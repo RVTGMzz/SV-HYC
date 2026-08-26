@@ -1,0 +1,12 @@
+{
+  "Name": "Chuyen Tam Linh Ko Dua Duoc Dau",
+  "Author": "ronvotri",
+  "Version": "1.0.0",
+  "Description": "Mod them su kien va hien tuong tam linh khi nguoi choi trot buong loi thach thuc.",
+  "UniqueID": "ronvotri.chuyentamlinhkoduaduocdau",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [],
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher"
+  }
+}
