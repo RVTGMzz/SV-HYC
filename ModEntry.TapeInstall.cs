@@ -18,7 +18,10 @@ internal sealed partial class ModEntry
             return;
 
         if (ModIdentity.IsCursedVhsInstalled(Game1.player))
+        {
+            this.RemoveAllCursedVhsFromInventory();
             return;
+        }
 
         Item? heldItem = Game1.player.CurrentItem;
         if (heldItem?.QualifiedItemId != ModIdentity.CursedVhsQualifiedItemId)
@@ -36,18 +39,17 @@ internal sealed partial class ModEntry
             return;
 
         this.Helper.Input.Suppress(e.Button);
-        Game1.player.reduceActiveItemByOne();
+
+        int removedCopies = this.RemoveAllCursedVhsFromInventory();
         Game1.player.modData[ModIdentity.CursedVhsInstalledKey] = "true";
 
         Game1.playSound("smallSelect");
         Game1.showGlobalMessage("*Cạch.* Cuộn VHS biến mất vào trong TV. Nút eject không phản hồi.");
 
-        // First activation happens immediately when the tape is inserted, regardless of the clock.
-        // FinishSequence marks today's signal as completed, so 8:00 won't trigger a second time today.
         this.TryStartArrival(force: true);
 
         this.Monitor.Log(
-            $"Cursed VHS installed. First signal started immediately; future daily signals are armed for {this.Config.DailySignalTime}.",
+            $"Cursed VHS installed ({removedCopies} inventory copy/copies consumed). First signal started immediately; future daily signals are armed for {this.Config.DailySignalTime}.",
             LogLevel.Info
         );
     }
