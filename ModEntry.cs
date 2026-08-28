@@ -13,7 +13,6 @@ namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry : Mod
 {
-
     private const int FrameWidth = 64;
     private const int FrameHeight = 64;
     private const int FrameCount = 6;
@@ -46,12 +45,12 @@ internal sealed partial class ModEntry : Mod
         helper.Events.Input.ButtonPressed += this.OnTapeButtonPressed;
         helper.Events.Input.ButtonPressed += this.OnButtonPressed;
 
-        helper.ConsoleCommands.Add("sudoku_testarrival", "Start the current Hey! You’re Cursed! sequence immediately while inside the farmhouse.", this.OnTestArrivalCommand);
-        helper.ConsoleCommands.Add("sudoku_resetarrival", "Reset the full VHS/signal/Sudoku core flow and return one fresh test tape.", this.OnResetArrivalCommand);
-        helper.ConsoleCommands.Add("sudoku_unlocknpc", "Set Sudoku's arrival flag and create the NPC immediately if possible.", this.OnUnlockNpcCommand);
-        helper.ConsoleCommands.Add("sudoku_status", "Print stabilized Hey! You’re Cursed! core state for the current save.", this.OnStatusCommand);
-        helper.ConsoleCommands.Add("sudoku_open", "Open today's Sudoku board immediately for testing.", this.OnOpenDailyCommand);
-        helper.ConsoleCommands.Add("sudoku_resetdaily", "Reset today's Sudoku board and reward flag for testing.", this.OnResetDailyCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_testarrival", "Start the current Hey! You’re Cursed! sequence immediately while inside the farmhouse.", this.OnTestArrivalCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_resetarrival", "Reset the full VHS/signal/Sudoku core flow and return one fresh test tape.", this.OnResetArrivalCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_unlocknpc", "Set Sudoku's arrival flag and create the NPC immediately if possible.", this.OnUnlockNpcCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_status", "Print stabilized Hey! You’re Cursed! core state for the current save.", this.OnStatusCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_open", "Open today's Sudoku board immediately for testing.", this.OnOpenDailyCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_resetdaily", "Reset today's Sudoku board and reward flag for testing.", this.OnResetDailyCommand);
         helper.ConsoleCommands.Add("heyyourecursed_givevhs", "Give the Cursed VHS story item to the current player for testing.", this.OnGiveVhsCommand);
     }
 
@@ -139,7 +138,7 @@ internal sealed partial class ModEntry : Mod
         this.LoadEventTexturesSafely();
 
         this.Monitor.Log(
-            "Hey! You’re Cursed! v0.0.6-alpha.6 loaded. Interaction/intro stabilization is active.",
+            "Hey! You’re Cursed! v0.0.6-alpha.7 loaded. TV targeting, portraits, and Sudoku-menu handoff fixes are active.",
             LogLevel.Info
         );
 
