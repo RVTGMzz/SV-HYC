@@ -13,14 +13,15 @@ namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
+
     private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
     {
         if (!Context.IsWorldReady || this.sequenceActive)
             return;
 
-        // While the custom Sudoku menu is open, route controller input explicitly through
-        // SMAPI. This works even on setups where Stardew doesn't reliably forward every
-        // gamepad button to IClickableMenu.receiveGamePadButton.
+        // Route controller input explicitly through SMAPI while the custom Sudoku menu is open.
+        // This avoids relying only on Stardew's receiveGamePadButton forwarding, which can be
+        // inconsistent depending on gamepad mode/controller setup.
         if (Game1.activeClickableMenu is SudokuMenu sudokuMenu)
         {
             if (sudokuMenu.HandleSmapiInput(e.Button))
@@ -44,6 +45,7 @@ internal sealed partial class ModEntry
         if (sudoku is null)
             return;
 
+        // A completed signal should never leave an on-screen Sudoku stuck as non-interactive.
         if (ModIdentity.HasDailySignalRunToday(Game1.player))
             sudoku.IsInvisible = false;
 
@@ -54,9 +56,14 @@ internal sealed partial class ModEntry
         if (distance > 3.25f)
             return;
 
+        // Do not hijack every action button just because Sudoku happens to be nearby.
+        // The player must actually target/click Sudoku. This keeps TV/furniture interaction
+        // working normally when she is standing beside the television.
         if (!this.IsSudokuInteractionTarget(sudoku, e))
             return;
 
+        // Make the interaction feel responsive even while the stabilization build keeps
+        // Sudoku in a simple idle state instead of giving her a full house-wandering AI yet.
         Vector2 lookDelta = Game1.player.Tile - sudoku.Tile;
         if (Math.Abs(lookDelta.X) > Math.Abs(lookDelta.Y))
             sudoku.faceDirection(lookDelta.X > 0 ? 1 : 3);
@@ -77,9 +84,12 @@ internal sealed partial class ModEntry
                 this.Helper.Input.Suppress(e.Button);
                 Game1.drawObjectDialogue("Sudoku nhìn bạn.^\"...Hôm nay không có bảng.\"");
             }
+
             return;
         }
 
+        // Once today's reward has been claimed, preserve Stardew's normal right-click/action
+        // dialogue. Left-click gets a small fallback line so both interaction styles work.
         if (this.dailySudoku.IsRewardClaimedToday())
         {
             if (isMouseClick)
@@ -87,6 +97,7 @@ internal sealed partial class ModEntry
                 this.Helper.Input.Suppress(e.Button);
                 Game1.drawObjectDialogue("Sudoku nhìn bạn một lúc.^\"...Mai 8 giờ.\"");
             }
+
             return;
         }
 
@@ -94,10 +105,13 @@ internal sealed partial class ModEntry
         this.ShowDailySudokuPrompt();
     }
 
+
     private bool IsSudokuInteractionTarget(NPC sudoku, ButtonPressedEventArgs e)
     {
         if (e.Button == SButton.MouseLeft)
         {
+            // Mouse clicks only belong to Sudoku when the clicked tile is actually her tile.
+            // A loose radius here caused clicks on the TV next to her to open her dialogue.
             Vector2 clickedTile = e.Cursor.GrabTile;
             return Vector2.Distance(clickedTile, sudoku.Tile) <= 0.70f;
         }
@@ -112,16 +126,35 @@ internal sealed partial class ModEntry
         };
 
         Vector2 targetTile = Game1.player.Tile + facingOffset;
+
+        // Action-button interaction must target Sudoku's own tile. Do not fall back to
+        // “Sudoku is merely adjacent to the player”, because that steals actions meant
+        // for TVs, furniture, chests, etc.
         return Vector2.Distance(targetTile, sudoku.Tile) <= 0.70f;
     }
+
+
+    private static bool AnswerMatches(string? answer, string key)
+    {
+        if (string.IsNullOrWhiteSpace(answer))
+            return false;
+
+        string value = answer.Trim();
+        return value.Equals(key, StringComparison.OrdinalIgnoreCase)
+            || value.EndsWith("_" + key, StringComparison.OrdinalIgnoreCase)
+            || value.EndsWith("." + key, StringComparison.OrdinalIgnoreCase)
+            || value.EndsWith("/" + key, StringComparison.OrdinalIgnoreCase);
+    }
+
 
     private void QueueDailySudokuOpen()
     {
         this.pendingSudokuMenuOpen = true;
-        this.pendingSudokuMenuDelayTicks = 2;
+        this.pendingSudokuMenuDelayTicks = 12;
         this.pendingSudokuMenuWaitTicks = 0;
-        this.Monitor.Log("Daily Sudoku menu queued; waiting for Stardew's dialogue box to finish closing.", LogLevel.Trace);
+        this.Monitor.Log("Daily Sudoku menu queued; delayed dialogue handoff armed.", LogLevel.Info);
     }
+
 
     private void ShowFirstConversation()
     {
@@ -143,9 +176,10 @@ internal sealed partial class ModEntry
         );
     }
 
+
     private void OnFirstConversationSightAnswered(Farmer who, string answer)
     {
-        string prompt = answer == "tv"
+        string prompt = AnswerMatches(answer, "tv")
             ? "\"Tốt.\"^Sudoku liếc sang chiếc TV.^\"...Nó nói chuyện dễ hiểu hơn ngươi.\"^\"...Có bút chì không?\""
             : "Sudoku im lặng vài giây.^\"...Phiền thật.\"^\"...Ngươi có bút chì không?\"";
 
@@ -164,11 +198,12 @@ internal sealed partial class ModEntry
         );
     }
 
+
     private void OnFirstConversationPencilAnswered(Farmer who, string answer)
     {
         Game1.player.modData[ModIdentity.FirstConversationCompletedKey] = "true";
 
-        string prompt = answer == "hoe"
+        string prompt = AnswerMatches(answer, "hoe")
             ? "Sudoku nhìn xuống cây cuốc của bạn.^\"......\"^\"Đừng dùng thứ đó lên bảng.\"^Cô ấy rút ra một tờ giấy đầy ô vuông.^\"...Muốn thử luôn không?\""
             : "Sudoku khẽ gật đầu.^\"...Được.\"^Cô ấy rút ra một tờ giấy đầy ô vuông.^\"...Thử một bảng?\"";
 
@@ -187,9 +222,12 @@ internal sealed partial class ModEntry
         );
     }
 
+
     private void OnFirstConversationBoardAnswered(Farmer who, string answer)
     {
-        if (answer == "board")
+        this.Monitor.Log($"First-board dialogue answered with key '{answer}'.", LogLevel.Info);
+
+        if (AnswerMatches(answer, "board"))
         {
             this.QueueDailySudokuOpen();
             return;
@@ -197,6 +235,7 @@ internal sealed partial class ModEntry
 
         Game1.drawObjectDialogue("Sudoku gấp tờ giấy lại.^\"...Ngày mai. 8 giờ.\"");
     }
+
 
     private void ShowDailySudokuPrompt()
     {
@@ -215,9 +254,12 @@ internal sealed partial class ModEntry
         );
     }
 
+
     private void OnDailySudokuPromptAnswered(Farmer who, string answer)
     {
-        if (answer == "solve")
+        this.Monitor.Log($"Daily-board dialogue answered with key '{answer}'.", LogLevel.Info);
+
+        if (AnswerMatches(answer, "solve"))
         {
             this.QueueDailySudokuOpen();
             return;

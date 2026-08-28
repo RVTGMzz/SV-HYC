@@ -13,11 +13,13 @@ namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
+
     private void OnTimeChanged(object? sender, TimeChangedEventArgs e)
     {
         if (this.Config.EnableDailySignal && e.NewTime >= this.Config.DailySignalTime)
             this.TryStartArrival(force: false);
     }
+
 
     private void OnWarped(object? sender, WarpedEventArgs e)
     {
@@ -34,6 +36,7 @@ internal sealed partial class ModEntry
             this.TryStartArrival(force: false);
     }
 
+
     private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
     {
         if (!Context.IsWorldReady)
@@ -49,20 +52,28 @@ internal sealed partial class ModEntry
             {
                 this.pendingSudokuMenuWaitTicks++;
 
-                // A question callback fires before Stardew has completely dismissed its
-                // DialogueBox. Never replace that menu in the same update frame: the game
-                // can overwrite our SudokuMenu immediately afterwards. Wait for a genuinely
-                // clean frame, then open the custom board.
+                // The answer callback runs while Stardew still owns the DialogueBox.
+                // Wait a short moment so its click/transition completes, then dismiss only
+                // that stale dialogue. Open Sudoku on the NEXT update tick, never the same
+                // tick we clear the dialogue, so Stardew can't overwrite our custom menu.
+                if (Game1.activeClickableMenu is DialogueBox)
+                {
+                    this.Monitor.Log("Closing completed Sudoku dialogue before custom-menu handoff.", LogLevel.Trace);
+                    Game1.activeClickableMenu = null;
+                    this.pendingSudokuMenuWaitTicks = 0;
+                    return;
+                }
+
                 if (Game1.activeClickableMenu is null)
                 {
                     this.pendingSudokuMenuOpen = false;
                     this.pendingSudokuMenuWaitTicks = 0;
                     this.OpenDailySudoku(force: true);
                 }
-                else if (this.pendingSudokuMenuWaitTicks >= 180)
+                else if (this.pendingSudokuMenuWaitTicks >= 300)
                 {
                     this.Monitor.Log(
-                        $"Daily Sudoku menu was queued but another menu ({Game1.activeClickableMenu.GetType().Name}) stayed open for too long. Cancelling the pending open.",
+                        $"Daily Sudoku menu was queued but another menu ({Game1.activeClickableMenu.GetType().Name}) blocked the handoff for too long. Cancelling the pending open.",
                         LogLevel.Warn
                     );
                     this.pendingSudokuMenuOpen = false;
@@ -80,7 +91,11 @@ internal sealed partial class ModEntry
             return;
         }
 
+        // Keep the player from drifting away from the TV while the lightweight custom
+        // sequence is running. This avoids accidental warps/collision weirdness without
+        // depending on event-script state.
         Game1.player.Halt();
+
         this.elapsedTicks++;
 
         if (this.elapsedTicks == 1)
