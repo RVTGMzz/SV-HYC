@@ -6,8 +6,10 @@ using StardewValley;
 using StardewValley.GameData.Characters;
 using StardewValley.GameData.Objects;
 using StardewValley.Locations;
+using StardewValley.Menus;
+using StardewValley.Objects;
 
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
@@ -33,6 +35,7 @@ internal sealed partial class ModEntry
         }
 
         Game1.activeClickableMenu = new SudokuMenu(this.dailySudoku, puzzle);
+        this.Monitor.Log($"Daily Sudoku menu opened: puzzle={puzzle.Id}, difficulty={puzzle.Difficulty}.", LogLevel.Info);
     }
 
     private void OnOpenDailyCommand(string command, string[] args)
@@ -61,5 +64,4 @@ internal sealed partial class ModEntry
             LogLevel.Info
         );
     }
-
 }
