@@ -1,7 +1,7 @@
 using StardewModdingAPI;
 using StardewValley;
 
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
 internal sealed class DailySudokuService
 {
@@ -120,9 +120,6 @@ internal sealed class DailySudokuService
             && claimedDay == day;
     }
 
-    /// <summary>
-    /// Claims today's reward and returns a player-facing description, or null if the reward couldn't be claimed.
-    /// </summary>
     public string? ClaimReward(SudokuPuzzle puzzle)
     {
         if (!this.IsSolved(puzzle) || this.IsRewardClaimedToday())
@@ -176,10 +173,7 @@ internal sealed class DailySudokuService
         string[] suffixes = { "Day", "PuzzleId", "Board", "ClaimedDay" };
 
         foreach (string suffix in suffixes)
-        {
             Game1.player.modData.Remove(ModIdentity.DailySudokuPrefix + suffix);
-            Game1.player.modData.Remove(ModIdentity.LegacyDailySudokuPrefix + suffix);
-        }
     }
 
     private SudokuPuzzle SelectPuzzleForToday(int day)
