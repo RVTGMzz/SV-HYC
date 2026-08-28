@@ -1,11 +1,15 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.GameData.Characters;
+using StardewValley.GameData.Objects;
 using StardewValley.Locations;
+using StardewValley.Menus;
 using StardewValley.Objects;
 
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
@@ -39,13 +43,11 @@ internal sealed partial class ModEntry
             return;
 
         this.Helper.Input.Suppress(e.Button);
-
         int removedCopies = this.RemoveAllCursedVhsFromInventory();
         Game1.player.modData[ModIdentity.CursedVhsInstalledKey] = "true";
 
         Game1.playSound("smallSelect");
         Game1.showGlobalMessage("*Cạch.* Cuộn VHS biến mất vào trong TV. Nút eject không phản hồi.");
-
         this.TryStartArrival(force: true);
 
         this.Monitor.Log(
