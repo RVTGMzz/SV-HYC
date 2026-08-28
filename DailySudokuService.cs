@@ -140,7 +140,8 @@ internal sealed class DailySudokuService
             else
             {
                 int day = Game1.Date.TotalDays;
-                int seed = unchecked((int)(Game1.uniqueIDForThisGame ^ ((long)day * 486187739L) ^ 0x5A17BEEFL));
+                long seed64 = unchecked((long)Game1.uniqueIDForThisGame ^ ((long)day * 486187739L) ^ 0x5A17BEEFL);
+                int seed = unchecked((int)seed64);
                 Random random = new(seed);
                 int stack = random.Next(selected.MinStack, selected.MaxStack + 1);
 
@@ -210,7 +211,8 @@ internal sealed class DailySudokuService
 
         int totalWeight = pool.Sum(p => Math.Max(1, p.Weight));
         int day = Game1.Date.TotalDays;
-        int seed = unchecked((int)(Game1.uniqueIDForThisGame ^ ((long)day * 104729L) ^ 0xC0FFEE));
+        long seed64 = unchecked((long)Game1.uniqueIDForThisGame ^ ((long)day * 104729L) ^ 0xC0FFEEL);
+        int seed = unchecked((int)seed64);
         Random random = new(seed);
         int roll = random.Next(totalWeight);
 

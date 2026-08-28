@@ -1,0 +1,101 @@
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
+using StardewModdingAPI.Events;
+using StardewValley;
+using StardewValley.GameData.Characters;
+using StardewValley.GameData.Objects;
+using StardewValley.Locations;
+
+namespace CursedSignal;
+
+internal sealed partial class ModEntry
+{
+    private void OnGiveVhsCommand(string command, string[] args)
+    {
+        if (!Context.IsWorldReady)
+        {
+            this.Monitor.Log("Load a save before using cursedsignal_givevhs.", LogLevel.Warn);
+            return;
+        }
+
+        Game1.player.modData.Remove(ModIdentity.CursedVhsGrantedKey);
+        this.EnsureCursedVhsGranted(showDialogue: true);
+    }
+
+    private void OnTestArrivalCommand(string command, string[] args)
+    {
+        if (!Context.IsWorldReady)
+        {
+            this.Monitor.Log("Load a save before using sudoku_testarrival.", LogLevel.Warn);
+            return;
+        }
+
+        if (Game1.currentLocation is not FarmHouse)
+        {
+            this.Monitor.Log("Enter the farmhouse before using sudoku_testarrival.", LogLevel.Warn);
+            return;
+        }
+
+        this.TryStartArrival(force: true);
+    }
+
+    private void OnResetArrivalCommand(string command, string[] args)
+    {
+        if (!Context.IsWorldReady)
+        {
+            this.Monitor.Log("Load a save before using sudoku_resetarrival.", LogLevel.Warn);
+            return;
+        }
+
+        this.CancelSequence();
+        ModIdentity.ClearArrivalFlags(Game1.player);
+        this.Monitor.Log(
+            "Sudoku arrival/VHS flags cleared in the Cursed Signal and legacy prototype keyspaces. Existing NPC/item instances are intentionally left alone.",
+            LogLevel.Info
+        );
+    }
+
+    private void OnUnlockNpcCommand(string command, string[] args)
+    {
+        if (!Context.IsWorldReady)
+        {
+            this.Monitor.Log("Load a save before using sudoku_unlocknpc.", LogLevel.Warn);
+            return;
+        }
+
+        Game1.player.modData[ModIdentity.ArrivalSeenKey] = "true";
+        Game1.player.modData[ModIdentity.SudokuNpcEnabledKey] = "true";
+        this.EnsureCursedVhsGranted(showDialogue: false);
+
+        this.Monitor.Log(
+            "Sudoku unlock flags set under ronvotri.CursedSignal. Save/reload or sleep to the next day to let Data/Characters add her.",
+            LogLevel.Info
+        );
+    }
+
+    private void OnStatusCommand(string command, string[] args)
+    {
+        if (!Context.IsWorldReady)
+        {
+            this.Monitor.Log("No save is loaded.", LogLevel.Info);
+            return;
+        }
+
+        bool seen = ModIdentity.HasArrivalBeenSeen(Game1.player);
+        NPC? sudoku = this.FindSudoku(currentLocationOnly: false);
+        bool dailyClaimed = this.dailySudoku?.IsRewardClaimedToday() ?? false;
+        SudokuPuzzle? dailyPuzzle = this.dailySudoku?.EnsureToday();
+        bool npcEnabled =
+            Game1.player.modData.TryGetValue(ModIdentity.SudokuNpcEnabledKey, out string? enabled)
+            && enabled == "true";
+        bool vhsGranted =
+            Game1.player.modData.TryGetValue(ModIdentity.CursedVhsGrantedKey, out string? vhs)
+            && vhs == "true";
+
+        this.Monitor.Log(
+            $"Sudoku status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcPresent={sudoku is not null}, npcId={sudoku?.Name ?? "none"}, vhsGranted={vhsGranted}, sequenceActive={this.sequenceActive}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
+            LogLevel.Info
+        );
+    }
+}
