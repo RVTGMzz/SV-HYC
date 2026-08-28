@@ -3,8 +3,8 @@ setlocal
 cd /d "%~dp0"
 
 echo ==========================================
-echo   Hey! You're Cursed! v0.0.6-alpha.8
-echo   Controller-first Sudoku Controls
+echo   Hey! You're Cursed! v0.0.6-alpha.9
+echo   Dialogue to Sudoku Handoff Fix
 echo ==========================================
 echo.
 
@@ -40,7 +40,7 @@ echo.
 echo ==========================================
 echo   BUILD FAILED
 echo   Copy the error lines above and send them
-echo   back to ChatGPT.
+ echo   back to ChatGPT.
 echo ==========================================
 echo.
 pause
