@@ -6,8 +6,10 @@ using StardewValley;
 using StardewValley.GameData.Characters;
 using StardewValley.GameData.Objects;
 using StardewValley.Locations;
+using StardewValley.Menus;
+using StardewValley.Objects;
 
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
@@ -50,56 +52,6 @@ internal sealed partial class ModEntry
         }
 
         Game1.player.modData[ModIdentity.SudokuNpcEnabledKey] = "true";
-    }
-
-    private NPC? NormalizeSudokuInstances()
-    {
-        List<NPC> all = this.FindAllSudoku();
-        if (all.Count == 0)
-            return null;
-
-        NPC canonical = all
-            .OrderBy(p => p.Name == ModIdentity.LegacySudokuNpcId ? 0 : 1)
-            .First();
-
-        int removed = 0;
-        foreach (NPC duplicate in all)
-        {
-            if (ReferenceEquals(duplicate, canonical))
-                continue;
-
-            if (duplicate.currentLocation is not null && duplicate.currentLocation.characters.Contains(duplicate))
-            {
-                duplicate.currentLocation.characters.Remove(duplicate);
-                removed++;
-            }
-        }
-
-        if (removed > 0)
-        {
-            this.Monitor.Log(
-                $"Removed {removed} duplicate Sudoku NPC instance(s); keeping {canonical.Name}.",
-                LogLevel.Warn
-            );
-        }
-
-        return canonical;
-    }
-
-    private int RemoveAllSudokuInstances()
-    {
-        int removed = 0;
-
-        foreach (NPC sudoku in this.FindAllSudoku())
-        {
-            if (sudoku.currentLocation is not null && sudoku.currentLocation.characters.Contains(sudoku))
-            {
-                sudoku.currentLocation.characters.Remove(sudoku);
-                removed++;
-            }
-        }
-
-        return removed;
     }
 
     private NPC? EnsureSudokuCharacterExists()
@@ -147,7 +99,7 @@ internal sealed partial class ModEntry
         sudoku.Halt();
 
         this.Monitor.Log(
-            "Sudoku is hidden until today's Cursed Signal materializes her.",
+            "Sudoku is hidden until today's Hey! You’re Cursed! materializes her.",
             LogLevel.Trace
         );
     }
@@ -164,18 +116,9 @@ internal sealed partial class ModEntry
         Vector2 playerTile = Game1.player.Tile;
         Vector2[] offsets =
         {
-            new(1f, 0f),
-            new(-1f, 0f),
-            new(0f, 1f),
-            new(0f, -1f),
-            new(1f, 1f),
-            new(-1f, 1f),
-            new(1f, -1f),
-            new(-1f, -1f),
-            new(2f, 0f),
-            new(-2f, 0f),
-            new(0f, 2f),
-            new(0f, -2f)
+            new(1f, 0f), new(-1f, 0f), new(0f, 1f), new(0f, -1f),
+            new(1f, 1f), new(-1f, 1f), new(1f, -1f), new(-1f, -1f),
+            new(2f, 0f), new(-2f, 0f), new(0f, 2f), new(0f, -2f)
         };
 
         Vector2? arrivalTile = null;
@@ -213,6 +156,50 @@ internal sealed partial class ModEntry
         );
 
         return sudoku;
+    }
+
+    private NPC? NormalizeSudokuInstances()
+    {
+        List<NPC> all = this.FindAllSudoku();
+        if (all.Count == 0)
+            return null;
+
+        NPC canonical = all
+            .OrderBy(p => p.Name == ModIdentity.LegacySudokuNpcId ? 0 : 1)
+            .First();
+
+        int removed = 0;
+        foreach (NPC duplicate in all)
+        {
+            if (ReferenceEquals(duplicate, canonical))
+                continue;
+
+            if (duplicate.currentLocation is not null && duplicate.currentLocation.characters.Remove(duplicate))
+                removed++;
+        }
+
+        if (removed > 0)
+        {
+            this.Monitor.Log(
+                $"Removed {removed} duplicate Sudoku NPC instance(s); keeping {canonical.Name}.",
+                LogLevel.Warn
+            );
+        }
+
+        return canonical;
+    }
+
+    private int RemoveAllSudokuInstances()
+    {
+        int removed = 0;
+
+        foreach (NPC sudoku in this.FindAllSudoku())
+        {
+            if (sudoku.currentLocation is not null && sudoku.currentLocation.characters.Remove(sudoku))
+                removed++;
+        }
+
+        return removed;
     }
 
     private int CountCursedVhsInInventory()
