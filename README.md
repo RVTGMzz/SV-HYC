@@ -1,47 +1,87 @@
-# Chuyện Tâm Linh Ko Đùa Được Đâu — Sudoku prototype
+# Chuyện Tâm Linh Ko Đùa Được Đâu — Sudoku prototype v0.0.3
 
-Development branch for **v0.0.2: TV Arrival + Custom NPC foundation**.
+Development branch for **v0.0.3: Daily Sudoku**.
 
-## What changed from v0.0.1
+> Status: source-complete prototype, **not yet compiled or tested in Stardew Valley/SMAPI**.
 
-- the base64 event image workaround was removed;
-- real PNG assets are now used;
-- a brief haunted-VHS presentation was added:
-  1. static;
-  2. a corrupted glimpse of a well;
-  3. glitch;
-  4. six TV-emergence frames;
-- Sudoku now has `Data/Characters` data, a 16×32 movement sheet, portraits, dialogue, and a basic stay-at-home schedule;
-- Sudoku is locked behind the per-save arrival flag;
-- after the arrival flag is set, the game's spawn-if-missing system should make her eligible to appear as a normal NPC on the next save load/day rollover.
+## Current flow
 
-## Important prototype limitation
+1. The v0.0.2 haunted-TV arrival remains intact.
+2. After the per-save `SudokuArrivalSeen` flag is set, Sudoku can exist as a custom NPC in the farmhouse.
+3. Each in-game day gets one deterministic Sudoku puzzle.
+4. Interact near Sudoku before claiming today's reward to open the 9×9 board.
+5. Fill all editable cells and press **KIỂM TRA**.
+6. A correct solution gives one reward for that day; reopening can't grant a second reward.
+7. Closing the menu preserves the board in player `modData`, so the same puzzle can be resumed later that day.
 
-This branch has **not been tested in-game yet**.
+## Puzzle bank
 
-Custom NPC spawning is deliberately deferred to the game's normal `Data/Characters` spawn pass. That means the arrival cutscene can finish at 7:00 AM, but the real NPC is expected to become persistent after sleeping/reloading rather than being force-inserted mid-day.
+`assets/Data/Sudoku.puzzles.json` contains **18 pre-validated puzzles**:
 
-This avoids creating a duplicate or partially initialized NPC while the prototype is still untested.
+- 6 Easy
+- 6 Normal
+- 6 Hard
+
+The prototype chooses difficulty from friendship points:
+
+- below 4 hearts: Easy
+- 4–7 hearts: Normal
+- 8+ hearts: Hard
+
+If friendship data isn't available yet, it safely falls back to Easy.
+
+## Controls
+
+### Mouse / keyboard
+
+- click an editable cell;
+- click `1–9` or press number keys;
+- `Backspace`, `Delete`, or `0` clears the selected cell;
+- arrow keys move selection;
+- `Enter` checks the board;
+- `Esc` closes the board.
+
+### Controller prototype
+
+- D-pad: move selection;
+- `A`: cycle selected cell forward;
+- `LB/RB`: cycle backward/forward;
+- `X`: clear;
+- `Y`: check;
+- `B`: close.
+
+## Daily rewards
+
+For v0.0.3 rewards are deliberately simple and low-risk while the UI is untested:
+
+- Easy: `250g`
+- Normal: `500g`
+- Hard: `900g`
+
+The intended later design is to replace/augment this with thematic item rewards and friendship progression.
 
 ## Console commands
 
-- `sudoku_testarrival` — run the arrival immediately in the farmhouse.
-- `sudoku_resetarrival` — clear the per-save arrival flag.
-- `sudoku_unlocknpc` — set the flag without playing the arrival; sleep/reload afterwards.
-- `sudoku_status` — print the flag / NPC / sequence state.
+Existing:
 
-## Current asset sizes
+- `sudoku_testarrival`
+- `sudoku_resetarrival`
+- `sudoku_unlocknpc`
+- `sudoku_status`
 
-- `assets/Characters/Sudoku.png`: 64×128, 4×4 movement sheet, 16×32 per frame.
-- `assets/Portraits/Sudoku.png`: 256×128, 8 portraits, 64×64 each.
-- `assets/Events/Sudoku_TV.png`: 192×128, 6 event frames, 64×64 each.
+New in v0.0.3:
+
+- `sudoku_open` — open today's board immediately, even before the NPC flow is ready;
+- `sudoku_resetdaily` — reset today's board and reward flag for repeated testing.
 
 ## Still intentionally deferred
 
-- exact TV location anchoring in every farmhouse upgrade/map replacement;
-- cursed VHS as an inventory item;
-- gifts and friendship balancing;
-- daily Sudoku minigame;
-- daily rewards;
-- roommate progression;
-- localization/i18n pass.
+- a proper `Giải / Để sau` dialogue choice before opening the menu;
+- item rewards / cursed VHS rewards;
+- pencil-note candidates inside cells;
+- mistakes/highlighting assistance;
+- animated portrait reactions while solving;
+- final controller navigation polish;
+- multiplayer authority/sync rules;
+- full localization/i18n;
+- balancing and final friendship progression.
