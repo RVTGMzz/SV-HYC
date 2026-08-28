@@ -62,8 +62,6 @@ internal sealed partial class ModEntry
 
         try
         {
-            // Stardew 1.6 can materialize a Data/Characters entry immediately.
-            // bypassConditions is safe here because the arrival flag has already been set by Cursed Signal.
             Game1.AddCharacterIfNecessary(ModIdentity.SudokuNpcId, bypassConditions: true);
 
             NPC? sudoku = Game1.getCharacterFromName(ModIdentity.SudokuNpcId);
@@ -93,15 +91,34 @@ internal sealed partial class ModEntry
         if (Game1.currentLocation is not FarmHouse farmHouse)
             return sudoku;
 
-        // Keep the first appearance predictable and visible. Her normal schedule can take over tomorrow.
-        Vector2 arrivalTile = new(6f, 5f);
+        Vector2 playerTile = Game1.player.Tile;
+        Vector2[] candidates =
+        {
+            playerTile + new Vector2(1f, 0f),
+            playerTile + new Vector2(-1f, 0f),
+            playerTile + new Vector2(0f, 1f),
+            playerTile + new Vector2(0f, -1f)
+        };
+
+        Vector2 arrivalTile = candidates.FirstOrDefault(farmHouse.isTileLocationTotallyClearAndPlaceable);
+        if (arrivalTile == Vector2.Zero)
+            arrivalTile = playerTile + new Vector2(1f, 0f);
+
         Game1.warpCharacter(sudoku, farmHouse, arrivalTile);
         sudoku.ignoreScheduleToday = true;
         sudoku.Halt();
-        sudoku.faceDirection(2);
+
+        Vector2 delta = playerTile - arrivalTile;
+        int facingDirection;
+        if (Math.Abs(delta.X) > Math.Abs(delta.Y))
+            facingDirection = delta.X > 0 ? 1 : 3;
+        else
+            facingDirection = delta.Y > 0 ? 2 : 0;
+
+        sudoku.faceDirection(facingDirection);
 
         this.Monitor.Log(
-            $"Sudoku placed in {farmHouse.NameOrUniqueName} at tile {arrivalTile} after the TV arrival.",
+            $"Sudoku placed beside the player in {farmHouse.NameOrUniqueName} at tile {arrivalTile} after the TV signal.",
             LogLevel.Info
         );
 

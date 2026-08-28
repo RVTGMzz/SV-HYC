@@ -39,19 +39,15 @@ internal sealed partial class ModEntry
         Game1.player.reduceActiveItemByOne();
         Game1.player.modData[ModIdentity.CursedVhsInstalledKey] = "true";
 
-        // If installed after 8:00, don't fire instantly; wait until tomorrow morning.
-        if (Game1.timeOfDay >= this.Config.DailySignalTime)
-            Game1.player.modData[ModIdentity.DailySignalDayKey] = Game1.Date.TotalDays.ToString();
-        else
-            Game1.player.modData.Remove(ModIdentity.DailySignalDayKey);
-
         Game1.playSound("smallSelect");
-        Game1.drawObjectDialogue(
-            "Bạn đẩy cuộn VHS vào TV.^*Cạch.*^Cuộn băng biến mất vào trong.^Nút eject không phản hồi."
-        );
+        Game1.showGlobalMessage("*Cạch.* Cuộn VHS biến mất vào trong TV. Nút eject không phản hồi.");
+
+        // First activation happens immediately when the tape is inserted, regardless of the clock.
+        // FinishSequence marks today's signal as completed, so 8:00 won't trigger a second time today.
+        this.TryStartArrival(force: true);
 
         this.Monitor.Log(
-            $"Cursed VHS installed into a farmhouse TV. Daily signal armed for {this.Config.DailySignalTime}.",
+            $"Cursed VHS installed. First signal started immediately; future daily signals are armed for {this.Config.DailySignalTime}.",
             LogLevel.Info
         );
     }
