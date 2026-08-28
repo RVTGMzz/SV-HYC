@@ -16,11 +16,23 @@ internal sealed partial class ModEntry
         if (!this.sequenceActive || this.tvArrivalSheet is null)
             return;
 
+        this.DrawDarkBackdrop(e.SpriteBatch);
+
+        if (!this.sequenceIsFirstArrival)
+        {
+            int repeatStaticEnd = Math.Max(1, this.Config.RepeatStaticTicks);
+
+            if (this.elapsedTicks < repeatStaticEnd)
+                this.DrawStatic(e.SpriteBatch, 0.85f);
+            else
+                this.DrawGlitch(e.SpriteBatch);
+
+            return;
+        }
+
         int staticEnd = Math.Max(1, this.Config.StaticTicks);
         int wellEnd = staticEnd + Math.Max(1, this.Config.WellTicks);
         int glitchEnd = wellEnd + Math.Max(1, this.Config.GlitchTicks);
-
-        this.DrawDarkBackdrop(e.SpriteBatch);
 
         if (this.elapsedTicks < staticEnd)
         {
@@ -30,7 +42,6 @@ internal sealed partial class ModEntry
 
         if (this.elapsedTicks < wellEnd)
         {
-            // v0.0.4.1 uses a dedicated VHS still instead of the old rectangle placeholder.
             this.DrawWellGlimpse(e.SpriteBatch);
             return;
         }
@@ -50,7 +61,7 @@ internal sealed partial class ModEntry
         spriteBatch.Draw(
             Game1.staminaRect,
             new Rectangle(0, 0, Game1.viewport.Width, Game1.viewport.Height),
-            Color.Black * 0.68f
+            Color.Black * (this.sequenceIsFirstArrival ? 0.68f : 0.38f)
         );
     }
 
@@ -95,7 +106,6 @@ internal sealed partial class ModEntry
             drawWidth = drawHeight * 192 / 128;
         }
 
-        // Tiny horizontal tracking wobble makes it feel like a VHS image without obscuring the well.
         int jitterX = (this.elapsedTicks / 4) % 9 == 0 ? 3 : 0;
         int jitterY = (this.elapsedTicks / 7) % 11 == 0 ? -2 : 0;
 
@@ -116,8 +126,6 @@ internal sealed partial class ModEntry
         spriteBatch.Draw(Game1.staminaRect, frame, new Color(5, 8, 11) * 0.98f);
         spriteBatch.Draw(this.wellBroadcastTexture, destination, Color.White);
 
-        // Sparse scanlines only inside the broadcast image. The old prototype drew noise
-        // across the whole room and made the actual well hard to read.
         for (int y = destination.Y + 8; y < destination.Bottom; y += 16)
         {
             spriteBatch.Draw(
