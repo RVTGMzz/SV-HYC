@@ -76,16 +76,24 @@ internal sealed partial class ModEntry
 
         if (!force)
         {
-            if (ModIdentity.HasArrivalBeenSeen(Game1.player))
+            if (!this.Config.EnableDailySignal)
                 return;
-            if (Game1.timeOfDay < this.Config.TestArrivalTime)
+            if (!ModIdentity.IsCursedVhsInstalled(Game1.player))
+                return;
+            if (Game1.timeOfDay < this.Config.DailySignalTime)
+                return;
+            if (ModIdentity.HasDailySignalRunToday(Game1.player))
                 return;
         }
 
         this.sequenceActive = true;
         this.elapsedTicks = 0;
         this.frameIndex = 0;
-        this.Monitor.Log("Sudoku's haunted-TV arrival sequence started.", LogLevel.Info);
+        this.Monitor.Log(
+            force
+                ? "Cursed Signal arrival sequence started by debug command."
+                : "The installed Cursed VHS activated today's 8:00 AM signal.",
+            LogLevel.Info
+        );
     }
-
 }
