@@ -21,6 +21,7 @@ internal sealed partial class ModEntry : Mod
     private DailySudokuService? dailySudoku;
 
     private bool sequenceActive;
+    private bool sequenceIsFirstArrival;
     private int elapsedTicks;
     private int frameIndex;
 
@@ -39,7 +40,7 @@ internal sealed partial class ModEntry : Mod
         helper.Events.Input.ButtonPressed += this.OnTapeButtonPressed;
         helper.Events.Input.ButtonPressed += this.OnButtonPressed;
 
-        helper.ConsoleCommands.Add("sudoku_testarrival", "Start Sudoku's haunted-TV arrival immediately while inside the farmhouse.", this.OnTestArrivalCommand);
+        helper.ConsoleCommands.Add("sudoku_testarrival", "Start the current Cursed Signal sequence immediately while inside the farmhouse.", this.OnTestArrivalCommand);
         helper.ConsoleCommands.Add("sudoku_resetarrival", "Clear Sudoku's arrival/tape flags so the sequence can be tested again.", this.OnResetArrivalCommand);
         helper.ConsoleCommands.Add("sudoku_unlocknpc", "Set Sudoku's arrival flag and create the NPC immediately if possible.", this.OnUnlockNpcCommand);
         helper.ConsoleCommands.Add("sudoku_status", "Print Sudoku and Cursed VHS prototype state for the current save.", this.OnStatusCommand);
@@ -134,7 +135,7 @@ internal sealed partial class ModEntry : Mod
         this.ResetSequenceState();
 
         this.Monitor.Log(
-            "Cursed Signal v0.0.5 loaded. VHS installation gate and 8:00 AM daily signal are active.",
+            "Cursed Signal v0.0.6 loaded. First-arrival and short repeat-morning signals are active.",
             LogLevel.Info
         );
 
@@ -155,6 +156,9 @@ internal sealed partial class ModEntry : Mod
             this.Monitor.Log("Sudoku has already arrived in this save. Ensuring her NPC instance exists.", LogLevel.Info);
             this.EnsureSudokuCharacterExists();
 
+            if (ModIdentity.IsCursedVhsInstalled(Game1.player) && !ModIdentity.HasDailySignalRunToday(Game1.player))
+                this.HideSudokuUntilDailySignal();
+
             if (this.Config.EnableDailySudoku)
                 this.dailySudoku?.EnsureToday();
         }
@@ -168,7 +172,12 @@ internal sealed partial class ModEntry : Mod
             this.EnsureCursedVhsGranted(showDialogue: false);
 
         if (ModIdentity.HasArrivalBeenSeen(Game1.player))
+        {
             this.EnsureSudokuCharacterExists();
+
+            if (ModIdentity.IsCursedVhsInstalled(Game1.player) && !ModIdentity.HasDailySignalRunToday(Game1.player))
+                this.HideSudokuUntilDailySignal();
+        }
 
         if (!this.Config.EnableDailySudoku || this.dailySudoku is null)
             return;
