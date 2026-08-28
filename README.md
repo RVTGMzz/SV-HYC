@@ -1,4 +1,4 @@
-# Hey! You’re Cursed! — v0.0.6-alpha.6
+# Hey! You’re Cursed! — v0.0.6-alpha.7
 
 A paranormal Stardew Valley mod about a cursed VHS, Sudoku, and a ghost who treats your farmhouse like a very inconvenient address.
 
@@ -15,11 +15,12 @@ This build completes the rename while the project is still pre-release:
 
 Early `ronvotri.CursedSignal` prototype keys/NPC IDs are still recognized for test-save cleanup/migration, but all new state uses the final ID.
 
-## alpha.6 — Sudoku menu hardening
+## alpha.7 — Interaction + portrait + menu handoff hotfix
 
-The final dialogue choice now queues the Sudoku board for a short delay. If Stardew leaves the final `DialogueBox` alive after its response callback, the mod dismisses only that stale dialogue and opens `SudokuMenu` on a clean update frame. This fixes the alpha.5 case where choosing `Đưa đây.` could leave the minigame queued forever.
-
-Diagnostics now log when the menu is queued/opened and `sudoku_status` includes the pending-menu and active-menu state.
+- TV/furniture actions are no longer stolen just because Sudoku is standing on a neighboring tile. Action-button interaction now requires Sudoku's actual tile to be targeted.
+- Question dialogues pass Sudoku as the speaker so her portrait can be used by Stardew's dialogue UI.
+- Choosing `Đưa đây.` no longer force-replaces the active `DialogueBox` in the same update frame. The mod waits until Stardew closes the dialogue naturally, then opens `SudokuMenu` on the next clean frame.
+- All debug commands now use the `heyyourecursed_` prefix so an old prototype can't crash mod entry by registering the same command names.
 
 ## Current core flow
 
@@ -42,11 +43,12 @@ Double-click `Build_HeyYoureCursed.bat`.
 
 ## Useful test commands
 
-- `sudoku_resetarrival`
-- `sudoku_status`
-- `sudoku_open`
-- `sudoku_resetdaily`
-- `sudoku_unlocknpc`
+- `heyyourecursed_resetarrival`
+- `heyyourecursed_status`
+- `heyyourecursed_open`
+- `heyyourecursed_resetdaily`
+- `heyyourecursed_unlocknpc`
+- `heyyourecursed_testarrival`
 - `heyyourecursed_givevhs`
 
-`sudoku_open` is the direct diagnostic: if it opens the board, the menu itself is healthy and any remaining issue is in the conversation transition.
+`heyyourecursed_open` is the direct diagnostic: if it opens the board, the menu itself is healthy and any remaining issue is in the conversation transition.
