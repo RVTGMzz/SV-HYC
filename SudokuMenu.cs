@@ -4,11 +4,11 @@ using Microsoft.Xna.Framework.Input;
 using StardewValley;
 using StardewValley.Menus;
 
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
 internal sealed class SudokuMenu : IClickableMenu
 {
-    private const int CellSize = 54;
+    private const int CellSize = 48;
     private const int GridSize = CellSize * 9;
 
     private readonly DailySudokuService service;
@@ -20,10 +20,10 @@ internal sealed class SudokuMenu : IClickableMenu
 
     public SudokuMenu(DailySudokuService service, SudokuPuzzle puzzle)
         : base(
-            Game1.viewport.Width / 2 - 350,
-            Game1.viewport.Height / 2 - 390,
-            700,
-            780,
+            Game1.viewport.Width / 2 - 325,
+            Game1.viewport.Height / 2 - 360,
+            650,
+            720,
             showUpperRightCloseButton: true
         )
     {
@@ -39,7 +39,7 @@ internal sealed class SudokuMenu : IClickableMenu
     {
         base.receiveLeftClick(x, y, playSound);
 
-        if (this.readyToClose())
+        if (Game1.activeClickableMenu != this)
             return;
 
         if (x >= this.GridX && x < this.GridX + GridSize && y >= this.GridY && y < this.GridY + GridSize)
@@ -48,13 +48,17 @@ internal sealed class SudokuMenu : IClickableMenu
             int row = (y - this.GridY) / CellSize;
             this.selectedRow = Math.Clamp(row, 0, 8);
             this.selectedColumn = Math.Clamp(col, 0, 8);
+            int index = this.selectedRow * 9 + this.selectedColumn;
+            this.statusText = this.puzzle.Puzzle[index] == '0'
+                ? "Đã chọn ô trống. Chọn số 1–9 bên dưới."
+                : "Ô này là đề bài. Hãy chọn một ô trống.";
             Game1.playSound("shiny4");
             return;
         }
 
-        int numberY = this.GridY + GridSize + 28;
-        int buttonSize = 46;
-        int gap = 8;
+        int numberY = this.GridY + GridSize + 22;
+        int buttonSize = 42;
+        int gap = 6;
         int totalWidth = 9 * buttonSize + 8 * gap;
         int startX = this.xPositionOnScreen + (this.width - totalWidth) / 2;
 
@@ -68,8 +72,8 @@ internal sealed class SudokuMenu : IClickableMenu
             }
         }
 
-        Rectangle clearRect = new(this.xPositionOnScreen + 86, numberY + 66, 150, 50);
-        Rectangle checkRect = new(this.xPositionOnScreen + this.width - 236, numberY + 66, 150, 50);
+        Rectangle clearRect = new(this.xPositionOnScreen + 72, numberY + 58, 145, 46);
+        Rectangle checkRect = new(this.xPositionOnScreen + this.width - 217, numberY + 58, 145, 46);
 
         if (clearRect.Contains(x, y))
         {
@@ -207,7 +211,7 @@ internal sealed class SudokuMenu : IClickableMenu
         b.DrawString(
             Game1.smallFont,
             this.statusText,
-            new Vector2(this.xPositionOnScreen + (this.width - statusSize.X) / 2, this.yPositionOnScreen + this.height - 54),
+            new Vector2(this.xPositionOnScreen + (this.width - statusSize.X) / 2, this.yPositionOnScreen + this.height - 42),
             new Color(205, 215, 225)
         );
 
@@ -274,9 +278,9 @@ internal sealed class SudokuMenu : IClickableMenu
 
     private void DrawNumberButtons(SpriteBatch b)
     {
-        int numberY = this.GridY + GridSize + 28;
-        int buttonSize = 46;
-        int gap = 8;
+        int numberY = this.GridY + GridSize + 22;
+        int buttonSize = 42;
+        int gap = 6;
         int totalWidth = 9 * buttonSize + 8 * gap;
         int startX = this.xPositionOnScreen + (this.width - totalWidth) / 2;
 
@@ -291,8 +295,8 @@ internal sealed class SudokuMenu : IClickableMenu
             b.DrawString(Game1.smallFont, text, new Vector2(rect.Center.X - size.X / 2, rect.Center.Y - size.Y / 2), Color.White);
         }
 
-        Rectangle clearRect = new(this.xPositionOnScreen + 86, numberY + 66, 150, 50);
-        Rectangle checkRect = new(this.xPositionOnScreen + this.width - 236, numberY + 66, 150, 50);
+        Rectangle clearRect = new(this.xPositionOnScreen + 72, numberY + 58, 145, 46);
+        Rectangle checkRect = new(this.xPositionOnScreen + this.width - 217, numberY + 58, 145, 46);
         this.DrawButton(b, clearRect, "XÓA");
         this.DrawButton(b, checkRect, "KIỂM TRA");
     }
