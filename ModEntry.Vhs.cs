@@ -45,15 +45,21 @@ internal sealed partial class ModEntry
 
     private void EnsureCursedVhsGranted(bool showDialogue)
     {
-        if (!Context.IsWorldReady || ModIdentity.IsCursedVhsInstalled(Game1.player))
+        if (!Context.IsWorldReady)
             return;
 
-        bool alreadyInInventory = Game1.player.Items.Any(
-            item => item?.QualifiedItemId == ModIdentity.CursedVhsQualifiedItemId
-        );
-
-        if (!alreadyInInventory)
+        if (ModIdentity.IsCursedVhsInstalled(Game1.player))
         {
+            this.RemoveAllCursedVhsFromInventory();
+            return;
+        }
+
+        int inventoryCount = this.CountCursedVhsInInventory();
+
+        if (inventoryCount != 1)
+        {
+            this.RemoveAllCursedVhsFromInventory();
+
             try
             {
                 Item tape = ItemRegistry.Create(ModIdentity.CursedVhsQualifiedItemId, 1);
