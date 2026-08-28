@@ -6,8 +6,10 @@ using StardewValley;
 using StardewValley.GameData.Characters;
 using StardewValley.GameData.Objects;
 using StardewValley.Locations;
+using StardewValley.Menus;
+using StardewValley.Objects;
 
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
@@ -34,7 +36,41 @@ internal sealed partial class ModEntry
 
     private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
     {
-        if (!this.sequenceActive || !Context.IsWorldReady)
+        if (!Context.IsWorldReady)
+            return;
+
+        if (this.pendingSudokuMenuOpen && !this.sequenceActive)
+        {
+            if (this.pendingSudokuMenuDelayTicks > 0)
+            {
+                this.pendingSudokuMenuDelayTicks--;
+            }
+            else
+            {
+                this.pendingSudokuMenuWaitTicks++;
+
+                if (Game1.activeClickableMenu is DialogueBox)
+                    Game1.activeClickableMenu = null;
+
+                if (Game1.activeClickableMenu is null)
+                {
+                    this.pendingSudokuMenuOpen = false;
+                    this.pendingSudokuMenuWaitTicks = 0;
+                    this.OpenDailySudoku(force: true);
+                }
+                else if (this.pendingSudokuMenuWaitTicks >= 120)
+                {
+                    this.Monitor.Log(
+                        $"Daily Sudoku menu was queued but another menu ({Game1.activeClickableMenu.GetType().Name}) stayed open for too long. Cancelling the pending open.",
+                        LogLevel.Warn
+                    );
+                    this.pendingSudokuMenuOpen = false;
+                    this.pendingSudokuMenuWaitTicks = 0;
+                }
+            }
+        }
+
+        if (!this.sequenceActive)
             return;
 
         if (Game1.currentLocation is not FarmHouse)
@@ -64,8 +100,7 @@ internal sealed partial class ModEntry
         }
 
         int staticEnd = Math.Max(1, this.Config.StaticTicks);
-        int wellEnd = staticEnd + Math.Max(1, this.Config.WellTicks);
-        int glitchEnd = wellEnd + Math.Max(1, this.Config.GlitchTicks);
+        int glitchEnd = staticEnd + Math.Max(1, this.Config.GlitchTicks);
 
         if (this.elapsedTicks == staticEnd)
             Game1.playSound("thunder");
