@@ -13,43 +13,39 @@ internal sealed partial class ModEntry
 {
     private void FinishSequence()
     {
+        bool firstArrival = !ModIdentity.HasArrivalBeenSeen(Game1.player);
+
         this.ResetSequenceState();
         Game1.player.modData[ModIdentity.ArrivalSeenKey] = "true";
         Game1.player.modData[ModIdentity.SudokuNpcEnabledKey] = "true";
+        ModIdentity.MarkDailySignalRunToday(Game1.player);
 
         NPC? sudoku = this.PlaceSudokuAfterArrival();
-        this.EnsureCursedVhsGranted(showDialogue: false);
 
-        Game1.drawObjectDialogue(
-            "......^Ngươi...^...có bút chì không?^^*Có thứ gì đó rơi xuống cạnh TV.*^^Một cuộn băng lạnh ngắt. Trên nhãn là một lưới 9×9."
-        );
-
-        if (sudoku is null)
+        if (firstArrival)
         {
-            this.Monitor.Log(
-                "Arrival finished, but Sudoku could not be materialized immediately. The save flags remain set so the game can retry on load/day start.",
-                LogLevel.Warn
+            Game1.drawObjectDialogue(
+                "......^Ngươi...^...có bút chì không?"
             );
         }
         else
         {
-            this.Monitor.Log(
-                "Sudoku's arrival finished. She was spawned and kept in the farmhouse instead of disappearing.",
-                LogLevel.Info
+            Game1.drawObjectDialogue(
+                "TV tắt phụt.^Sudoku đã đứng cạnh nó từ lúc nào.^\"...8 giờ.\""
             );
         }
+
+        this.Monitor.Log(
+            sudoku is null
+                ? "Daily signal finished, but Sudoku could not be materialized immediately."
+                : "Daily signal finished. Sudoku is active in the farmhouse.",
+            sudoku is null ? LogLevel.Warn : LogLevel.Info
+        );
     }
 
     private void EnsureCursedVhsGranted(bool showDialogue)
     {
-        if (!Context.IsWorldReady)
-            return;
-
-        bool alreadyFlagged =
-            Game1.player.modData.TryGetValue(ModIdentity.CursedVhsGrantedKey, out string? raw)
-            && raw == "true";
-
-        if (alreadyFlagged)
+        if (!Context.IsWorldReady || ModIdentity.IsCursedVhsInstalled(Game1.player))
             return;
 
         bool alreadyInInventory = Game1.player.Items.Any(
@@ -75,7 +71,7 @@ internal sealed partial class ModEntry
         if (showDialogue)
         {
             Game1.drawObjectDialogue(
-                "Bạn nhặt được một cuộn VHS không nhãn.^Ai đó đã vẽ một lưới 9×9 lên mặt băng."
+                "Bạn nhận được một cuộn VHS cũ.^Có lẽ nó sẽ hoạt động nếu bạn dùng trực tiếp lên TV trong nhà."
             );
         }
     }
