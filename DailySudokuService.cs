@@ -1,0 +1,161 @@
+using StardewModdingAPI;
+using StardewValley;
+
+namespace ChuyenTamLinhKoDuaDuocDau;
+
+internal sealed class DailySudokuService
+{
+    private const string Prefix = "ronvotri.chuyentamlinhkoduaduocdau/DailySudoku/";
+    private const string DayKey = Prefix + "Day";
+    private const string PuzzleIdKey = Prefix + "PuzzleId";
+    private const string BoardKey = Prefix + "Board";
+    private const string ClaimedDayKey = Prefix + "ClaimedDay";
+
+    private readonly IMonitor monitor;
+    private readonly ModConfig config;
+    private readonly List<SudokuPuzzle> puzzles;
+
+    public DailySudokuService(IModHelper helper, IMonitor monitor, ModConfig config)
+    {
+        this.monitor = monitor;
+        this.config = config;
+        this.puzzles = helper.Data.ReadJsonFile<List<SudokuPuzzle>>(
+            "assets/Data/Sudoku.puzzles.json"
+        ) ?? new List<SudokuPuzzle>();
+
+        this.puzzles = this.puzzles
+            .Where(p => p.Puzzle.Length == 81 && p.Solution.Length == 81)
+            .ToList();
+
+        if (this.puzzles.Count == 0)
+            this.monitor.Log("Daily Sudoku puzzle bank is empty or invalid.", LogLevel.Error);
+    }
+
+    public SudokuPuzzle? EnsureToday()
+    {
+        if (!Context.IsWorldReady || this.puzzles.Count == 0)
+            return null;
+
+        int day = Game1.Date.TotalDays;
+        SudokuPuzzle puzzle = this.SelectPuzzleForToday(day);
+
+        bool sameDay =
+            Game1.player.modData.TryGetValue(DayKey, out string? dayRaw)
+            && int.TryParse(dayRaw, out int storedDay)
+            && storedDay == day;
+
+        bool samePuzzle =
+            Game1.player.modData.TryGetValue(PuzzleIdKey, out string? id)
+            && id == puzzle.Id;
+
+        if (!sameDay || !samePuzzle)
+        {
+            Game1.player.modData[DayKey] = day.ToString();
+            Game1.player.modData[PuzzleIdKey] = puzzle.Id;
+            Game1.player.modData[BoardKey] = puzzle.Puzzle;
+        }
+        else if (!Game1.player.modData.TryGetValue(BoardKey, out string? board) || board.Length != 81)
+        {
+            Game1.player.modData[BoardKey] = puzzle.Puzzle;
+        }
+
+        return puzzle;
+    }
+
+    public string GetBoard(SudokuPuzzle puzzle)
+    {
+        this.EnsureToday();
+
+        if (Game1.player.modData.TryGetValue(BoardKey, out string? board) && board.Length == 81)
+            return board;
+
+        return puzzle.Puzzle;
+    }
+
+    public void SetCell(SudokuPuzzle puzzle, int row, int column, int value)
+    {
+        if (row < 0 || row > 8 || column < 0 || column > 8 || value < 0 || value > 9)
+            return;
+
+        int index = row * 9 + column;
+        if (puzzle.Puzzle[index] != '0')
+            return;
+
+        char[] board = this.GetBoard(puzzle).ToCharArray();
+        board[index] = value == 0 ? '0' : (char)('0' + value);
+        Game1.player.modData[BoardKey] = new string(board);
+    }
+
+    public bool IsSolved(SudokuPuzzle puzzle)
+    {
+        return this.GetBoard(puzzle) == puzzle.Solution;
+    }
+
+    public bool IsRewardClaimedToday()
+    {
+        int day = Game1.Date.TotalDays;
+        return Game1.player.modData.TryGetValue(ClaimedDayKey, out string? raw)
+            && int.TryParse(raw, out int claimedDay)
+            && claimedDay == day;
+    }
+
+    public int ClaimReward(SudokuPuzzle puzzle)
+    {
+        if (!this.IsSolved(puzzle) || this.IsRewardClaimedToday())
+            return 0;
+
+        int reward = puzzle.Difficulty.ToLowerInvariant() switch
+        {
+            "hard" => Math.Max(0, this.config.DailyRewardHard),
+            "normal" => Math.Max(0, this.config.DailyRewardNormal),
+            _ => Math.Max(0, this.config.DailyRewardEasy)
+        };
+
+        Game1.player.Money += reward;
+        Game1.player.modData[ClaimedDayKey] = Game1.Date.TotalDays.ToString();
+
+        this.monitor.Log(
+            $"Daily Sudoku solved: {puzzle.Id} ({puzzle.Difficulty}), reward={reward}g.",
+            LogLevel.Info
+        );
+
+        return reward;
+    }
+
+    public void ResetTodayForTesting()
+    {
+        Game1.player.modData.Remove(DayKey);
+        Game1.player.modData.Remove(PuzzleIdKey);
+        Game1.player.modData.Remove(BoardKey);
+        Game1.player.modData.Remove(ClaimedDayKey);
+    }
+
+    private SudokuPuzzle SelectPuzzleForToday(int day)
+    {
+        string difficulty = this.GetDifficultyForPlayer();
+        List<SudokuPuzzle> pool = this.puzzles
+            .Where(p => p.Difficulty.Equals(difficulty, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (pool.Count == 0)
+            pool = this.puzzles;
+
+        long seed = unchecked((long)Game1.uniqueIDForThisGame + day * 7919L);
+        int index = (int)(Math.Abs(seed % pool.Count));
+        return pool[index];
+    }
+
+    private string GetDifficultyForPlayer()
+    {
+        const string npcId = "ronvotri.chuyentamlinhkoduaduocdau_Sudoku";
+
+        if (!Game1.player.friendshipData.TryGetValue(npcId, out Friendship? friendship))
+            return "Easy";
+
+        if (friendship.Points >= 2000)
+            return "Hard";
+        if (friendship.Points >= 1000)
+            return "Normal";
+        return "Easy";
+    }
+}
