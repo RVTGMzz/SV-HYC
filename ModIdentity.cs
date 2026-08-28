@@ -16,6 +16,8 @@ internal static class ModIdentity
     public const string ArrivalSeenKey = UniqueId + "/SudokuArrivalSeen";
     public const string SudokuNpcEnabledKey = UniqueId + "/SudokuNpcEnabled";
     public const string FirstConversationCompletedKey = UniqueId + "/FirstConversationCompleted";
+    public const string DailyDialogueDayKey = UniqueId + "/DailyDialogueDay";
+    public const string SudokuSolvedCountKey = UniqueId + "/SudokuSolvedCount";
 
     public const string CursedVhsItemId = UniqueId + "_CursedVHS";
     public const string CursedVhsQualifiedItemId = "(O)" + CursedVhsItemId;
@@ -75,7 +77,9 @@ internal static class ModIdentity
             "FirstConversationCompleted",
             "CursedVHSGranted",
             "CursedVHSInstalled",
-            "DailySignalDay"
+            "DailySignalDay",
+            "DailyDialogueDay",
+            "SudokuSolvedCount"
         };
 
         foreach (string suffix in scalarSuffixes)
@@ -123,6 +127,35 @@ internal static class ModIdentity
             && value == "true";
     }
 
+    public static bool HasDailyDialogueRunToday(Farmer player)
+    {
+        int day = Game1.Date.TotalDays;
+        return player.modData.TryGetValue(DailyDialogueDayKey, out string? raw)
+            && int.TryParse(raw, out int storedDay)
+            && storedDay == day;
+    }
+
+    public static void MarkDailyDialogueRunToday(Farmer player)
+    {
+        player.modData[DailyDialogueDayKey] = Game1.Date.TotalDays.ToString();
+    }
+
+    public static int GetSudokuSolvedCount(Farmer player)
+    {
+        return player.modData.TryGetValue(SudokuSolvedCountKey, out string? raw)
+            && int.TryParse(raw, out int count)
+            && count > 0
+                ? count
+                : 0;
+    }
+
+    public static int IncrementSudokuSolvedCount(Farmer player)
+    {
+        int next = GetSudokuSolvedCount(player) + 1;
+        player.modData[SudokuSolvedCountKey] = next.ToString();
+        return next;
+    }
+
     public static bool IsCursedVhsInstalled(Farmer player)
     {
         return player.modData.TryGetValue(CursedVhsInstalledKey, out string? value)
@@ -151,7 +184,9 @@ internal static class ModIdentity
             "FirstConversationCompleted",
             "CursedVHSGranted",
             "CursedVHSInstalled",
-            "DailySignalDay"
+            "DailySignalDay",
+            "DailyDialogueDay",
+            "SudokuSolvedCount"
         };
 
         foreach (string suffix in suffixes)
