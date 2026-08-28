@@ -33,6 +33,7 @@ internal sealed partial class ModEntry : Mod
         helper.Events.Content.AssetRequested += this.OnAssetRequested;
         helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
         helper.Events.GameLoop.DayStarted += this.OnDayStarted;
+        helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
         helper.Events.GameLoop.TimeChanged += this.OnTimeChanged;
         helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
         helper.Events.Player.Warped += this.OnWarped;
@@ -41,9 +42,9 @@ internal sealed partial class ModEntry : Mod
         helper.Events.Input.ButtonPressed += this.OnButtonPressed;
 
         helper.ConsoleCommands.Add("sudoku_testarrival", "Start the current Cursed Signal sequence immediately while inside the farmhouse.", this.OnTestArrivalCommand);
-        helper.ConsoleCommands.Add("sudoku_resetarrival", "Clear Sudoku's arrival/tape flags so the sequence can be tested again.", this.OnResetArrivalCommand);
+        helper.ConsoleCommands.Add("sudoku_resetarrival", "Reset the full VHS/signal/Sudoku core flow and return one fresh test tape.", this.OnResetArrivalCommand);
         helper.ConsoleCommands.Add("sudoku_unlocknpc", "Set Sudoku's arrival flag and create the NPC immediately if possible.", this.OnUnlockNpcCommand);
-        helper.ConsoleCommands.Add("sudoku_status", "Print Sudoku and Cursed VHS prototype state for the current save.", this.OnStatusCommand);
+        helper.ConsoleCommands.Add("sudoku_status", "Print stabilized Cursed Signal core state for the current save.", this.OnStatusCommand);
         helper.ConsoleCommands.Add("sudoku_open", "Open today's Sudoku board immediately for testing.", this.OnOpenDailyCommand);
         helper.ConsoleCommands.Add("sudoku_resetdaily", "Reset today's Sudoku board and reward flag for testing.", this.OnResetDailyCommand);
         helper.ConsoleCommands.Add("cursedsignal_givevhs", "Give the Cursed VHS story item to the current player for testing.", this.OnGiveVhsCommand);
@@ -128,14 +129,11 @@ internal sealed partial class ModEntry : Mod
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         int migratedKeys = ModIdentity.MigrateLegacyPlayerData(Game1.player);
-        this.SyncNpcIdentityFlag();
-
-        this.tvArrivalSheet = this.Helper.ModContent.Load<Texture2D>("assets/Events/Sudoku_TV.png");
-        this.wellBroadcastTexture = this.Helper.ModContent.Load<Texture2D>("assets/Events/WellBroadcast.png");
         this.ResetSequenceState();
+        this.LoadEventTexturesSafely();
 
         this.Monitor.Log(
-            "Cursed Signal v0.0.6 loaded. First-arrival and short repeat-morning signals are active.",
+            "Cursed Signal v0.0.6-alpha.2 loaded. Core stabilization pass is active.",
             LogLevel.Info
         );
 
@@ -147,43 +145,73 @@ internal sealed partial class ModEntry : Mod
             );
         }
 
-        // Temporary prototype delivery until the final tape-origin quest is implemented.
+        this.ReconcileCoreState();
+
         if (!ModIdentity.IsCursedVhsInstalled(Game1.player))
             this.EnsureCursedVhsGranted(showDialogue: false);
 
-        if (ModIdentity.HasArrivalBeenSeen(Game1.player))
-        {
-            this.Monitor.Log("Sudoku has already arrived in this save. Ensuring her NPC instance exists.", LogLevel.Info);
-            this.EnsureSudokuCharacterExists();
-
-            if (ModIdentity.IsCursedVhsInstalled(Game1.player) && !ModIdentity.HasDailySignalRunToday(Game1.player))
-                this.HideSudokuUntilDailySignal();
-
-            if (this.Config.EnableDailySudoku)
-                this.dailySudoku?.EnsureToday();
-        }
+        if (ModIdentity.HasArrivalBeenSeen(Game1.player) && this.Config.EnableDailySudoku)
+            this.dailySudoku?.EnsureToday();
     }
 
     private void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
-        this.SyncNpcIdentityFlag();
+        this.ResetSequenceState();
+        this.ReconcileCoreState();
 
         if (!ModIdentity.IsCursedVhsInstalled(Game1.player))
             this.EnsureCursedVhsGranted(showDialogue: false);
 
-        if (ModIdentity.HasArrivalBeenSeen(Game1.player))
-        {
-            this.EnsureSudokuCharacterExists();
+        if (this.Config.EnableDailySudoku && this.dailySudoku is not null && ModIdentity.HasArrivalBeenSeen(Game1.player))
+            this.dailySudoku.EnsureToday();
+    }
 
-            if (ModIdentity.IsCursedVhsInstalled(Game1.player) && !ModIdentity.HasDailySignalRunToday(Game1.player))
-                this.HideSudokuUntilDailySignal();
+    private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
+    {
+        this.ResetSequenceState();
+        this.tvArrivalSheet = null;
+        this.wellBroadcastTexture = null;
+    }
+
+    private void LoadEventTexturesSafely()
+    {
+        this.tvArrivalSheet = null;
+        this.wellBroadcastTexture = null;
+
+        try
+        {
+            Texture2D sheet = this.Helper.ModContent.Load<Texture2D>("assets/Events/Sudoku_TV.png");
+            if (sheet.Width < FrameWidth * 3 || sheet.Height < FrameHeight * 2)
+            {
+                this.Monitor.Log(
+                    $"assets/Events/Sudoku_TV.png is too small ({sheet.Width}x{sheet.Height}); expected at least {FrameWidth * 3}x{FrameHeight * 2}. The sequence will continue without emergence frames.",
+                    LogLevel.Error
+                );
+            }
+            else
+            {
+                this.tvArrivalSheet = sheet;
+            }
+        }
+        catch (Exception ex)
+        {
+            this.Monitor.Log(
+                $"Couldn't load assets/Events/Sudoku_TV.png. The sequence will continue with fallback static/glitch only. {ex.Message}",
+                LogLevel.Error
+            );
         }
 
-        if (!this.Config.EnableDailySudoku || this.dailySudoku is null)
-            return;
-
-        if (ModIdentity.HasArrivalBeenSeen(Game1.player))
-            this.dailySudoku.EnsureToday();
+        try
+        {
+            this.wellBroadcastTexture = this.Helper.ModContent.Load<Texture2D>("assets/Events/WellBroadcast.png");
+        }
+        catch (Exception ex)
+        {
+            this.Monitor.Log(
+                $"Couldn't load assets/Events/WellBroadcast.png. The first signal will skip the well image instead of crashing. {ex.Message}",
+                LogLevel.Error
+            );
+        }
     }
 
     private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
@@ -201,7 +229,7 @@ internal sealed partial class ModEntry : Mod
             return;
 
         NPC? sudoku = this.FindSudoku(currentLocationOnly: true);
-        if (sudoku is null)
+        if (sudoku is null || sudoku.IsInvisible)
             return;
 
         float distance = Vector2.Distance(Game1.player.Tile, sudoku.Tile);
