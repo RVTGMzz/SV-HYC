@@ -6,8 +6,10 @@ using StardewValley;
 using StardewValley.GameData.Characters;
 using StardewValley.GameData.Objects;
 using StardewValley.Locations;
+using StardewValley.Menus;
+using StardewValley.Objects;
 
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
@@ -93,8 +95,8 @@ internal sealed partial class ModEntry
 
         this.Monitor.Log(
             this.sequenceIsFirstArrival
-                ? "Cursed Signal full first-arrival sequence started."
-                : "Cursed Signal short repeat-morning sequence started.",
+                ? "Hey! You’re Cursed! full first-arrival sequence started."
+                : "Hey! You’re Cursed! short repeat-morning sequence started.",
             LogLevel.Info
         );
     }
