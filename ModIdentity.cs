@@ -18,6 +18,8 @@ internal static class ModIdentity
     public const string CursedVhsItemId = UniqueId + "_CursedVHS";
     public const string CursedVhsQualifiedItemId = "(O)" + CursedVhsItemId;
     public const string CursedVhsGrantedKey = UniqueId + "/CursedVHSGranted";
+    public const string CursedVhsInstalledKey = UniqueId + "/CursedVHSInstalled";
+    public const string DailySignalDayKey = UniqueId + "/DailySignalDay";
     public const string ItemTextureAsset = "Mods/" + UniqueId + "/Items";
 
     public const string DailySudokuPrefix = UniqueId + "/DailySudoku/";
@@ -50,10 +52,6 @@ internal static class ModIdentity
         return false;
     }
 
-    /// <summary>
-    /// Copies legacy prototype state into the Cursed Signal keyspace without deleting the old keys.
-    /// Keeping the old keys makes rollback to an older dev branch safer while the mod is still untested.
-    /// </summary>
     public static int MigrateLegacyPlayerData(Farmer player)
     {
         int migrated = 0;
@@ -81,11 +79,32 @@ internal static class ModIdentity
         return migrated;
     }
 
+    public static bool IsCursedVhsInstalled(Farmer player)
+    {
+        return player.modData.TryGetValue(CursedVhsInstalledKey, out string? value)
+            && value == "true";
+    }
+
+    public static bool HasDailySignalRunToday(Farmer player)
+    {
+        int day = Game1.Date.TotalDays;
+        return player.modData.TryGetValue(DailySignalDayKey, out string? raw)
+            && int.TryParse(raw, out int storedDay)
+            && storedDay == day;
+    }
+
+    public static void MarkDailySignalRunToday(Farmer player)
+    {
+        player.modData[DailySignalDayKey] = Game1.Date.TotalDays.ToString();
+    }
+
     public static void ClearArrivalFlags(Farmer player)
     {
         player.modData.Remove(ArrivalSeenKey);
         player.modData.Remove(LegacyArrivalSeenKey);
         player.modData.Remove(SudokuNpcEnabledKey);
         player.modData.Remove(CursedVhsGrantedKey);
+        player.modData.Remove(CursedVhsInstalledKey);
+        player.modData.Remove(DailySignalDayKey);
     }
 }
