@@ -19,6 +19,7 @@ internal sealed class ModEntry : Mod
 
     private ModConfig Config = null!;
     private Texture2D? tvArrivalSheet;
+    private DailySudokuService? dailySudoku;
 
     private bool sequenceActive;
     private int elapsedTicks;
@@ -27,13 +28,16 @@ internal sealed class ModEntry : Mod
     public override void Entry(IModHelper helper)
     {
         this.Config = helper.ReadConfig<ModConfig>();
+        this.dailySudoku = new DailySudokuService(helper, this.Monitor, this.Config);
 
         helper.Events.Content.AssetRequested += this.OnAssetRequested;
         helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
+        helper.Events.GameLoop.DayStarted += this.OnDayStarted;
         helper.Events.GameLoop.TimeChanged += this.OnTimeChanged;
         helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
         helper.Events.Player.Warped += this.OnWarped;
         helper.Events.Display.RenderedWorld += this.OnRenderedWorld;
+        helper.Events.Input.ButtonPressed += this.OnButtonPressed;
 
         helper.ConsoleCommands.Add(
             "sudoku_testarrival",
@@ -57,6 +61,18 @@ internal sealed class ModEntry : Mod
             "sudoku_status",
             "Print Sudoku prototype state for the current save.",
             this.OnStatusCommand
+        );
+
+        helper.ConsoleCommands.Add(
+            "sudoku_open",
+            "Open today's Sudoku board immediately for testing.",
+            this.OnOpenDailyCommand
+        );
+
+        helper.ConsoleCommands.Add(
+            "sudoku_resetdaily",
+            "Reset today's Sudoku board and reward flag for testing.",
+            this.OnResetDailyCommand
         );
     }
 
@@ -130,7 +146,7 @@ internal sealed class ModEntry : Mod
         this.ResetSequenceState();
 
         this.Monitor.Log(
-            "Sudoku prototype v0.0.2 loaded. Arrival test remains available at 7:00 AM in the farmhouse.",
+            "Sudoku prototype v0.0.3 loaded. Daily Sudoku prototype is available after Sudoku arrives.",
             LogLevel.Info
         );
 
@@ -140,7 +156,51 @@ internal sealed class ModEntry : Mod
                 "Sudoku has already arrived in this save. Her custom NPC data is unlocked.",
                 LogLevel.Info
             );
+
+            if (this.Config.EnableDailySudoku)
+                this.dailySudoku?.EnsureToday();
         }
+    }
+
+    private void OnDayStarted(object? sender, DayStartedEventArgs e)
+    {
+        if (!this.Config.EnableDailySudoku || this.dailySudoku is null)
+            return;
+
+        if (Game1.player.modData.TryGetValue(SeenKey, out string? raw) && raw == "true")
+            this.dailySudoku.EnsureToday();
+    }
+
+    private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
+    {
+        if (!this.Config.EnableDailySudoku || this.dailySudoku is null)
+            return;
+
+        if (!Context.IsWorldReady || this.sequenceActive || Game1.activeClickableMenu is not null)
+            return;
+
+        if (!e.Button.IsActionButton())
+            return;
+
+        if (!Game1.player.modData.TryGetValue(SeenKey, out string? raw) || raw != "true")
+            return;
+
+        NPC? sudoku = Utility.getAllCharacters()
+            .FirstOrDefault(p => p.Name == NpcId && p.currentLocation == Game1.currentLocation);
+
+        if (sudoku is null)
+            return;
+
+        float distance = Vector2.Distance(Game1.player.Tile, sudoku.Tile);
+        if (distance > 2.1f)
+            return;
+
+        // Once today's reward has been claimed, let normal NPC dialogue happen.
+        if (this.dailySudoku.IsRewardClaimedToday())
+            return;
+
+        this.Helper.Input.Suppress(e.Button);
+        this.OpenDailySudoku(force: false);
     }
 
     private void OnTimeChanged(object? sender, TimeChangedEventArgs e)
@@ -287,6 +347,8 @@ internal sealed class ModEntry : Mod
         Rectangle inner = new(cx - 132, cy - 92, 264, 184);
         spriteBatch.Draw(Game1.staminaRect, inner, new Color(90, 125, 145) * 0.35f);
 
+        // An intentionally crude, half-seen "well" silhouette. It should read like
+        // a corrupted VHS image rather than a clean illustration.
         for (int i = 0; i < 11; i++)
         {
             int width = 132 - (i * 7);
@@ -305,6 +367,7 @@ internal sealed class ModEntry : Mod
             Color.Black * 0.92f
         );
 
+        // A barely-readable figure behind the well.
         spriteBatch.Draw(
             Game1.staminaRect,
             new Rectangle(cx - 8, cy - 50, 16, 76),
@@ -440,6 +503,57 @@ internal sealed class ModEntry : Mod
         this.frameIndex = 0;
     }
 
+    private void OpenDailySudoku(bool force)
+    {
+        if (!Context.IsWorldReady || this.dailySudoku is null)
+            return;
+
+        if (!force)
+        {
+            if (!this.Config.EnableDailySudoku)
+                return;
+
+            if (!Game1.player.modData.TryGetValue(SeenKey, out string? raw) || raw != "true")
+                return;
+        }
+
+        SudokuPuzzle? puzzle = this.dailySudoku.EnsureToday();
+        if (puzzle is null)
+        {
+            this.Monitor.Log("Couldn't open Daily Sudoku because no valid puzzle was available.", LogLevel.Error);
+            return;
+        }
+
+        Game1.activeClickableMenu = new SudokuMenu(this.dailySudoku, puzzle);
+    }
+
+    private void OnOpenDailyCommand(string command, string[] args)
+    {
+        if (!Context.IsWorldReady)
+        {
+            this.Monitor.Log("Load a save before using sudoku_open.", LogLevel.Warn);
+            return;
+        }
+
+        this.OpenDailySudoku(force: true);
+    }
+
+    private void OnResetDailyCommand(string command, string[] args)
+    {
+        if (!Context.IsWorldReady || this.dailySudoku is null)
+        {
+            this.Monitor.Log("Load a save before using sudoku_resetdaily.", LogLevel.Warn);
+            return;
+        }
+
+        this.dailySudoku.ResetTodayForTesting();
+        SudokuPuzzle? puzzle = this.dailySudoku.EnsureToday();
+        this.Monitor.Log(
+            $"Today's Sudoku reset. Current puzzle={puzzle?.Id ?? "none"}.",
+            LogLevel.Info
+        );
+    }
+
     private void OnTestArrivalCommand(string command, string[] args)
     {
         if (!Context.IsWorldReady)
@@ -505,8 +619,11 @@ internal sealed class ModEntry : Mod
         NPC? sudoku = Utility.getAllCharacters()
             .FirstOrDefault(p => p.Name == NpcId);
 
+        bool dailyClaimed = this.dailySudoku?.IsRewardClaimedToday() ?? false;
+        SudokuPuzzle? dailyPuzzle = this.dailySudoku?.EnsureToday();
+
         this.Monitor.Log(
-            $"Sudoku status: arrivalSeen={seen}, npcPresent={sudoku is not null}, sequenceActive={this.sequenceActive}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
+            $"Sudoku status: arrivalSeen={seen}, npcPresent={sudoku is not null}, sequenceActive={this.sequenceActive}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
             LogLevel.Info
         );
     }
