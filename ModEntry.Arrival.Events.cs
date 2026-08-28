@@ -13,7 +13,7 @@ internal sealed partial class ModEntry
 {
     private void OnTimeChanged(object? sender, TimeChangedEventArgs e)
     {
-        if (this.Config.EnableArrivalTest && e.NewTime >= this.Config.TestArrivalTime)
+        if (this.Config.EnableDailySignal && e.NewTime >= this.Config.DailySignalTime)
             this.TryStartArrival(force: false);
     }
 
@@ -25,10 +25,11 @@ internal sealed partial class ModEntry
             return;
         }
 
-        if (!this.Config.EnableArrivalTest || e.NewLocation is not FarmHouse)
+        if (!this.Config.EnableDailySignal || e.NewLocation is not FarmHouse)
             return;
 
-        if (Game1.timeOfDay >= this.Config.TestArrivalTime)
+        // If the player wasn't home at 8:00, fire today's signal the first time they return.
+        if (Game1.timeOfDay >= this.Config.DailySignalTime)
             this.TryStartArrival(force: false);
     }
 
@@ -69,5 +70,4 @@ internal sealed partial class ModEntry
 
         this.frameIndex = Math.Clamp(rawFrame, 0, FrameCount - 1);
     }
-
 }
