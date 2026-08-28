@@ -49,16 +49,17 @@ internal sealed partial class ModEntry
             {
                 this.pendingSudokuMenuWaitTicks++;
 
-                if (Game1.activeClickableMenu is DialogueBox)
-                    Game1.activeClickableMenu = null;
-
+                // A question callback fires before Stardew has completely dismissed its
+                // DialogueBox. Never replace that menu in the same update frame: the game
+                // can overwrite our SudokuMenu immediately afterwards. Wait for a genuinely
+                // clean frame, then open the custom board.
                 if (Game1.activeClickableMenu is null)
                 {
                     this.pendingSudokuMenuOpen = false;
                     this.pendingSudokuMenuWaitTicks = 0;
                     this.OpenDailySudoku(force: true);
                 }
-                else if (this.pendingSudokuMenuWaitTicks >= 120)
+                else if (this.pendingSudokuMenuWaitTicks >= 180)
                 {
                     this.Monitor.Log(
                         $"Daily Sudoku menu was queued but another menu ({Game1.activeClickableMenu.GetType().Name}) stayed open for too long. Cancelling the pending open.",
