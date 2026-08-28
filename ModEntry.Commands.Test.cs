@@ -19,6 +19,12 @@ internal sealed partial class ModEntry
             return;
         }
 
+        if (ModIdentity.IsCursedVhsInstalled(Game1.player))
+        {
+            this.Monitor.Log("The Cursed VHS is already installed in the TV for this save.", LogLevel.Info);
+            return;
+        }
+
         Game1.player.modData.Remove(ModIdentity.CursedVhsGrantedKey);
         this.EnsureCursedVhsGranted(showDialogue: true);
     }
@@ -51,7 +57,7 @@ internal sealed partial class ModEntry
         this.CancelSequence();
         ModIdentity.ClearArrivalFlags(Game1.player);
         this.Monitor.Log(
-            "Sudoku arrival/VHS flags cleared in the Cursed Signal and legacy prototype keyspaces. Existing NPC/item instances are intentionally left alone.",
+            "Sudoku arrival, VHS installation, and daily signal flags were cleared. Existing NPC/item instances are intentionally left alone for testing.",
             LogLevel.Info
         );
     }
@@ -66,7 +72,6 @@ internal sealed partial class ModEntry
 
         Game1.player.modData[ModIdentity.ArrivalSeenKey] = "true";
         Game1.player.modData[ModIdentity.SudokuNpcEnabledKey] = "true";
-        this.EnsureCursedVhsGranted(showDialogue: false);
         NPC? sudoku = this.EnsureSudokuCharacterExists();
 
         this.Monitor.Log(
@@ -95,12 +100,14 @@ internal sealed partial class ModEntry
         bool vhsGranted =
             Game1.player.modData.TryGetValue(ModIdentity.CursedVhsGrantedKey, out string? vhs)
             && vhs == "true";
+        bool vhsInstalled = ModIdentity.IsCursedVhsInstalled(Game1.player);
+        bool signalRanToday = ModIdentity.HasDailySignalRunToday(Game1.player);
 
         string npcLocation = sudoku?.currentLocation?.NameOrUniqueName ?? "none";
         string npcTile = sudoku is null ? "none" : sudoku.Tile.ToString();
 
         this.Monitor.Log(
-            $"Sudoku status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcPresent={sudoku is not null}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, vhsGranted={vhsGranted}, sequenceActive={this.sequenceActive}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
+            $"Sudoku status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcPresent={sudoku is not null}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, vhsGranted={vhsGranted}, vhsInstalled={vhsInstalled}, signalRanToday={signalRanToday}, sequenceActive={this.sequenceActive}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
             LogLevel.Info
         );
     }
