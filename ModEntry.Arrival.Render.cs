@@ -13,7 +13,7 @@ internal sealed partial class ModEntry
 {
     private void OnRenderedWorld(object? sender, RenderedWorldEventArgs e)
     {
-        if (!this.sequenceActive || this.tvArrivalSheet is null)
+        if (!this.sequenceActive)
             return;
 
         this.DrawDarkBackdrop(e.SpriteBatch);
