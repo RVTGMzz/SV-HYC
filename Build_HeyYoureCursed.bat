@@ -3,8 +3,8 @@ setlocal
 cd /d "%~dp0"
 
 echo ==========================================
-echo   Hey! You're Cursed! v0.0.6-alpha.9
-echo   Dialogue to Sudoku Handoff Fix
+echo   Hey! You're Cursed! v0.0.6-alpha.10
+echo   Direct NPC to Sudoku Menu
 echo ==========================================
 echo.
 
