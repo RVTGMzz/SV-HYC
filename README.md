@@ -1,4 +1,4 @@
-# Hey! You’re Cursed! — v0.0.6-alpha.7
+# Hey! You’re Cursed! — v0.0.6-alpha.8
 
 A paranormal Stardew Valley mod about a cursed VHS, Sudoku, and a ghost who treats your farmhouse like a very inconvenient address.
 
@@ -14,6 +14,23 @@ This build completes the rename while the project is still pre-release:
 - deployed Mods folder and release ZIP name: `HeyYoureCursed`
 
 Early `ronvotri.CursedSignal` prototype keys/NPC IDs are still recognized for test-save cleanup/migration, but all new state uses the final ID.
+
+## alpha.8 — Controller-first Sudoku controls
+
+Controller handling is now routed through SMAPI while `SudokuMenu` is active, so the menu no longer depends only on Stardew forwarding gamepad buttons to `receiveGamePadButton`.
+
+Controller layout:
+
+- D-pad or left stick: move the selected cell.
+- A: open the number picker for an editable cell.
+- Left/right while the picker is open: choose 1–9.
+- A again: place the highlighted number.
+- X: erase the selected cell.
+- Y or Start: check the board.
+- B: cancel the number picker, or close the menu when the picker is closed.
+- LB/RB or LT/RT: jump to the previous/next editable cell.
+
+The board now highlights the selected row, column, 3×3 box, and matching values so controller navigation is easier to read.
 
 ## alpha.7 — Interaction + portrait + menu handoff hotfix
 
