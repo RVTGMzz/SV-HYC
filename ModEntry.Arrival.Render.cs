@@ -30,9 +30,8 @@ internal sealed partial class ModEntry
 
         if (this.elapsedTicks < wellEnd)
         {
+            // v0.0.4.1 uses a dedicated VHS still instead of the old rectangle placeholder.
             this.DrawWellGlimpse(e.SpriteBatch);
-            if ((this.elapsedTicks / 5) % 2 == 0)
-                this.DrawStatic(e.SpriteBatch, 0.22f);
             return;
         }
 
@@ -81,46 +80,51 @@ internal sealed partial class ModEntry
 
     private void DrawWellGlimpse(SpriteBatch spriteBatch)
     {
-        int cx = Game1.viewport.Width / 2;
-        int cy = Game1.viewport.Height / 2;
+        if (this.wellBroadcastTexture is null)
+            return;
 
-        spriteBatch.Draw(
-            Game1.staminaRect,
-            new Rectangle(cx - 150, cy - 110, 300, 220),
-            new Color(25, 37, 48) * 0.96f
-        );
-        spriteBatch.Draw(
-            Game1.staminaRect,
-            new Rectangle(cx - 132, cy - 92, 264, 184),
-            new Color(90, 125, 145) * 0.35f
-        );
+        int availableWidth = Math.Max(192, Game1.viewport.Width - 120);
+        int availableHeight = Math.Max(128, Game1.viewport.Height - 180);
 
-        for (int i = 0; i < 11; i++)
+        int drawWidth = Math.Min(576, availableWidth);
+        int drawHeight = drawWidth * 128 / 192;
+
+        if (drawHeight > availableHeight)
         {
-            int width = 132 - (i * 7);
-            int y = cy + 28 + (i * 3);
-            spriteBatch.Draw(
-                Game1.staminaRect,
-                new Rectangle(cx - width / 2, y, width, 4),
-                new Color(105, 110, 118) * (0.85f - i * 0.035f)
-            );
+            drawHeight = availableHeight;
+            drawWidth = drawHeight * 192 / 128;
         }
 
-        spriteBatch.Draw(
-            Game1.staminaRect,
-            new Rectangle(cx - 45, cy + 39, 90, 23),
-            Color.Black * 0.92f
-        );
-        spriteBatch.Draw(
-            Game1.staminaRect,
-            new Rectangle(cx - 8, cy - 50, 16, 76),
-            new Color(7, 10, 14) * 0.92f
-        );
-        spriteBatch.Draw(
-            Game1.staminaRect,
-            new Rectangle(cx - 24, cy - 58, 48, 34),
-            new Color(7, 10, 14) * 0.92f
-        );
-    }
+        // Tiny horizontal tracking wobble makes it feel like a VHS image without obscuring the well.
+        int jitterX = (this.elapsedTicks / 4) % 9 == 0 ? 3 : 0;
+        int jitterY = (this.elapsedTicks / 7) % 11 == 0 ? -2 : 0;
 
+        Rectangle destination = new(
+            (Game1.viewport.Width - drawWidth) / 2 + jitterX,
+            (Game1.viewport.Height - drawHeight) / 2 + jitterY,
+            drawWidth,
+            drawHeight
+        );
+
+        Rectangle frame = new(
+            destination.X - 12,
+            destination.Y - 12,
+            destination.Width + 24,
+            destination.Height + 24
+        );
+
+        spriteBatch.Draw(Game1.staminaRect, frame, new Color(5, 8, 11) * 0.98f);
+        spriteBatch.Draw(this.wellBroadcastTexture, destination, Color.White);
+
+        // Sparse scanlines only inside the broadcast image. The old prototype drew noise
+        // across the whole room and made the actual well hard to read.
+        for (int y = destination.Y + 8; y < destination.Bottom; y += 16)
+        {
+            spriteBatch.Draw(
+                Game1.staminaRect,
+                new Rectangle(destination.X, y, destination.Width, 2),
+                Color.Black * 0.20f
+            );
+        }
+    }
 }

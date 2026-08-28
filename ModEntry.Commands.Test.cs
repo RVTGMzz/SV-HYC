@@ -67,10 +67,13 @@ internal sealed partial class ModEntry
         Game1.player.modData[ModIdentity.ArrivalSeenKey] = "true";
         Game1.player.modData[ModIdentity.SudokuNpcEnabledKey] = "true";
         this.EnsureCursedVhsGranted(showDialogue: false);
+        NPC? sudoku = this.EnsureSudokuCharacterExists();
 
         this.Monitor.Log(
-            "Sudoku unlock flags set under ronvotri.CursedSignal. Save/reload or sleep to the next day to let Data/Characters add her.",
-            LogLevel.Info
+            sudoku is null
+                ? "Sudoku unlock flags are set, but the NPC instance could not be created immediately."
+                : $"Sudoku unlocked and present as {sudoku.Name} in {sudoku.currentLocation?.NameOrUniqueName ?? "unknown"}.",
+            sudoku is null ? LogLevel.Warn : LogLevel.Info
         );
     }
 
@@ -93,8 +96,11 @@ internal sealed partial class ModEntry
             Game1.player.modData.TryGetValue(ModIdentity.CursedVhsGrantedKey, out string? vhs)
             && vhs == "true";
 
+        string npcLocation = sudoku?.currentLocation?.NameOrUniqueName ?? "none";
+        string npcTile = sudoku is null ? "none" : sudoku.Tile.ToString();
+
         this.Monitor.Log(
-            $"Sudoku status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcPresent={sudoku is not null}, npcId={sudoku?.Name ?? "none"}, vhsGranted={vhsGranted}, sequenceActive={this.sequenceActive}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
+            $"Sudoku status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcPresent={sudoku is not null}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, vhsGranted={vhsGranted}, sequenceActive={this.sequenceActive}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
             LogLevel.Info
         );
     }

@@ -51,4 +51,60 @@ internal sealed partial class ModEntry
         Game1.player.modData[ModIdentity.SudokuNpcEnabledKey] = "true";
     }
 
+    private NPC? EnsureSudokuCharacterExists()
+    {
+        if (!Context.IsWorldReady)
+            return null;
+
+        NPC? existing = this.FindSudoku(currentLocationOnly: false);
+        if (existing is not null)
+            return existing;
+
+        try
+        {
+            // Stardew 1.6 can materialize a Data/Characters entry immediately.
+            // bypassConditions is safe here because the arrival flag has already been set by Cursed Signal.
+            Game1.AddCharacterIfNecessary(ModIdentity.SudokuNpcId, bypassConditions: true);
+
+            NPC? sudoku = Game1.getCharacterFromName(ModIdentity.SudokuNpcId);
+            if (sudoku is null)
+            {
+                this.Monitor.Log(
+                    "Sudoku's Data/Characters entry is unlocked, but Game1.AddCharacterIfNecessary did not create an NPC instance.",
+                    LogLevel.Warn
+                );
+            }
+
+            return sudoku;
+        }
+        catch (Exception ex)
+        {
+            this.Monitor.Log($"Couldn't spawn Sudoku immediately. {ex}", LogLevel.Error);
+            return null;
+        }
+    }
+
+    private NPC? PlaceSudokuAfterArrival()
+    {
+        NPC? sudoku = this.EnsureSudokuCharacterExists();
+        if (sudoku is null)
+            return null;
+
+        if (Game1.currentLocation is not FarmHouse farmHouse)
+            return sudoku;
+
+        // Keep the first appearance predictable and visible. Her normal schedule can take over tomorrow.
+        Vector2 arrivalTile = new(6f, 5f);
+        Game1.warpCharacter(sudoku, farmHouse, arrivalTile);
+        sudoku.ignoreScheduleToday = true;
+        sudoku.Halt();
+        sudoku.faceDirection(2);
+
+        this.Monitor.Log(
+            $"Sudoku placed in {farmHouse.NameOrUniqueName} at tile {arrivalTile} after the TV arrival.",
+            LogLevel.Info
+        );
+
+        return sudoku;
+    }
 }

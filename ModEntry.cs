@@ -17,6 +17,7 @@ internal sealed partial class ModEntry : Mod
 
     private ModConfig Config = null!;
     private Texture2D? tvArrivalSheet;
+    private Texture2D? wellBroadcastTexture;
     private DailySudokuService? dailySudoku;
 
     private bool sequenceActive;
@@ -128,10 +129,11 @@ internal sealed partial class ModEntry : Mod
         this.SyncNpcIdentityFlag();
 
         this.tvArrivalSheet = this.Helper.ModContent.Load<Texture2D>("assets/Events/Sudoku_TV.png");
+        this.wellBroadcastTexture = this.Helper.ModContent.Load<Texture2D>("assets/Events/WellBroadcast.png");
         this.ResetSequenceState();
 
         this.Monitor.Log(
-            "Cursed Signal v0.0.4 loaded. Cursed VHS, Daily Interaction, and item reward pools are enabled.",
+            "Cursed Signal v0.0.4.1 loaded. Arrival hotfix is active.",
             LogLevel.Info
         );
 
@@ -145,7 +147,8 @@ internal sealed partial class ModEntry : Mod
 
         if (ModIdentity.HasArrivalBeenSeen(Game1.player))
         {
-            this.Monitor.Log("Sudoku has already arrived in this save. Her Cursed Signal NPC data is unlocked.", LogLevel.Info);
+            this.Monitor.Log("Sudoku has already arrived in this save. Ensuring her NPC instance exists.", LogLevel.Info);
+            this.EnsureSudokuCharacterExists();
             this.EnsureCursedVhsGranted(showDialogue: false);
 
             if (this.Config.EnableDailySudoku)
@@ -158,7 +161,10 @@ internal sealed partial class ModEntry : Mod
         this.SyncNpcIdentityFlag();
 
         if (ModIdentity.HasArrivalBeenSeen(Game1.player))
+        {
+            this.EnsureSudokuCharacterExists();
             this.EnsureCursedVhsGranted(showDialogue: false);
+        }
 
         if (!this.Config.EnableDailySudoku || this.dailySudoku is null)
             return;
@@ -223,5 +229,4 @@ internal sealed partial class ModEntry : Mod
 
         Game1.drawObjectDialogue("Sudoku nhìn bạn vài giây.^\"...Đừng điền bừa khi quay lại.\"");
     }
-
 }

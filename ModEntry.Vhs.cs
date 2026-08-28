@@ -17,16 +17,27 @@ internal sealed partial class ModEntry
         Game1.player.modData[ModIdentity.ArrivalSeenKey] = "true";
         Game1.player.modData[ModIdentity.SudokuNpcEnabledKey] = "true";
 
+        NPC? sudoku = this.PlaceSudokuAfterArrival();
         this.EnsureCursedVhsGranted(showDialogue: false);
 
         Game1.drawObjectDialogue(
-            "......^Ngươi...^...có bút chì không?^^Một cuộn băng lạnh ngắt nằm cạnh TV. Trên nhãn là một lưới 9×9."
+            "......^Ngươi...^...có bút chì không?^^*Có thứ gì đó rơi xuống cạnh TV.*^^Một cuộn băng lạnh ngắt. Trên nhãn là một lưới 9×9."
         );
 
-        this.Monitor.Log(
-            "Sudoku's arrival finished. The Cursed Signal save/NPC flags are set and the Cursed VHS has been granted.",
-            LogLevel.Info
-        );
+        if (sudoku is null)
+        {
+            this.Monitor.Log(
+                "Arrival finished, but Sudoku could not be materialized immediately. The save flags remain set so the game can retry on load/day start.",
+                LogLevel.Warn
+            );
+        }
+        else
+        {
+            this.Monitor.Log(
+                "Sudoku's arrival finished. She was spawned and kept in the farmhouse instead of disappearing.",
+                LogLevel.Info
+            );
+        }
     }
 
     private void EnsureCursedVhsGranted(bool showDialogue)
@@ -84,5 +95,4 @@ internal sealed partial class ModEntry
         this.elapsedTicks = 0;
         this.frameIndex = 0;
     }
-
 }
