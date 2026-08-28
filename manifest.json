@@ -1,12 +1,10 @@
 {
-  "Name": "Chuyen Tam Linh Ko Dua Duoc Dau",
+  "Name": "Chuyen Tam Linh Ko Dua Duoc Dau - Sudoku Prototype",
   "Author": "ronvotri",
-  "Version": "1.0.0",
-  "Description": "Mod them su kien va hien tuong tam linh khi nguoi choi trot buong loi thach thuc.",
+  "Version": "0.0.1",
+  "Description": "Prototype for Sudoku's haunted-TV arrival event.",
   "UniqueID": "ronvotri.chuyentamlinhkoduaduocdau",
+  "EntryDll": "ChuyenTamLinhKoDuaDuocDau.dll",
   "MinimumApiVersion": "4.0.0",
-  "UpdateKeys": [],
-  "ContentPackFor": {
-    "UniqueID": "Pathoschild.ContentPatcher"
-  }
+  "UpdateKeys": []
 }
