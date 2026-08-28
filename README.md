@@ -25,7 +25,8 @@ Older prototype builds used `ronvotri.chuyentamlinhkoduaduocdau` in NPC IDs and 
 - old Daily Sudoku day, puzzle, board, and claimed-reward state are copied if the new keys don't exist;
 - legacy keys are **not deleted**, so rolling back to an older development branch is safer;
 - runtime asset lookup still recognizes the old Sudoku NPC ID if a test save contains it;
-- Daily Sudoku difficulty can still read friendship data stored under the legacy NPC ID.
+- Daily Sudoku difficulty can still read friendship data stored under the legacy NPC ID;
+- a separate `SudokuNpcEnabled` flag prevents the new-ID Sudoku from spawning when a legacy Sudoku instance is already present, avoiding an obvious duplicate-NPC migration case.
 
 The test commands `sudoku_resetarrival` and `sudoku_resetdaily` intentionally clear both new and legacy prototype flags.
 
