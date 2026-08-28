@@ -1,8 +1,8 @@
 {
   "Name": "Chuyen Tam Linh Ko Dua Duoc Dau - Sudoku Prototype",
   "Author": "ronvotri",
-  "Version": "0.0.1",
-  "Description": "Prototype for Sudoku's haunted-TV arrival event.",
+  "Version": "0.0.2",
+  "Description": "Prototype for Sudoku's haunted-TV arrival and persistent custom NPC.",
   "UniqueID": "ronvotri.chuyentamlinhkoduaduocdau",
   "EntryDll": "ChuyenTamLinhKoDuaDuocDau.dll",
   "MinimumApiVersion": "4.0.0",
