@@ -21,6 +21,7 @@ internal sealed partial class ModEntry
 
         if (ModIdentity.IsCursedVhsInstalled(Game1.player))
         {
+            this.RemoveAllCursedVhsFromInventory();
             this.Monitor.Log("The Cursed VHS is already installed in the TV for this save.", LogLevel.Info);
             return;
         }
@@ -55,9 +56,17 @@ internal sealed partial class ModEntry
         }
 
         this.CancelSequence();
+
+        int removedNpcCount = this.RemoveAllSudokuInstances();
+        int removedTapeCount = this.RemoveAllCursedVhsFromInventory();
+
         ModIdentity.ClearArrivalFlags(Game1.player);
+        this.dailySudoku?.ResetTodayForTesting();
+
+        this.EnsureCursedVhsGranted(showDialogue: false);
+
         this.Monitor.Log(
-            "Sudoku arrival, VHS installation, and daily signal flags were cleared. Existing NPC/item instances are intentionally left alone for testing.",
+            $"Core reset complete. Removed NPCs={removedNpcCount}, removed VHS copies={removedTapeCount}. One fresh Cursed VHS was returned to the player.",
             LogLevel.Info
         );
     }
@@ -91,6 +100,7 @@ internal sealed partial class ModEntry
         }
 
         bool seen = ModIdentity.HasArrivalBeenSeen(Game1.player);
+        List<NPC> allSudoku = this.FindAllSudoku();
         NPC? sudoku = this.FindSudoku(currentLocationOnly: false);
         bool dailyClaimed = this.dailySudoku?.IsRewardClaimedToday() ?? false;
         SudokuPuzzle? dailyPuzzle = this.dailySudoku?.EnsureToday();
@@ -102,12 +112,14 @@ internal sealed partial class ModEntry
             && vhs == "true";
         bool vhsInstalled = ModIdentity.IsCursedVhsInstalled(Game1.player);
         bool signalRanToday = ModIdentity.HasDailySignalRunToday(Game1.player);
+        int vhsInventoryCount = this.CountCursedVhsInInventory();
 
         string npcLocation = sudoku?.currentLocation?.NameOrUniqueName ?? "none";
         string npcTile = sudoku is null ? "none" : sudoku.Tile.ToString();
+        string npcInvisible = sudoku is null ? "n/a" : sudoku.IsInvisible.ToString();
 
         this.Monitor.Log(
-            $"Sudoku status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcPresent={sudoku is not null}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, vhsGranted={vhsGranted}, vhsInstalled={vhsInstalled}, signalRanToday={signalRanToday}, sequenceActive={this.sequenceActive}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
+            $"Cursed Signal core status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcCount={allSudoku.Count}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, npcInvisible={npcInvisible}, vhsGranted={vhsGranted}, vhsInstalled={vhsInstalled}, vhsInventoryCount={vhsInventoryCount}, signalRanToday={signalRanToday}, sequenceActive={this.sequenceActive}, firstSequence={this.sequenceIsFirstArrival}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
             LogLevel.Info
         );
     }
