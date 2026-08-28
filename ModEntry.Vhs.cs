@@ -6,8 +6,10 @@ using StardewValley;
 using StardewValley.GameData.Characters;
 using StardewValley.GameData.Objects;
 using StardewValley.Locations;
+using StardewValley.Menus;
+using StardewValley.Objects;
 
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
@@ -23,21 +25,15 @@ internal sealed partial class ModEntry
         NPC? sudoku = this.PlaceSudokuAfterArrival();
 
         if (firstArrival)
-        {
-            Game1.drawObjectDialogue(
-                "......^Ngươi...^...có bút chì không?"
-            );
-        }
+            this.ShowFirstConversation();
         else
-        {
             Game1.showGlobalMessage("TV nhiễu lên rồi tắt phụt. Sudoku đã đứng cạnh bạn.");
-        }
 
         this.Monitor.Log(
             sudoku is null
-                ? "Cursed Signal finished, but Sudoku could not be materialized immediately."
+                ? "Hey! You’re Cursed! sequence finished, but Sudoku could not be materialized immediately."
                 : firstArrival
-                    ? "First Cursed Signal finished. Sudoku materialized beside the player."
+                    ? "First cursed-TV sequence finished. Sudoku materialized beside the player."
                     : "Repeat morning signal finished. Sudoku materialized beside the player.",
             sudoku is null ? LogLevel.Warn : LogLevel.Info
         );
@@ -55,7 +51,6 @@ internal sealed partial class ModEntry
         }
 
         int inventoryCount = this.CountCursedVhsInInventory();
-
         if (inventoryCount != 1)
         {
             this.RemoveAllCursedVhsFromInventory();
@@ -86,7 +81,7 @@ internal sealed partial class ModEntry
     {
         this.ResetSequenceState();
         this.Monitor.Log(
-            "Sudoku's TV signal was cancelled because the player left the farmhouse.",
+            "Sudoku's TV arrival sequence was cancelled because the player left the farmhouse.",
             LogLevel.Trace
         );
     }
