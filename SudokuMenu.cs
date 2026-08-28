@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using StardewValley;
 using StardewValley.Menus;
 
-namespace ChuyenTamLinhKoDuaDuocDau;
+namespace CursedSignal;
 
 internal sealed class SudokuMenu : IClickableMenu
 {
