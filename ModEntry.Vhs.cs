@@ -13,7 +13,7 @@ internal sealed partial class ModEntry
 {
     private void FinishSequence()
     {
-        bool firstArrival = !ModIdentity.HasArrivalBeenSeen(Game1.player);
+        bool firstArrival = this.sequenceIsFirstArrival;
 
         this.ResetSequenceState();
         Game1.player.modData[ModIdentity.ArrivalSeenKey] = "true";
@@ -30,15 +30,15 @@ internal sealed partial class ModEntry
         }
         else
         {
-            Game1.drawObjectDialogue(
-                "TV tắt phụt.^Sudoku đã đứng cạnh nó từ lúc nào.^\"...8 giờ.\""
-            );
+            Game1.showGlobalMessage("TV nhiễu lên rồi tắt phụt. Sudoku đã đứng cạnh bạn.");
         }
 
         this.Monitor.Log(
             sudoku is null
-                ? "Daily signal finished, but Sudoku could not be materialized immediately."
-                : "Daily signal finished. Sudoku is active in the farmhouse.",
+                ? "Cursed Signal finished, but Sudoku could not be materialized immediately."
+                : firstArrival
+                    ? "First Cursed Signal finished. Sudoku materialized beside the player."
+                    : "Repeat morning signal finished. Sudoku materialized beside the player.",
             sudoku is null ? LogLevel.Warn : LogLevel.Info
         );
     }
@@ -80,7 +80,7 @@ internal sealed partial class ModEntry
     {
         this.ResetSequenceState();
         this.Monitor.Log(
-            "Sudoku's TV arrival sequence was cancelled because the player left the farmhouse.",
+            "Sudoku's TV signal was cancelled because the player left the farmhouse.",
             LogLevel.Trace
         );
     }
@@ -88,6 +88,7 @@ internal sealed partial class ModEntry
     private void ResetSequenceState()
     {
         this.sequenceActive = false;
+        this.sequenceIsFirstArrival = false;
         this.elapsedTicks = 0;
         this.frameIndex = 0;
     }
