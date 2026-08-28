@@ -36,12 +36,13 @@ internal sealed partial class ModEntry : Mod
         helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
         helper.Events.Player.Warped += this.OnWarped;
         helper.Events.Display.RenderedWorld += this.OnRenderedWorld;
+        helper.Events.Input.ButtonPressed += this.OnTapeButtonPressed;
         helper.Events.Input.ButtonPressed += this.OnButtonPressed;
 
         helper.ConsoleCommands.Add("sudoku_testarrival", "Start Sudoku's haunted-TV arrival immediately while inside the farmhouse.", this.OnTestArrivalCommand);
-        helper.ConsoleCommands.Add("sudoku_resetarrival", "Clear Sudoku's arrival flag so the sequence can be tested again.", this.OnResetArrivalCommand);
-        helper.ConsoleCommands.Add("sudoku_unlocknpc", "Set Sudoku's arrival flag. The real NPC should be added on the next save load/day rollover.", this.OnUnlockNpcCommand);
-        helper.ConsoleCommands.Add("sudoku_status", "Print Sudoku prototype state for the current save.", this.OnStatusCommand);
+        helper.ConsoleCommands.Add("sudoku_resetarrival", "Clear Sudoku's arrival/tape flags so the sequence can be tested again.", this.OnResetArrivalCommand);
+        helper.ConsoleCommands.Add("sudoku_unlocknpc", "Set Sudoku's arrival flag and create the NPC immediately if possible.", this.OnUnlockNpcCommand);
+        helper.ConsoleCommands.Add("sudoku_status", "Print Sudoku and Cursed VHS prototype state for the current save.", this.OnStatusCommand);
         helper.ConsoleCommands.Add("sudoku_open", "Open today's Sudoku board immediately for testing.", this.OnOpenDailyCommand);
         helper.ConsoleCommands.Add("sudoku_resetdaily", "Reset today's Sudoku board and reward flag for testing.", this.OnResetDailyCommand);
         helper.ConsoleCommands.Add("cursedsignal_givevhs", "Give the Cursed VHS story item to the current player for testing.", this.OnGiveVhsCommand);
@@ -133,7 +134,7 @@ internal sealed partial class ModEntry : Mod
         this.ResetSequenceState();
 
         this.Monitor.Log(
-            "Cursed Signal v0.0.4.1 loaded. Arrival hotfix is active.",
+            "Cursed Signal v0.0.5 loaded. VHS installation gate and 8:00 AM daily signal are active.",
             LogLevel.Info
         );
 
@@ -145,11 +146,14 @@ internal sealed partial class ModEntry : Mod
             );
         }
 
+        // Temporary prototype delivery until the final tape-origin quest is implemented.
+        if (!ModIdentity.IsCursedVhsInstalled(Game1.player))
+            this.EnsureCursedVhsGranted(showDialogue: false);
+
         if (ModIdentity.HasArrivalBeenSeen(Game1.player))
         {
             this.Monitor.Log("Sudoku has already arrived in this save. Ensuring her NPC instance exists.", LogLevel.Info);
             this.EnsureSudokuCharacterExists();
-            this.EnsureCursedVhsGranted(showDialogue: false);
 
             if (this.Config.EnableDailySudoku)
                 this.dailySudoku?.EnsureToday();
@@ -160,11 +164,11 @@ internal sealed partial class ModEntry : Mod
     {
         this.SyncNpcIdentityFlag();
 
-        if (ModIdentity.HasArrivalBeenSeen(Game1.player))
-        {
-            this.EnsureSudokuCharacterExists();
+        if (!ModIdentity.IsCursedVhsInstalled(Game1.player))
             this.EnsureCursedVhsGranted(showDialogue: false);
-        }
+
+        if (ModIdentity.HasArrivalBeenSeen(Game1.player))
+            this.EnsureSudokuCharacterExists();
 
         if (!this.Config.EnableDailySudoku || this.dailySudoku is null)
             return;
@@ -195,8 +199,6 @@ internal sealed partial class ModEntry : Mod
         if (distance > 2.1f)
             return;
 
-        // Once today's reward has been claimed, don't intercept the action button.
-        // The game's normal NPC dialogue can happen instead.
         if (this.dailySudoku.IsRewardClaimedToday())
             return;
 
