@@ -22,4 +22,16 @@ internal sealed class ModConfig
 
     /// <summary>How large the 64x64 event frame is drawn on-screen.</summary>
     public float EventScale { get; set; } = 4f;
+
+    /// <summary>Enable the daily Sudoku prototype.</summary>
+    public bool EnableDailySudoku { get; set; } = true;
+
+    /// <summary>Gold reward for an Easy daily board.</summary>
+    public int DailyRewardEasy { get; set; } = 250;
+
+    /// <summary>Gold reward for a Normal daily board.</summary>
+    public int DailyRewardNormal { get; set; } = 500;
+
+    /// <summary>Gold reward for a Hard daily board.</summary>
+    public int DailyRewardHard { get; set; } = 900;
 }
