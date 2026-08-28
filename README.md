@@ -1,4 +1,4 @@
-# Hey! You’re Cursed! — v0.0.6-alpha.8
+# Hey! You’re Cursed! — v0.0.6-alpha.9
 
 A paranormal Stardew Valley mod about a cursed VHS, Sudoku, and a ghost who treats your farmhouse like a very inconvenient address.
 
@@ -14,6 +14,13 @@ This build completes the rename while the project is still pre-release:
 - deployed Mods folder and release ZIP name: `HeyYoureCursed`
 
 Early `ronvotri.CursedSignal` prototype keys/NPC IDs are still recognized for test-save cleanup/migration, but all new state uses the final ID.
+
+## alpha.9 — Dialogue → Sudoku handoff fix
+
+- The direct `heyyourecursed_open` command already proved the Sudoku menu itself is healthy.
+- Stardew may return prefixed response keys from question dialogues, so answer handling now accepts `board` / `solve` plus common prefixed forms instead of requiring an exact string.
+- After `Đưa đây.`, the mod waits briefly for the answer click to settle, dismisses only the completed dialogue box, then opens `SudokuMenu` on the following update tick.
+- SMAPI now logs the actual response key for the first-board and daily-board prompts so any remaining dialogue edge case is visible immediately.
 
 ## alpha.8 — Controller-first Sudoku controls
 
@@ -36,7 +43,6 @@ The board now highlights the selected row, column, 3×3 box, and matching values
 
 - TV/furniture actions are no longer stolen just because Sudoku is standing on a neighboring tile. Action-button interaction now requires Sudoku's actual tile to be targeted.
 - Question dialogues pass Sudoku as the speaker so her portrait can be used by Stardew's dialogue UI.
-- Choosing `Đưa đây.` no longer force-replaces the active `DialogueBox` in the same update frame. The mod waits until Stardew closes the dialogue naturally, then opens `SudokuMenu` on the next clean frame.
 - All debug commands now use the `heyyourecursed_` prefix so an old prototype can't crash mod entry by registering the same command names.
 
 ## Current core flow
