@@ -1,0 +1,21 @@
+{
+  "ronvotri.CursedSignal_CursedVHS": {
+    "Name": "Cursed VHS",
+    "DisplayName": "Cursed VHS",
+    "Description": "The label has been scratched off. A 9x9 grid is drawn over the plastic in faded ink. The tape feels colder than it should.",
+    "Type": "Basic",
+    "Category": 0,
+    "Price": 0,
+    "Texture": "Mods/ronvotri.CursedSignal/Items",
+    "SpriteIndex": 0,
+    "Edibility": -300,
+    "CanBeGivenAsGift": false,
+    "CanBeTrashed": false,
+    "ExcludeFromRandomSale": true,
+    "ExcludeFromShippingCollection": true,
+    "ContextTags": [
+      "cursed_signal_vhs",
+      "cursed_signal_story_item"
+    ]
+  }
+}

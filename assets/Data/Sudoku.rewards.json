@@ -1,0 +1,114 @@
+[
+  {
+    "Id": "easy_coffee",
+    "Difficulty": "Easy",
+    "QualifiedItemId": "(O)395",
+    "MinStack": 1,
+    "MaxStack": 2,
+    "Weight": 4
+  },
+  {
+    "Id": "easy_field_snack",
+    "Difficulty": "Easy",
+    "QualifiedItemId": "(O)403",
+    "MinStack": 1,
+    "MaxStack": 2,
+    "Weight": 3
+  },
+  {
+    "Id": "easy_omni_geode",
+    "Difficulty": "Easy",
+    "QualifiedItemId": "(O)749",
+    "MinStack": 1,
+    "MaxStack": 1,
+    "Weight": 3
+  },
+  {
+    "Id": "easy_mixed_seeds",
+    "Difficulty": "Easy",
+    "QualifiedItemId": "(O)770",
+    "MinStack": 3,
+    "MaxStack": 6,
+    "Weight": 2
+  },
+  {
+    "Id": "normal_omni_geode",
+    "Difficulty": "Normal",
+    "QualifiedItemId": "(O)749",
+    "MinStack": 2,
+    "MaxStack": 3,
+    "Weight": 4
+  },
+  {
+    "Id": "normal_frozen_tear",
+    "Difficulty": "Normal",
+    "QualifiedItemId": "(O)84",
+    "MinStack": 1,
+    "MaxStack": 1,
+    "Weight": 2
+  },
+  {
+    "Id": "normal_fire_quartz",
+    "Difficulty": "Normal",
+    "QualifiedItemId": "(O)82",
+    "MinStack": 1,
+    "MaxStack": 1,
+    "Weight": 2
+  },
+  {
+    "Id": "normal_jade",
+    "Difficulty": "Normal",
+    "QualifiedItemId": "(O)70",
+    "MinStack": 1,
+    "MaxStack": 1,
+    "Weight": 2
+  },
+  {
+    "Id": "normal_coffee",
+    "Difficulty": "Normal",
+    "QualifiedItemId": "(O)395",
+    "MinStack": 2,
+    "MaxStack": 3,
+    "Weight": 3
+  },
+  {
+    "Id": "hard_diamond",
+    "Difficulty": "Hard",
+    "QualifiedItemId": "(O)72",
+    "MinStack": 1,
+    "MaxStack": 1,
+    "Weight": 3
+  },
+  {
+    "Id": "hard_iridium_bar",
+    "Difficulty": "Hard",
+    "QualifiedItemId": "(O)337",
+    "MinStack": 1,
+    "MaxStack": 1,
+    "Weight": 2
+  },
+  {
+    "Id": "hard_battery_pack",
+    "Difficulty": "Hard",
+    "QualifiedItemId": "(O)787",
+    "MinStack": 1,
+    "MaxStack": 2,
+    "Weight": 2
+  },
+  {
+    "Id": "hard_spicy_eel",
+    "Difficulty": "Hard",
+    "QualifiedItemId": "(O)226",
+    "MinStack": 1,
+    "MaxStack": 2,
+    "Weight": 2
+  },
+  {
+    "Id": "hard_omni_geode",
+    "Difficulty": "Hard",
+    "QualifiedItemId": "(O)749",
+    "MinStack": 3,
+    "MaxStack": 5,
+    "Weight": 3
+  }
+]

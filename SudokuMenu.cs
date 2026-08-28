@@ -337,10 +337,10 @@ internal sealed class SudokuMenu : IClickableMenu
             return;
         }
 
-        int reward = this.service.ClaimReward(this.puzzle);
-        if (reward > 0)
+        string? reward = this.service.ClaimReward(this.puzzle);
+        if (!string.IsNullOrWhiteSpace(reward))
         {
-            this.statusText = $"Đúng. Sudoku đẩy sang cho bạn {reward}g. 'Đừng hiểu lầm. Không phải quà.'";
+            this.statusText = $"Đúng. Sudoku đẩy sang cho bạn {reward}. 'Đừng hiểu lầm. Không phải quà.'";
             Game1.playSound("purchase");
         }
         else

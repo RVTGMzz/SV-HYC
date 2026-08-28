@@ -13,11 +13,13 @@ internal sealed class DailySudokuService
     private readonly IMonitor monitor;
     private readonly ModConfig config;
     private readonly List<SudokuPuzzle> puzzles;
+    private readonly List<SudokuRewardEntry> rewards;
 
     public DailySudokuService(IModHelper helper, IMonitor monitor, ModConfig config)
     {
         this.monitor = monitor;
         this.config = config;
+
         this.puzzles = helper.Data.ReadJsonFile<List<SudokuPuzzle>>(
             "assets/Data/Sudoku.puzzles.json"
         ) ?? new List<SudokuPuzzle>();
@@ -26,8 +28,24 @@ internal sealed class DailySudokuService
             .Where(p => p.Puzzle.Length == 81 && p.Solution.Length == 81)
             .ToList();
 
+        this.rewards = helper.Data.ReadJsonFile<List<SudokuRewardEntry>>(
+            "assets/Data/Sudoku.rewards.json"
+        ) ?? new List<SudokuRewardEntry>();
+
+        this.rewards = this.rewards
+            .Where(p =>
+                !string.IsNullOrWhiteSpace(p.QualifiedItemId)
+                && p.MinStack > 0
+                && p.MaxStack >= p.MinStack
+                && p.Weight > 0
+            )
+            .ToList();
+
         if (this.puzzles.Count == 0)
             this.monitor.Log("Daily Sudoku puzzle bank is empty or invalid.", LogLevel.Error);
+
+        if (this.rewards.Count == 0)
+            this.monitor.Log("Daily Sudoku item reward pool is empty or invalid; gold fallback will be used.", LogLevel.Warn);
     }
 
     public SudokuPuzzle? EnsureToday()
@@ -102,27 +120,54 @@ internal sealed class DailySudokuService
             && claimedDay == day;
     }
 
-    public int ClaimReward(SudokuPuzzle puzzle)
+    /// <summary>
+    /// Claims today's reward and returns a player-facing description, or null if the reward couldn't be claimed.
+    /// </summary>
+    public string? ClaimReward(SudokuPuzzle puzzle)
     {
         if (!this.IsSolved(puzzle) || this.IsRewardClaimedToday())
-            return 0;
+            return null;
 
-        int reward = puzzle.Difficulty.ToLowerInvariant() switch
+        string rewardDescription;
+
+        try
         {
-            "hard" => Math.Max(0, this.config.DailyRewardHard),
-            "normal" => Math.Max(0, this.config.DailyRewardNormal),
-            _ => Math.Max(0, this.config.DailyRewardEasy)
-        };
+            SudokuRewardEntry? selected = this.SelectRewardForToday(puzzle);
+            if (selected is null)
+            {
+                rewardDescription = this.GrantFallbackGold(puzzle);
+            }
+            else
+            {
+                int day = Game1.Date.TotalDays;
+                int seed = unchecked((int)(Game1.uniqueIDForThisGame ^ ((long)day * 486187739L) ^ 0x5A17BEEFL));
+                Random random = new(seed);
+                int stack = random.Next(selected.MinStack, selected.MaxStack + 1);
 
-        Game1.player.Money += reward;
+                Item reward = ItemRegistry.Create(selected.QualifiedItemId, stack);
+                Game1.player.addItemByMenuIfNecessary(reward);
+                rewardDescription = stack > 1
+                    ? $"{stack}× {reward.DisplayName}"
+                    : reward.DisplayName;
+            }
+        }
+        catch (Exception ex)
+        {
+            this.monitor.Log(
+                $"Couldn't create today's Daily Sudoku item reward; using gold fallback instead. {ex}",
+                LogLevel.Warn
+            );
+            rewardDescription = this.GrantFallbackGold(puzzle);
+        }
+
         Game1.player.modData[ClaimedDayKey] = Game1.Date.TotalDays.ToString();
 
         this.monitor.Log(
-            $"Daily Sudoku solved: {puzzle.Id} ({puzzle.Difficulty}), reward={reward}g.",
+            $"Daily Sudoku solved: {puzzle.Id} ({puzzle.Difficulty}), reward={rewardDescription}.",
             LogLevel.Info
         );
 
-        return reward;
+        return rewardDescription;
     }
 
     public void ResetTodayForTesting()
@@ -149,6 +194,47 @@ internal sealed class DailySudokuService
         long seed = unchecked((long)Game1.uniqueIDForThisGame + day * 7919L);
         int index = (int)Math.Abs(seed % pool.Count);
         return pool[index];
+    }
+
+    private SudokuRewardEntry? SelectRewardForToday(SudokuPuzzle puzzle)
+    {
+        List<SudokuRewardEntry> pool = this.rewards
+            .Where(p => p.Difficulty.Equals(puzzle.Difficulty, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (pool.Count == 0)
+            pool = this.rewards;
+
+        if (pool.Count == 0)
+            return null;
+
+        int totalWeight = pool.Sum(p => Math.Max(1, p.Weight));
+        int day = Game1.Date.TotalDays;
+        int seed = unchecked((int)(Game1.uniqueIDForThisGame ^ ((long)day * 104729L) ^ 0xC0FFEE));
+        Random random = new(seed);
+        int roll = random.Next(totalWeight);
+
+        foreach (SudokuRewardEntry entry in pool)
+        {
+            roll -= Math.Max(1, entry.Weight);
+            if (roll < 0)
+                return entry;
+        }
+
+        return pool[^1];
+    }
+
+    private string GrantFallbackGold(SudokuPuzzle puzzle)
+    {
+        int gold = puzzle.Difficulty.ToLowerInvariant() switch
+        {
+            "hard" => Math.Max(0, this.config.DailyRewardHard),
+            "normal" => Math.Max(0, this.config.DailyRewardNormal),
+            _ => Math.Max(0, this.config.DailyRewardEasy)
+        };
+
+        Game1.player.Money += gold;
+        return $"{gold}g";
     }
 
     private string GetDifficultyForPlayer()

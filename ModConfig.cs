@@ -26,12 +26,12 @@ internal sealed class ModConfig
     /// <summary>Enable the daily Sudoku prototype.</summary>
     public bool EnableDailySudoku { get; set; } = true;
 
-    /// <summary>Gold reward for an Easy daily board.</summary>
+    /// <summary>Fallback gold reward if the Easy item reward pool fails.</summary>
     public int DailyRewardEasy { get; set; } = 250;
 
-    /// <summary>Gold reward for a Normal daily board.</summary>
+    /// <summary>Fallback gold reward if the Normal item reward pool fails.</summary>
     public int DailyRewardNormal { get; set; } = 500;
 
-    /// <summary>Gold reward for a Hard daily board.</summary>
+    /// <summary>Fallback gold reward if the Hard item reward pool fails.</summary>
     public int DailyRewardHard { get; set; } = 900;
 }

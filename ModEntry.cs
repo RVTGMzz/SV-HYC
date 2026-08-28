@@ -4,6 +4,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.GameData.Characters;
+using StardewValley.GameData.Objects;
 using StardewValley.Locations;
 
 namespace CursedSignal;
@@ -42,6 +43,7 @@ internal sealed class ModEntry : Mod
         helper.ConsoleCommands.Add("sudoku_status", "Print Sudoku prototype state for the current save.", this.OnStatusCommand);
         helper.ConsoleCommands.Add("sudoku_open", "Open today's Sudoku board immediately for testing.", this.OnOpenDailyCommand);
         helper.ConsoleCommands.Add("sudoku_resetdaily", "Reset today's Sudoku board and reward flag for testing.", this.OnResetDailyCommand);
+        helper.ConsoleCommands.Add("cursedsignal_givevhs", "Give the Cursed VHS story item to the current player for testing.", this.OnGiveVhsCommand);
     }
 
     private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
@@ -50,6 +52,12 @@ internal sealed class ModEntry : Mod
         {
             return e.NameWithoutLocale.IsEquivalentTo($"{prefix}/{ModIdentity.SudokuNpcId}")
                 || e.NameWithoutLocale.IsEquivalentTo($"{prefix}/{ModIdentity.LegacySudokuNpcId}");
+        }
+
+        if (e.NameWithoutLocale.IsEquivalentTo(ModIdentity.ItemTextureAsset))
+        {
+            e.LoadFromModFile<Texture2D>("assets/Items/CursedVHS.png", AssetLoadPriority.Exclusive);
+            return;
         }
 
         if (IsNpcAsset("Characters"))
@@ -92,6 +100,25 @@ internal sealed class ModEntry : Mod
 
                 asset.AsDictionary<string, CharacterData>().Data[ModIdentity.SudokuNpcId] = sudoku;
             });
+            return;
+        }
+
+        if (e.NameWithoutLocale.IsEquivalentTo("Data/Objects"))
+        {
+            e.Edit(asset =>
+            {
+                Dictionary<string, ObjectData>? custom = this.Helper.Data.ReadJsonFile<Dictionary<string, ObjectData>>(
+                    "assets/Data/CursedSignal.objects.json"
+                );
+
+                if (custom is null || !custom.TryGetValue(ModIdentity.CursedVhsItemId, out ObjectData? vhs))
+                {
+                    this.Monitor.Log("Couldn't read CursedSignal.objects.json; the Cursed VHS item was not injected.", LogLevel.Error);
+                    return;
+                }
+
+                asset.AsDictionary<string, ObjectData>().Data[ModIdentity.CursedVhsItemId] = vhs;
+            });
         }
     }
 
@@ -104,7 +131,7 @@ internal sealed class ModEntry : Mod
         this.ResetSequenceState();
 
         this.Monitor.Log(
-            "Cursed Signal v0.0.3.1 identity cleanup loaded. Daily Sudoku remains available after Sudoku arrives.",
+            "Cursed Signal v0.0.4 loaded. Cursed VHS, Daily Interaction, and item reward pools are enabled.",
             LogLevel.Info
         );
 
@@ -119,6 +146,7 @@ internal sealed class ModEntry : Mod
         if (ModIdentity.HasArrivalBeenSeen(Game1.player))
         {
             this.Monitor.Log("Sudoku has already arrived in this save. Her Cursed Signal NPC data is unlocked.", LogLevel.Info);
+            this.EnsureCursedVhsGranted(showDialogue: false);
 
             if (this.Config.EnableDailySudoku)
                 this.dailySudoku?.EnsureToday();
@@ -128,6 +156,9 @@ internal sealed class ModEntry : Mod
     private void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
         this.SyncNpcIdentityFlag();
+
+        if (ModIdentity.HasArrivalBeenSeen(Game1.player))
+            this.EnsureCursedVhsGranted(showDialogue: false);
 
         if (!this.Config.EnableDailySudoku || this.dailySudoku is null)
             return;
@@ -158,11 +189,39 @@ internal sealed class ModEntry : Mod
         if (distance > 2.1f)
             return;
 
+        // Once today's reward has been claimed, don't intercept the action button.
+        // The game's normal NPC dialogue can happen instead.
         if (this.dailySudoku.IsRewardClaimedToday())
             return;
 
         this.Helper.Input.Suppress(e.Button);
-        this.OpenDailySudoku(force: false);
+        this.ShowDailySudokuPrompt();
+    }
+
+    private void ShowDailySudokuPrompt()
+    {
+        Response[] responses =
+        {
+            new("solve", "Giải."),
+            new("later", "Để sau.")
+        };
+
+        Game1.currentLocation.createQuestionDialogue(
+            "......^Bảng hôm nay.",
+            responses,
+            new GameLocation.afterQuestionBehavior(this.OnDailySudokuPromptAnswered)
+        );
+    }
+
+    private void OnDailySudokuPromptAnswered(Farmer who, string answer)
+    {
+        if (answer == "solve")
+        {
+            this.OpenDailySudoku(force: false);
+            return;
+        }
+
+        Game1.drawObjectDialogue("Sudoku nhìn bạn vài giây.^\"...Đừng điền bừa khi quay lại.\"");
     }
 
     private void OnTimeChanged(object? sender, TimeChangedEventArgs e)
@@ -261,7 +320,11 @@ internal sealed class ModEntry : Mod
 
     private void DrawDarkBackdrop(SpriteBatch spriteBatch)
     {
-        spriteBatch.Draw(Game1.staminaRect, new Rectangle(0, 0, Game1.viewport.Width, Game1.viewport.Height), Color.Black * 0.68f);
+        spriteBatch.Draw(
+            Game1.staminaRect,
+            new Rectangle(0, 0, Game1.viewport.Width, Game1.viewport.Height),
+            Color.Black * 0.68f
+        );
     }
 
     private void DrawStatic(SpriteBatch spriteBatch, float strength)
@@ -276,9 +339,15 @@ internal sealed class ModEntry : Mod
             int x = random.Next(0, Math.Max(1, width));
             int lineWidth = random.Next(8, Math.Max(9, width / 5));
             int lineHeight = random.Next(1, 5);
-            Color tint = random.NextDouble() > 0.5 ? new Color(170, 205, 225) : new Color(80, 105, 130);
+            Color tint = random.NextDouble() > 0.5
+                ? new Color(170, 205, 225)
+                : new Color(80, 105, 130);
 
-            spriteBatch.Draw(Game1.staminaRect, new Rectangle(x, y, lineWidth, lineHeight), tint * (0.16f * strength));
+            spriteBatch.Draw(
+                Game1.staminaRect,
+                new Rectangle(x, y, lineWidth, lineHeight),
+                tint * (0.16f * strength)
+            );
         }
     }
 
@@ -287,19 +356,43 @@ internal sealed class ModEntry : Mod
         int cx = Game1.viewport.Width / 2;
         int cy = Game1.viewport.Height / 2;
 
-        spriteBatch.Draw(Game1.staminaRect, new Rectangle(cx - 150, cy - 110, 300, 220), new Color(25, 37, 48) * 0.96f);
-        spriteBatch.Draw(Game1.staminaRect, new Rectangle(cx - 132, cy - 92, 264, 184), new Color(90, 125, 145) * 0.35f);
+        spriteBatch.Draw(
+            Game1.staminaRect,
+            new Rectangle(cx - 150, cy - 110, 300, 220),
+            new Color(25, 37, 48) * 0.96f
+        );
+        spriteBatch.Draw(
+            Game1.staminaRect,
+            new Rectangle(cx - 132, cy - 92, 264, 184),
+            new Color(90, 125, 145) * 0.35f
+        );
 
         for (int i = 0; i < 11; i++)
         {
             int width = 132 - (i * 7);
             int y = cy + 28 + (i * 3);
-            spriteBatch.Draw(Game1.staminaRect, new Rectangle(cx - width / 2, y, width, 4), new Color(105, 110, 118) * (0.85f - i * 0.035f));
+            spriteBatch.Draw(
+                Game1.staminaRect,
+                new Rectangle(cx - width / 2, y, width, 4),
+                new Color(105, 110, 118) * (0.85f - i * 0.035f)
+            );
         }
 
-        spriteBatch.Draw(Game1.staminaRect, new Rectangle(cx - 45, cy + 39, 90, 23), Color.Black * 0.92f);
-        spriteBatch.Draw(Game1.staminaRect, new Rectangle(cx - 8, cy - 50, 16, 76), new Color(7, 10, 14) * 0.92f);
-        spriteBatch.Draw(Game1.staminaRect, new Rectangle(cx - 24, cy - 58, 48, 34), new Color(7, 10, 14) * 0.92f);
+        spriteBatch.Draw(
+            Game1.staminaRect,
+            new Rectangle(cx - 45, cy + 39, 90, 23),
+            Color.Black * 0.92f
+        );
+        spriteBatch.Draw(
+            Game1.staminaRect,
+            new Rectangle(cx - 8, cy - 50, 16, 76),
+            new Color(7, 10, 14) * 0.92f
+        );
+        spriteBatch.Draw(
+            Game1.staminaRect,
+            new Rectangle(cx - 24, cy - 58, 48, 34),
+            new Color(7, 10, 14) * 0.92f
+        );
     }
 
     private void DrawGlitch(SpriteBatch spriteBatch)
@@ -316,7 +409,12 @@ internal sealed class ModEntry : Mod
                 1 => new Color(70, 95, 120),
                 _ => Color.White
             };
-            spriteBatch.Draw(Game1.staminaRect, new Rectangle(0, y, Game1.viewport.Width, h), tint * 0.12f);
+
+            spriteBatch.Draw(
+                Game1.staminaRect,
+                new Rectangle(0, y, Game1.viewport.Width, h),
+                tint * 0.12f
+            );
         }
 
         this.DrawStatic(spriteBatch, 0.8f);
@@ -329,12 +427,22 @@ internal sealed class ModEntry : Mod
 
         int sourceColumn = this.frameIndex % 3;
         int sourceRow = this.frameIndex / 3;
-        Rectangle source = new(sourceColumn * FrameWidth, sourceRow * FrameHeight, FrameWidth, FrameHeight);
+        Rectangle source = new(
+            sourceColumn * FrameWidth,
+            sourceRow * FrameHeight,
+            FrameWidth,
+            FrameHeight
+        );
 
         float scale = Math.Max(0.5f, this.Config.EventScale);
         int drawWidth = (int)(FrameWidth * scale);
         int drawHeight = (int)(FrameHeight * scale);
-        Rectangle destination = new((Game1.viewport.Width - drawWidth) / 2, (Game1.viewport.Height - drawHeight) / 2, drawWidth, drawHeight);
+        Rectangle destination = new(
+            (Game1.viewport.Width - drawWidth) / 2,
+            (Game1.viewport.Height - drawHeight) / 2,
+            drawWidth,
+            drawHeight
+        );
 
         spriteBatch.Draw(this.tvArrivalSheet, destination, source, Color.White);
 
@@ -370,17 +478,65 @@ internal sealed class ModEntry : Mod
         Game1.player.modData[ModIdentity.ArrivalSeenKey] = "true";
         Game1.player.modData[ModIdentity.SudokuNpcEnabledKey] = "true";
 
-        Game1.drawObjectDialogue("......\n\nNgươi...\n\n...có bút chì không?");
+        this.EnsureCursedVhsGranted(showDialogue: false);
+
+        Game1.drawObjectDialogue(
+            "......^Ngươi...^...có bút chì không?^^Một cuộn băng lạnh ngắt nằm cạnh TV. Trên nhãn là một lưới 9×9."
+        );
+
         this.Monitor.Log(
-            "Sudoku's arrival finished. The Cursed Signal save and NPC-enable flags are now set.",
+            "Sudoku's arrival finished. The Cursed Signal save/NPC flags are set and the Cursed VHS has been granted.",
             LogLevel.Info
         );
+    }
+
+    private void EnsureCursedVhsGranted(bool showDialogue)
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        bool alreadyFlagged =
+            Game1.player.modData.TryGetValue(ModIdentity.CursedVhsGrantedKey, out string? raw)
+            && raw == "true";
+
+        if (alreadyFlagged)
+            return;
+
+        bool alreadyInInventory = Game1.player.Items.Any(
+            item => item?.QualifiedItemId == ModIdentity.CursedVhsQualifiedItemId
+        );
+
+        if (!alreadyInInventory)
+        {
+            try
+            {
+                Item tape = ItemRegistry.Create(ModIdentity.CursedVhsQualifiedItemId, 1);
+                Game1.player.addItemByMenuIfNecessary(tape);
+            }
+            catch (Exception ex)
+            {
+                this.Monitor.Log($"Couldn't grant the Cursed VHS item. {ex}", LogLevel.Error);
+                return;
+            }
+        }
+
+        Game1.player.modData[ModIdentity.CursedVhsGrantedKey] = "true";
+
+        if (showDialogue)
+        {
+            Game1.drawObjectDialogue(
+                "Bạn nhặt được một cuộn VHS không nhãn.^Ai đó đã vẽ một lưới 9×9 lên mặt băng."
+            );
+        }
     }
 
     private void CancelSequence()
     {
         this.ResetSequenceState();
-        this.Monitor.Log("Sudoku's TV arrival sequence was cancelled because the player left the farmhouse.", LogLevel.Trace);
+        this.Monitor.Log(
+            "Sudoku's TV arrival sequence was cancelled because the player left the farmhouse.",
+            LogLevel.Trace
+        );
     }
 
     private void ResetSequenceState()
@@ -392,12 +548,15 @@ internal sealed class ModEntry : Mod
 
     private NPC? FindSudoku(bool currentLocationOnly)
     {
-        IEnumerable<NPC> candidates = Utility.getAllCharacters().Where(p => ModIdentity.IsSudokuNpcId(p.Name));
+        IEnumerable<NPC> candidates = Utility.getAllCharacters()
+            .Where(p => ModIdentity.IsSudokuNpcId(p.Name));
 
         if (currentLocationOnly)
             candidates = candidates.Where(p => p.currentLocation == Game1.currentLocation);
 
-        return candidates.OrderBy(p => p.Name == ModIdentity.SudokuNpcId ? 0 : 1).FirstOrDefault();
+        return candidates
+            .OrderBy(p => p.Name == ModIdentity.SudokuNpcId ? 0 : 1)
+            .FirstOrDefault();
     }
 
     private void SyncNpcIdentityFlag()
@@ -441,7 +600,10 @@ internal sealed class ModEntry : Mod
         SudokuPuzzle? puzzle = this.dailySudoku.EnsureToday();
         if (puzzle is null)
         {
-            this.Monitor.Log("Couldn't open Daily Sudoku because no valid puzzle was available.", LogLevel.Error);
+            this.Monitor.Log(
+                "Couldn't open Daily Sudoku because no valid puzzle was available.",
+                LogLevel.Error
+            );
             return;
         }
 
@@ -455,6 +617,7 @@ internal sealed class ModEntry : Mod
             this.Monitor.Log("Load a save before using sudoku_open.", LogLevel.Warn);
             return;
         }
+
         this.OpenDailySudoku(force: true);
     }
 
@@ -468,7 +631,22 @@ internal sealed class ModEntry : Mod
 
         this.dailySudoku.ResetTodayForTesting();
         SudokuPuzzle? puzzle = this.dailySudoku.EnsureToday();
-        this.Monitor.Log($"Today's Sudoku reset. Current puzzle={puzzle?.Id ?? "none"}.", LogLevel.Info);
+        this.Monitor.Log(
+            $"Today's Sudoku reset. Current puzzle={puzzle?.Id ?? "none"}.",
+            LogLevel.Info
+        );
+    }
+
+    private void OnGiveVhsCommand(string command, string[] args)
+    {
+        if (!Context.IsWorldReady)
+        {
+            this.Monitor.Log("Load a save before using cursedsignal_givevhs.", LogLevel.Warn);
+            return;
+        }
+
+        Game1.player.modData.Remove(ModIdentity.CursedVhsGrantedKey);
+        this.EnsureCursedVhsGranted(showDialogue: true);
     }
 
     private void OnTestArrivalCommand(string command, string[] args)
@@ -478,11 +656,13 @@ internal sealed class ModEntry : Mod
             this.Monitor.Log("Load a save before using sudoku_testarrival.", LogLevel.Warn);
             return;
         }
+
         if (Game1.currentLocation is not FarmHouse)
         {
             this.Monitor.Log("Enter the farmhouse before using sudoku_testarrival.", LogLevel.Warn);
             return;
         }
+
         this.TryStartArrival(force: true);
     }
 
@@ -497,7 +677,7 @@ internal sealed class ModEntry : Mod
         this.CancelSequence();
         ModIdentity.ClearArrivalFlags(Game1.player);
         this.Monitor.Log(
-            "Sudoku arrival flags cleared in both the Cursed Signal and legacy prototype keyspaces. Existing NPC instances are intentionally left alone.",
+            "Sudoku arrival/VHS flags cleared in the Cursed Signal and legacy prototype keyspaces. Existing NPC/item instances are intentionally left alone.",
             LogLevel.Info
         );
     }
@@ -512,6 +692,8 @@ internal sealed class ModEntry : Mod
 
         Game1.player.modData[ModIdentity.ArrivalSeenKey] = "true";
         Game1.player.modData[ModIdentity.SudokuNpcEnabledKey] = "true";
+        this.EnsureCursedVhsGranted(showDialogue: false);
+
         this.Monitor.Log(
             "Sudoku unlock flags set under ronvotri.CursedSignal. Save/reload or sleep to the next day to let Data/Characters add her.",
             LogLevel.Info
@@ -530,10 +712,15 @@ internal sealed class ModEntry : Mod
         NPC? sudoku = this.FindSudoku(currentLocationOnly: false);
         bool dailyClaimed = this.dailySudoku?.IsRewardClaimedToday() ?? false;
         SudokuPuzzle? dailyPuzzle = this.dailySudoku?.EnsureToday();
-        bool npcEnabled = Game1.player.modData.TryGetValue(ModIdentity.SudokuNpcEnabledKey, out string? enabled) && enabled == "true";
+        bool npcEnabled =
+            Game1.player.modData.TryGetValue(ModIdentity.SudokuNpcEnabledKey, out string? enabled)
+            && enabled == "true";
+        bool vhsGranted =
+            Game1.player.modData.TryGetValue(ModIdentity.CursedVhsGrantedKey, out string? vhs)
+            && vhs == "true";
 
         this.Monitor.Log(
-            $"Sudoku status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcPresent={sudoku is not null}, npcId={sudoku?.Name ?? "none"}, sequenceActive={this.sequenceActive}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
+            $"Sudoku status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcPresent={sudoku is not null}, npcId={sudoku?.Name ?? "none"}, vhsGranted={vhsGranted}, sequenceActive={this.sequenceActive}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
             LogLevel.Info
         );
     }

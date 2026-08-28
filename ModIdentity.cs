@@ -15,6 +15,11 @@ internal static class ModIdentity
     public const string LegacyArrivalSeenKey = LegacyUniqueId + "/SudokuArrivalSeen";
     public const string SudokuNpcEnabledKey = UniqueId + "/SudokuNpcEnabled";
 
+    public const string CursedVhsItemId = UniqueId + "_CursedVHS";
+    public const string CursedVhsQualifiedItemId = "(O)" + CursedVhsItemId;
+    public const string CursedVhsGrantedKey = UniqueId + "/CursedVHSGranted";
+    public const string ItemTextureAsset = "Mods/" + UniqueId + "/Items";
+
     public const string DailySudokuPrefix = UniqueId + "/DailySudoku/";
     public const string LegacyDailySudokuPrefix = LegacyUniqueId + "/DailySudoku/";
 
@@ -81,5 +86,6 @@ internal static class ModIdentity
         player.modData.Remove(ArrivalSeenKey);
         player.modData.Remove(LegacyArrivalSeenKey);
         player.modData.Remove(SudokuNpcEnabledKey);
+        player.modData.Remove(CursedVhsGrantedKey);
     }
 }
