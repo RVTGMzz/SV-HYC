@@ -120,6 +120,15 @@ internal sealed class DailySudokuService
             && claimedDay == day;
     }
 
+    public int GetSolvedCount()
+    {
+        ModIdentity.MigrateLegacyPlayerData(Game1.player);
+        return ModIdentity.GetSudokuSolvedCount(Game1.player);
+    }
+
+    /// <summary>
+    /// Claims today's reward and returns a player-facing description, or null if the reward couldn't be claimed.
+    /// </summary>
     public string? ClaimReward(SudokuPuzzle puzzle)
     {
         if (!this.IsSolved(puzzle) || this.IsRewardClaimedToday())
@@ -159,9 +168,10 @@ internal sealed class DailySudokuService
         }
 
         Game1.player.modData[ClaimedDayKey] = Game1.Date.TotalDays.ToString();
+        int solvedCount = ModIdentity.IncrementSudokuSolvedCount(Game1.player);
 
         this.monitor.Log(
-            $"Daily Sudoku solved: {puzzle.Id} ({puzzle.Difficulty}), reward={rewardDescription}.",
+            $"Daily Sudoku solved: {puzzle.Id} ({puzzle.Difficulty}), reward={rewardDescription}, totalSolved={solvedCount}.",
             LogLevel.Info
         );
 
@@ -173,7 +183,12 @@ internal sealed class DailySudokuService
         string[] suffixes = { "Day", "PuzzleId", "Board", "ClaimedDay" };
 
         foreach (string suffix in suffixes)
+        {
             Game1.player.modData.Remove(ModIdentity.DailySudokuPrefix + suffix);
+        }
+
+        // Reset the day's full portrait conversation too, but keep lifetime solve progress.
+        Game1.player.modData.Remove(ModIdentity.DailyDialogueDayKey);
     }
 
     private SudokuPuzzle SelectPuzzleForToday(int day)
