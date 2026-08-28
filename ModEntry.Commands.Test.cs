@@ -36,13 +36,13 @@ internal sealed partial class ModEntry
     {
         if (!Context.IsWorldReady)
         {
-            this.Monitor.Log("Load a save before using sudoku_testarrival.", LogLevel.Warn);
+            this.Monitor.Log("Load a save before using heyyourecursed_testarrival.", LogLevel.Warn);
             return;
         }
 
         if (Game1.currentLocation is not FarmHouse)
         {
-            this.Monitor.Log("Enter the farmhouse before using sudoku_testarrival.", LogLevel.Warn);
+            this.Monitor.Log("Enter the farmhouse before using heyyourecursed_testarrival.", LogLevel.Warn);
             return;
         }
 
@@ -53,7 +53,7 @@ internal sealed partial class ModEntry
     {
         if (!Context.IsWorldReady)
         {
-            this.Monitor.Log("Load a save before using sudoku_resetarrival.", LogLevel.Warn);
+            this.Monitor.Log("Load a save before using heyyourecursed_resetarrival.", LogLevel.Warn);
             return;
         }
 
@@ -76,7 +76,7 @@ internal sealed partial class ModEntry
     {
         if (!Context.IsWorldReady)
         {
-            this.Monitor.Log("Load a save before using sudoku_unlocknpc.", LogLevel.Warn);
+            this.Monitor.Log("Load a save before using heyyourecursed_unlocknpc.", LogLevel.Warn);
             return;
         }
 
