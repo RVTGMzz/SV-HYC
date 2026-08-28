@@ -13,6 +13,7 @@ internal static class ModIdentity
 
     public const string ArrivalSeenKey = UniqueId + "/SudokuArrivalSeen";
     public const string LegacyArrivalSeenKey = LegacyUniqueId + "/SudokuArrivalSeen";
+    public const string SudokuNpcEnabledKey = UniqueId + "/SudokuNpcEnabled";
 
     public const string DailySudokuPrefix = UniqueId + "/DailySudoku/";
     public const string LegacyDailySudokuPrefix = LegacyUniqueId + "/DailySudoku/";
@@ -79,5 +80,6 @@ internal static class ModIdentity
     {
         player.modData.Remove(ArrivalSeenKey);
         player.modData.Remove(LegacyArrivalSeenKey);
+        player.modData.Remove(SudokuNpcEnabledKey);
     }
 }
