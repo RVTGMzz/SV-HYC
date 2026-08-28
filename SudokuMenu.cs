@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
 
@@ -16,6 +17,9 @@ internal sealed class SudokuMenu : IClickableMenu
 
     private int selectedRow;
     private int selectedColumn;
+    private bool controllerModeSeen;
+    private bool numberPickerOpen;
+    private int numberPickerValue = 1;
     private string statusText = "Chọn một ô trống, rồi điền số 1–9.";
 
     public SudokuMenu(DailySudokuService service, SudokuPuzzle puzzle)
@@ -37,6 +41,9 @@ internal sealed class SudokuMenu : IClickableMenu
 
     public override void receiveLeftClick(int x, int y, bool playSound = true)
     {
+        this.controllerModeSeen = false;
+        this.numberPickerOpen = false;
+
         base.receiveLeftClick(x, y, playSound);
 
         if (Game1.activeClickableMenu != this)
@@ -90,6 +97,9 @@ internal sealed class SudokuMenu : IClickableMenu
 
     public override void receiveKeyPress(Keys key)
     {
+        this.controllerModeSeen = false;
+        this.numberPickerOpen = false;
+
         if (key == Keys.Escape)
         {
             this.exitThisMenu();
@@ -137,41 +147,93 @@ internal sealed class SudokuMenu : IClickableMenu
         base.receiveKeyPress(key);
     }
 
-    public override void receiveGamePadButton(Buttons button)
+    /// <summary>
+    /// Handle controller input through SMAPI. This is the primary controller path because it
+    /// works even when Stardew doesn't forward a particular gamepad button to receiveGamePadButton.
+    /// </summary>
+    internal bool HandleSmapiInput(SButton button)
     {
+        bool isControllerInput = button is
+            SButton.ControllerA or SButton.ControllerB or SButton.ControllerX or SButton.ControllerY
+            or SButton.DPadLeft or SButton.DPadRight or SButton.DPadUp or SButton.DPadDown
+            or SButton.LeftThumbstickLeft or SButton.LeftThumbstickRight or SButton.LeftThumbstickUp or SButton.LeftThumbstickDown
+            or SButton.LeftShoulder or SButton.RightShoulder
+            or SButton.LeftTrigger or SButton.RightTrigger
+            or SButton.ControllerStart;
+
+        if (!isControllerInput)
+            return false;
+
+        this.controllerModeSeen = true;
+
+        if (this.numberPickerOpen)
+            return this.HandleNumberPickerInput(button);
+
         switch (button)
         {
-            case Buttons.DPadLeft:
+            case SButton.DPadLeft:
+            case SButton.LeftThumbstickLeft:
                 this.MoveSelection(0, -1);
-                return;
-            case Buttons.DPadRight:
+                return true;
+            case SButton.DPadRight:
+            case SButton.LeftThumbstickRight:
                 this.MoveSelection(0, 1);
-                return;
-            case Buttons.DPadUp:
+                return true;
+            case SButton.DPadUp:
+            case SButton.LeftThumbstickUp:
                 this.MoveSelection(-1, 0);
-                return;
-            case Buttons.DPadDown:
+                return true;
+            case SButton.DPadDown:
+            case SButton.LeftThumbstickDown:
                 this.MoveSelection(1, 0);
-                return;
-            case Buttons.A:
-                this.CycleSelectedCell(1);
-                return;
-            case Buttons.X:
+                return true;
+            case SButton.ControllerA:
+                this.OpenNumberPicker();
+                return true;
+            case SButton.ControllerX:
                 this.EnterNumber(0);
-                return;
-            case Buttons.Y:
+                return true;
+            case SButton.ControllerY:
+            case SButton.ControllerStart:
                 this.CheckBoard();
-                return;
-            case Buttons.B:
+                return true;
+            case SButton.LeftShoulder:
+            case SButton.LeftTrigger:
+                this.MoveToNextEditable(-1);
+                return true;
+            case SButton.RightShoulder:
+            case SButton.RightTrigger:
+                this.MoveToNextEditable(1);
+                return true;
+            case SButton.ControllerB:
                 this.exitThisMenu();
-                return;
-            case Buttons.LeftShoulder:
-                this.CycleSelectedCell(-1);
-                return;
-            case Buttons.RightShoulder:
-                this.CycleSelectedCell(1);
-                return;
+                return true;
         }
+
+        return false;
+    }
+
+    public override void receiveGamePadButton(Buttons button)
+    {
+        // Fallback for gamepad paths that bypass SMAPI's ButtonPressed event.
+        SButton? mapped = button switch
+        {
+            Buttons.DPadLeft => SButton.DPadLeft,
+            Buttons.DPadRight => SButton.DPadRight,
+            Buttons.DPadUp => SButton.DPadUp,
+            Buttons.DPadDown => SButton.DPadDown,
+            Buttons.A => SButton.ControllerA,
+            Buttons.B => SButton.ControllerB,
+            Buttons.X => SButton.ControllerX,
+            Buttons.Y => SButton.ControllerY,
+            Buttons.LeftShoulder => SButton.LeftShoulder,
+            Buttons.RightShoulder => SButton.RightShoulder,
+            Buttons.Start => SButton.ControllerStart,
+            _ => null
+        };
+
+        if (mapped.HasValue && this.HandleSmapiInput(mapped.Value))
+            return;
 
         base.receiveGamePadButton(button);
     }
@@ -184,7 +246,12 @@ internal sealed class SudokuMenu : IClickableMenu
             new Color(18, 24, 34) * 0.96f
         );
 
-        this.DrawBorder(b, new Rectangle(this.xPositionOnScreen, this.yPositionOnScreen, this.width, this.height), 4, new Color(95, 125, 148));
+        this.DrawBorder(
+            b,
+            new Rectangle(this.xPositionOnScreen, this.yPositionOnScreen, this.width, this.height),
+            4,
+            new Color(95, 125, 148)
+        );
 
         string title = "SUDOKU — BẢNG MỖI NGÀY";
         Vector2 titleSize = Game1.dialogueFont.MeasureString(title);
@@ -207,11 +274,25 @@ internal sealed class SudokuMenu : IClickableMenu
         this.DrawGrid(b);
         this.DrawNumberButtons(b);
 
+        string hint = this.controllerModeSeen
+            ? this.numberPickerOpen
+                ? "←/→: chọn số   A: điền   X: xóa   B: hủy"
+                : "D-pad/LS: di chuyển   A: chọn số   X: xóa   Y: kiểm tra   B: đóng"
+            : "Chuột: chọn ô/số   1–9: điền   Delete: xóa   Enter: kiểm tra";
+
+        Vector2 hintSize = Game1.smallFont.MeasureString(hint);
+        b.DrawString(
+            Game1.smallFont,
+            hint,
+            new Vector2(this.xPositionOnScreen + (this.width - hintSize.X) / 2, this.yPositionOnScreen + this.height - 66),
+            new Color(145, 170, 188)
+        );
+
         Vector2 statusSize = Game1.smallFont.MeasureString(this.statusText);
         b.DrawString(
             Game1.smallFont,
             this.statusText,
-            new Vector2(this.xPositionOnScreen + (this.width - statusSize.X) / 2, this.yPositionOnScreen + this.height - 42),
+            new Vector2(this.xPositionOnScreen + (this.width - statusSize.X) / 2, this.yPositionOnScreen + this.height - 38),
             new Color(205, 215, 225)
         );
 
@@ -222,6 +303,7 @@ internal sealed class SudokuMenu : IClickableMenu
     private void DrawGrid(SpriteBatch b)
     {
         string board = this.service.GetBoard(this.puzzle);
+        char selectedValue = board[this.selectedRow * 9 + this.selectedColumn];
 
         for (int row = 0; row < 9; row++)
         {
@@ -230,6 +312,9 @@ internal sealed class SudokuMenu : IClickableMenu
                 int index = row * 9 + col;
                 bool given = this.puzzle.Puzzle[index] != '0';
                 bool selected = row == this.selectedRow && col == this.selectedColumn;
+                bool sameBox = row / 3 == this.selectedRow / 3 && col / 3 == this.selectedColumn / 3;
+                bool peer = row == this.selectedRow || col == this.selectedColumn || sameBox;
+                bool sameValue = selectedValue != '0' && board[index] == selectedValue;
 
                 Rectangle cell = new(
                     this.GridX + col * CellSize,
@@ -242,8 +327,14 @@ internal sealed class SudokuMenu : IClickableMenu
                     ? new Color(45, 57, 70)
                     : new Color(28, 38, 50);
 
+                if (peer)
+                    fill = given ? new Color(53, 67, 80) : new Color(34, 47, 60);
+
+                if (sameValue)
+                    fill = given ? new Color(64, 82, 96) : new Color(48, 67, 82);
+
                 if (selected)
-                    fill = new Color(78, 102, 122);
+                    fill = new Color(88, 118, 142);
 
                 b.Draw(Game1.staminaRect, cell, fill);
 
@@ -271,8 +362,16 @@ internal sealed class SudokuMenu : IClickableMenu
             int thickness = i % 3 == 0 ? 4 : 1;
             Color line = i % 3 == 0 ? new Color(185, 205, 218) : new Color(92, 112, 128);
 
-            b.Draw(Game1.staminaRect, new Rectangle(this.GridX + i * CellSize - thickness / 2, this.GridY, thickness, GridSize), line);
-            b.Draw(Game1.staminaRect, new Rectangle(this.GridX, this.GridY + i * CellSize - thickness / 2, GridSize, thickness), line);
+            b.Draw(
+                Game1.staminaRect,
+                new Rectangle(this.GridX + i * CellSize - thickness / 2, this.GridY, thickness, GridSize),
+                line
+            );
+            b.Draw(
+                Game1.staminaRect,
+                new Rectangle(this.GridX, this.GridY + i * CellSize - thickness / 2, GridSize, thickness),
+                line
+            );
         }
     }
 
@@ -287,12 +386,21 @@ internal sealed class SudokuMenu : IClickableMenu
         for (int n = 1; n <= 9; n++)
         {
             Rectangle rect = new(startX + (n - 1) * (buttonSize + gap), numberY, buttonSize, buttonSize);
-            b.Draw(Game1.staminaRect, rect, new Color(49, 67, 82));
-            this.DrawBorder(b, rect, 2, new Color(105, 135, 158));
+            bool pickerSelected = this.numberPickerOpen && n == this.numberPickerValue;
+            Color fill = pickerSelected ? new Color(86, 118, 143) : new Color(49, 67, 82);
+            Color border = pickerSelected ? new Color(225, 235, 242) : new Color(105, 135, 158);
+
+            b.Draw(Game1.staminaRect, rect, fill);
+            this.DrawBorder(b, rect, pickerSelected ? 4 : 2, border);
 
             string text = n.ToString();
             Vector2 size = Game1.smallFont.MeasureString(text);
-            b.DrawString(Game1.smallFont, text, new Vector2(rect.Center.X - size.X / 2, rect.Center.Y - size.Y / 2), Color.White);
+            b.DrawString(
+                Game1.smallFont,
+                text,
+                new Vector2(rect.Center.X - size.X / 2, rect.Center.Y - size.Y / 2),
+                Color.White
+            );
         }
 
         Rectangle clearRect = new(this.xPositionOnScreen + 72, numberY + 58, 145, 46);
@@ -306,7 +414,12 @@ internal sealed class SudokuMenu : IClickableMenu
         b.Draw(Game1.staminaRect, rect, new Color(49, 67, 82));
         this.DrawBorder(b, rect, 2, new Color(120, 150, 170));
         Vector2 size = Game1.smallFont.MeasureString(text);
-        b.DrawString(Game1.smallFont, text, new Vector2(rect.Center.X - size.X / 2, rect.Center.Y - size.Y / 2), Color.White);
+        b.DrawString(
+            Game1.smallFont,
+            text,
+            new Vector2(rect.Center.X - size.X / 2, rect.Center.Y - size.Y / 2),
+            Color.White
+        );
     }
 
     private void DrawBorder(SpriteBatch b, Rectangle rect, int thickness, Color color)
@@ -354,28 +467,105 @@ internal sealed class SudokuMenu : IClickableMenu
         }
     }
 
-    private void MoveSelection(int rowDelta, int colDelta)
-    {
-        this.selectedRow = (this.selectedRow + rowDelta + 9) % 9;
-        this.selectedColumn = (this.selectedColumn + colDelta + 9) % 9;
-        Game1.playSound("shiny4");
-    }
-
-    private void CycleSelectedCell(int delta)
+    private void OpenNumberPicker()
     {
         int index = this.selectedRow * 9 + this.selectedColumn;
         if (this.puzzle.Puzzle[index] != '0')
         {
+            this.statusText = "Ô này là đề bài. Hãy chọn một ô trống.";
             Game1.playSound("cancel");
             return;
         }
 
         string board = this.service.GetBoard(this.puzzle);
-        int current = board[index] == '0' ? 0 : board[index] - '0';
-        int next = current + delta;
-        if (next > 9) next = 0;
-        if (next < 0) next = 9;
-        this.EnterNumber(next);
+        char current = board[index];
+        this.numberPickerValue = current is >= '1' and <= '9' ? current - '0' : 1;
+        this.numberPickerOpen = true;
+        this.statusText = "Chọn số bằng trái/phải rồi nhấn A.";
+        Game1.playSound("smallSelect");
+    }
+
+    private bool HandleNumberPickerInput(SButton button)
+    {
+        switch (button)
+        {
+            case SButton.DPadLeft:
+            case SButton.LeftThumbstickLeft:
+            case SButton.LeftShoulder:
+            case SButton.LeftTrigger:
+                this.ChangePicker(-1);
+                return true;
+            case SButton.DPadRight:
+            case SButton.LeftThumbstickRight:
+            case SButton.RightShoulder:
+            case SButton.RightTrigger:
+                this.ChangePicker(1);
+                return true;
+            case SButton.ControllerA:
+                this.EnterNumber(this.numberPickerValue);
+                this.numberPickerOpen = false;
+                return true;
+            case SButton.ControllerX:
+                this.EnterNumber(0);
+                this.numberPickerOpen = false;
+                return true;
+            case SButton.ControllerB:
+                this.numberPickerOpen = false;
+                this.statusText = "Đã hủy chọn số.";
+                Game1.playSound("cancel");
+                return true;
+            case SButton.DPadUp:
+            case SButton.LeftThumbstickUp:
+                this.ChangePicker(-1);
+                return true;
+            case SButton.DPadDown:
+            case SButton.LeftThumbstickDown:
+                this.ChangePicker(1);
+                return true;
+        }
+
+        return true;
+    }
+
+    private void ChangePicker(int delta)
+    {
+        this.numberPickerValue += delta;
+        if (this.numberPickerValue > 9)
+            this.numberPickerValue = 1;
+        else if (this.numberPickerValue < 1)
+            this.numberPickerValue = 9;
+
+        Game1.playSound("shiny4");
+    }
+
+    private void MoveSelection(int rowDelta, int colDelta)
+    {
+        this.numberPickerOpen = false;
+        this.selectedRow = (this.selectedRow + rowDelta + 9) % 9;
+        this.selectedColumn = (this.selectedColumn + colDelta + 9) % 9;
+        this.statusText = "Chọn ô. Nhấn A để chọn số.";
+        Game1.playSound("shiny4");
+    }
+
+    private void MoveToNextEditable(int delta)
+    {
+        int start = this.selectedRow * 9 + this.selectedColumn;
+        for (int step = 1; step <= 81; step++)
+        {
+            int index = (start + delta * step) % 81;
+            if (index < 0)
+                index += 81;
+
+            if (this.puzzle.Puzzle[index] == '0')
+            {
+                this.selectedRow = index / 9;
+                this.selectedColumn = index % 9;
+                this.numberPickerOpen = false;
+                this.statusText = "Đã nhảy tới ô trống kế tiếp.";
+                Game1.playSound("shiny4");
+                return;
+            }
+        }
     }
 
     private void SelectFirstEditableCell()
