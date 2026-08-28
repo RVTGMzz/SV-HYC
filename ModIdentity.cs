@@ -1,19 +1,21 @@
 using StardewValley;
 
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
-/// <summary>Central identity constants plus one-way compatibility helpers for pre-Cursed Signal prototype saves.</summary>
+/// <summary>Stable identity constants for Hey! You're Cursed!, with migration from early prototype IDs.</summary>
 internal static class ModIdentity
 {
-    public const string UniqueId = "ronvotri.CursedSignal";
-    public const string LegacyUniqueId = "ronvotri.chuyentamlinhkoduaduocdau";
+    public const string UniqueId = "ronvotri.HeyYoureCursed";
+    public const string LegacyUniqueId = "ronvotri.CursedSignal";
+    public const string OlderLegacyUniqueId = "ronvotri.chuyentamlinhkoduaduocdau";
 
     public const string SudokuNpcId = UniqueId + "_Sudoku";
     public const string LegacySudokuNpcId = LegacyUniqueId + "_Sudoku";
+    public const string OlderLegacySudokuNpcId = OlderLegacyUniqueId + "_Sudoku";
 
     public const string ArrivalSeenKey = UniqueId + "/SudokuArrivalSeen";
-    public const string LegacyArrivalSeenKey = LegacyUniqueId + "/SudokuArrivalSeen";
     public const string SudokuNpcEnabledKey = UniqueId + "/SudokuNpcEnabled";
+    public const string FirstConversationCompletedKey = UniqueId + "/FirstConversationCompleted";
 
     public const string CursedVhsItemId = UniqueId + "_CursedVHS";
     public const string CursedVhsQualifiedItemId = "(O)" + CursedVhsItemId;
@@ -23,7 +25,12 @@ internal static class ModIdentity
     public const string ItemTextureAsset = "Mods/" + UniqueId + "/Items";
 
     public const string DailySudokuPrefix = UniqueId + "/DailySudoku/";
-    public const string LegacyDailySudokuPrefix = LegacyUniqueId + "/DailySudoku/";
+
+    private static readonly string[] LegacyPrefixes =
+    {
+        LegacyUniqueId,
+        OlderLegacyUniqueId
+    };
 
     private static readonly string[] DailySudokuSuffixes =
     {
@@ -35,7 +42,9 @@ internal static class ModIdentity
 
     public static bool IsSudokuNpcId(string? name)
     {
-        return name == SudokuNpcId || name == LegacySudokuNpcId;
+        return name == SudokuNpcId
+            || name == LegacySudokuNpcId
+            || name == OlderLegacySudokuNpcId;
     }
 
     public static bool HasArrivalBeenSeen(Farmer player)
@@ -43,10 +52,14 @@ internal static class ModIdentity
         if (player.modData.TryGetValue(ArrivalSeenKey, out string? current) && current == "true")
             return true;
 
-        if (player.modData.TryGetValue(LegacyArrivalSeenKey, out string? legacy) && legacy == "true")
+        foreach (string legacyPrefix in LegacyPrefixes)
         {
-            player.modData[ArrivalSeenKey] = "true";
-            return true;
+            string key = legacyPrefix + "/SudokuArrivalSeen";
+            if (player.modData.TryGetValue(key, out string? value) && value == "true")
+            {
+                player.modData[ArrivalSeenKey] = "true";
+                return true;
+            }
         }
 
         return false;
@@ -55,28 +68,59 @@ internal static class ModIdentity
     public static int MigrateLegacyPlayerData(Farmer player)
     {
         int migrated = 0;
-
-        if (!player.modData.ContainsKey(ArrivalSeenKey)
-            && player.modData.TryGetValue(LegacyArrivalSeenKey, out string? arrival))
+        string[] scalarSuffixes =
         {
-            player.modData[ArrivalSeenKey] = arrival;
-            migrated++;
+            "SudokuArrivalSeen",
+            "SudokuNpcEnabled",
+            "FirstConversationCompleted",
+            "CursedVHSGranted",
+            "CursedVHSInstalled",
+            "DailySignalDay"
+        };
+
+        foreach (string suffix in scalarSuffixes)
+        {
+            string newKey = UniqueId + "/" + suffix;
+            if (player.modData.ContainsKey(newKey))
+                continue;
+
+            foreach (string legacyPrefix in LegacyPrefixes)
+            {
+                string oldKey = legacyPrefix + "/" + suffix;
+                if (player.modData.TryGetValue(oldKey, out string? value))
+                {
+                    player.modData[newKey] = value;
+                    migrated++;
+                    break;
+                }
+            }
         }
 
         foreach (string suffix in DailySudokuSuffixes)
         {
             string newKey = DailySudokuPrefix + suffix;
-            string oldKey = LegacyDailySudokuPrefix + suffix;
+            if (player.modData.ContainsKey(newKey))
+                continue;
 
-            if (!player.modData.ContainsKey(newKey)
-                && player.modData.TryGetValue(oldKey, out string? value))
+            foreach (string legacyPrefix in LegacyPrefixes)
             {
-                player.modData[newKey] = value;
-                migrated++;
+                string oldKey = legacyPrefix + "/DailySudoku/" + suffix;
+                if (player.modData.TryGetValue(oldKey, out string? value))
+                {
+                    player.modData[newKey] = value;
+                    migrated++;
+                    break;
+                }
             }
         }
 
         return migrated;
+    }
+
+    public static bool HasFirstConversationCompleted(Farmer player)
+    {
+        return player.modData.TryGetValue(FirstConversationCompletedKey, out string? value)
+            && value == "true";
     }
 
     public static bool IsCursedVhsInstalled(Farmer player)
@@ -100,11 +144,21 @@ internal static class ModIdentity
 
     public static void ClearArrivalFlags(Farmer player)
     {
-        player.modData.Remove(ArrivalSeenKey);
-        player.modData.Remove(LegacyArrivalSeenKey);
-        player.modData.Remove(SudokuNpcEnabledKey);
-        player.modData.Remove(CursedVhsGrantedKey);
-        player.modData.Remove(CursedVhsInstalledKey);
-        player.modData.Remove(DailySignalDayKey);
+        string[] suffixes =
+        {
+            "SudokuArrivalSeen",
+            "SudokuNpcEnabled",
+            "FirstConversationCompleted",
+            "CursedVHSGranted",
+            "CursedVHSInstalled",
+            "DailySignalDay"
+        };
+
+        foreach (string suffix in suffixes)
+        {
+            player.modData.Remove(UniqueId + "/" + suffix);
+            foreach (string legacyPrefix in LegacyPrefixes)
+                player.modData.Remove(legacyPrefix + "/" + suffix);
+        }
     }
 }
