@@ -1,16 +1,14 @@
-# Hey! You’re Cursed! — v0.0.6-alpha.10
+# Hey! You’re Cursed! — v0.0.6-alpha.11
 
 A paranormal Stardew Valley mod about a cursed VHS, Sudoku, and a ghost who treats your farmhouse like a very inconvenient address.
 
-## alpha.10 — Direct NPC → Sudoku menu
+## alpha.11 — Reliable NPC interaction + ghost visual pass
 
-The direct `heyyourecursed_open` command proved the custom Sudoku menu itself is healthy. The normal NPC flow no longer relies on a fragile extra question-dialogue handoff.
-
-- The one-time introduction still has two-way dialogue.
-- After the pencil/hoe reply, the intro ends and the first board is queued immediately.
-- The redundant third `Đưa đây.` question layer was removed.
-- After the introduction is complete, interacting with Sudoku opens today’s Sudoku board directly.
-- Controller-first controls from alpha.8 remain intact.
+- Old test saves which already reached day 2 with the cursed-TV arrival completed automatically recover the missing intro-complete flag, so talking to Sudoku opens the daily board.
+- Controller A is accepted explicitly as an action input.
+- NPC targeting now uses a short facing cone instead of an overly strict exact-tile comparison. Mouse targeting stays tight so clicks on the TV beside Sudoku still belong to the TV.
+- After the intro, interacting with Sudoku always opens today’s Sudoku board, even if today’s reward was already claimed; duplicate rewards remain blocked by the puzzle service.
+- Sudoku’s world sprite is 85% opaque and shifted upward by one source pixel (about four screen pixels at normal scale). Her shadow remains disabled, so she reads as slightly translucent and hovering instead of planted on the floor.
 
 ## Controller layout
 
