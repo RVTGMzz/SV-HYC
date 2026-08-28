@@ -1,8 +1,8 @@
 {
-  "Name": "Cursed Signal",
+  "Name": "Hey! You’re Cursed!",
   "Author": "ronvotri",
   "Version": "0.0.6-alpha.2",
-  "Description": "A paranormal Stardew Valley mod about a VHS tape installed in your TV, a stabilized daily 8 AM cursed signal, Sudoku, and a ghost who materializes beside you.",
+  "Description": "A paranormal Stardew Valley mod about a cursed VHS, a ghost who materializes from your TV, awkward conversations, and daily Sudoku.",
   "UniqueID": "ronvotri.CursedSignal",
   "EntryDll": "CursedSignal.dll",
   "MinimumApiVersion": "4.0.0",
