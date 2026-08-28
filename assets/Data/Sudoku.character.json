@@ -1,5 +1,5 @@
 {
-  "ronvotri.chuyentamlinhkoduaduocdau_Sudoku": {
+  "ronvotri.CursedSignal_Sudoku": {
     "DisplayName": "Sudoku",
     "Gender": "Female",
     "Age": "Adult",
@@ -13,12 +13,12 @@
     "PerfectionScore": false,
     "Calendar": "HiddenAlways",
     "SocialTab": "HiddenUntilMet",
-    "TextureName": "ronvotri.chuyentamlinhkoduaduocdau_Sudoku",
+    "TextureName": "ronvotri.CursedSignal_Sudoku",
     "Breather": false,
     "Shadow": {
       "Visible": false
     },
-    "UnlockConditions": "PLAYER_MOD_DATA Current ronvotri.chuyentamlinhkoduaduocdau/SudokuArrivalSeen true",
+    "UnlockConditions": "PLAYER_MOD_DATA Current ronvotri.CursedSignal/SudokuArrivalSeen true",
     "SpawnIfMissing": true,
     "Home": [
       {
