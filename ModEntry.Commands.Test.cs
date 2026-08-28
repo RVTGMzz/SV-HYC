@@ -6,8 +6,10 @@ using StardewValley;
 using StardewValley.GameData.Characters;
 using StardewValley.GameData.Objects;
 using StardewValley.Locations;
+using StardewValley.Menus;
+using StardewValley.Objects;
 
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
@@ -15,7 +17,7 @@ internal sealed partial class ModEntry
     {
         if (!Context.IsWorldReady)
         {
-            this.Monitor.Log("Load a save before using cursedsignal_givevhs.", LogLevel.Warn);
+            this.Monitor.Log("Load a save before using heyyourecursed_givevhs.", LogLevel.Warn);
             return;
         }
 
@@ -62,7 +64,6 @@ internal sealed partial class ModEntry
 
         ModIdentity.ClearArrivalFlags(Game1.player);
         this.dailySudoku?.ResetTodayForTesting();
-
         this.EnsureCursedVhsGranted(showDialogue: false);
 
         this.Monitor.Log(
@@ -119,7 +120,7 @@ internal sealed partial class ModEntry
         string npcInvisible = sudoku is null ? "n/a" : sudoku.IsInvisible.ToString();
 
         this.Monitor.Log(
-            $"Cursed Signal core status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcCount={allSudoku.Count}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, npcInvisible={npcInvisible}, vhsGranted={vhsGranted}, vhsInstalled={vhsInstalled}, vhsInventoryCount={vhsInventoryCount}, signalRanToday={signalRanToday}, sequenceActive={this.sequenceActive}, firstSequence={this.sequenceIsFirstArrival}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
+            $"Hey! You’re Cursed! core status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcCount={allSudoku.Count}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, npcInvisible={npcInvisible}, vhsGranted={vhsGranted}, vhsInstalled={vhsInstalled}, vhsInventoryCount={vhsInventoryCount}, signalRanToday={signalRanToday}, sequenceActive={this.sequenceActive}, firstSequence={this.sequenceIsFirstArrival}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, pendingSudokuMenu={this.pendingSudokuMenuOpen}, activeMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
             LogLevel.Info
         );
     }
