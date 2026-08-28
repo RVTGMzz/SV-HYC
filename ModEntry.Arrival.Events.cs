@@ -49,6 +49,22 @@ internal sealed partial class ModEntry
         if (this.elapsedTicks == 1)
             Game1.playSound("ghost");
 
+        // After the first arrival, the VHS only needs a short burst of static/glitch each morning.
+        // Replaying the full well + crawl scene every day would become intrusive very quickly.
+        if (!this.sequenceIsFirstArrival)
+        {
+            int repeatStaticEnd = Math.Max(1, this.Config.RepeatStaticTicks);
+            int repeatEnd = repeatStaticEnd + Math.Max(1, this.Config.RepeatGlitchTicks);
+
+            if (this.elapsedTicks == repeatStaticEnd)
+                Game1.playSound("smallSelect");
+
+            if (this.elapsedTicks >= repeatEnd)
+                this.FinishSequence();
+
+            return;
+        }
+
         int staticEnd = Math.Max(1, this.Config.StaticTicks);
         int wellEnd = staticEnd + Math.Max(1, this.Config.WellTicks);
         int glitchEnd = wellEnd + Math.Max(1, this.Config.GlitchTicks);
