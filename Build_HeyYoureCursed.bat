@@ -3,8 +3,8 @@ setlocal
 cd /d "%~dp0"
 
 echo ==========================================
-echo   Hey! You're Cursed! v0.0.6-alpha.6
-echo   Full Rename + Sudoku Menu Hardening
+echo   Hey! You're Cursed! v0.0.6-alpha.7
+echo   TV Target + Portrait + Sudoku Menu Hotfix
 echo ==========================================
 echo.
 
