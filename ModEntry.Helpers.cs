@@ -100,7 +100,9 @@ internal sealed partial class ModEntry
             playerTile + new Vector2(0f, -1f)
         };
 
-        Vector2 arrivalTile = candidates.FirstOrDefault(farmHouse.isTileLocationTotallyClearAndPlaceable);
+        Vector2 arrivalTile = candidates.FirstOrDefault(
+            candidate => farmHouse.isTileLocationTotallyClearAndPlaceable(candidate)
+        );
         if (arrivalTile == Vector2.Zero)
             arrivalTile = playerTile + new Vector2(1f, 0f);
 
