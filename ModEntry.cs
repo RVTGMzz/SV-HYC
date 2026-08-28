@@ -6,13 +6,10 @@ using StardewValley;
 using StardewValley.GameData.Characters;
 using StardewValley.Locations;
 
-namespace ChuyenTamLinhKoDuaDuocDau;
+namespace CursedSignal;
 
 internal sealed class ModEntry : Mod
 {
-    private const string NpcId = "ronvotri.chuyentamlinhkoduaduocdau_Sudoku";
-    private const string SeenKey = "ronvotri.chuyentamlinhkoduaduocdau/SudokuArrivalSeen";
-
     private const int FrameWidth = 64;
     private const int FrameHeight = 64;
     private const int FrameCount = 6;
@@ -78,7 +75,13 @@ internal sealed class ModEntry : Mod
 
     private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
     {
-        if (e.NameWithoutLocale.IsEquivalentTo($"Characters/{NpcId}"))
+        bool IsNpcAsset(string prefix)
+        {
+            return e.NameWithoutLocale.IsEquivalentTo($"{prefix}/{ModIdentity.SudokuNpcId}")
+                || e.NameWithoutLocale.IsEquivalentTo($"{prefix}/{ModIdentity.LegacySudokuNpcId}");
+        }
+
+        if (IsNpcAsset("Characters"))
         {
             e.LoadFromModFile<Texture2D>(
                 "assets/Characters/Sudoku.png",
@@ -87,7 +90,7 @@ internal sealed class ModEntry : Mod
             return;
         }
 
-        if (e.NameWithoutLocale.IsEquivalentTo($"Portraits/{NpcId}"))
+        if (IsNpcAsset("Portraits"))
         {
             e.LoadFromModFile<Texture2D>(
                 "assets/Portraits/Sudoku.png",
@@ -96,7 +99,7 @@ internal sealed class ModEntry : Mod
             return;
         }
 
-        if (e.NameWithoutLocale.IsEquivalentTo($"Characters/Dialogue/{NpcId}"))
+        if (IsNpcAsset("Characters/Dialogue"))
         {
             e.LoadFromModFile<Dictionary<string, string>>(
                 "assets/Dialogue/Sudoku.json",
@@ -105,7 +108,7 @@ internal sealed class ModEntry : Mod
             return;
         }
 
-        if (e.NameWithoutLocale.IsEquivalentTo($"Characters/schedules/{NpcId}"))
+        if (IsNpcAsset("Characters/schedules"))
         {
             e.LoadFromModFile<Dictionary<string, string>>(
                 "assets/Schedules/Sudoku.json",
@@ -123,7 +126,8 @@ internal sealed class ModEntry : Mod
                         "assets/Data/Sudoku.character.json"
                     );
 
-                if (custom is null || !custom.TryGetValue(NpcId, out CharacterData? sudoku))
+                if (custom is null
+                    || !custom.TryGetValue(ModIdentity.SudokuNpcId, out CharacterData? sudoku))
                 {
                     this.Monitor.Log(
                         "Couldn't read Sudoku.character.json; Sudoku NPC data was not injected.",
@@ -132,13 +136,15 @@ internal sealed class ModEntry : Mod
                     return;
                 }
 
-                asset.AsDictionary<string, CharacterData>().Data[NpcId] = sudoku;
+                asset.AsDictionary<string, CharacterData>().Data[ModIdentity.SudokuNpcId] = sudoku;
             });
         }
     }
 
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
+        int migratedKeys = ModIdentity.MigrateLegacyPlayerData(Game1.player);
+
         this.tvArrivalSheet = this.Helper.ModContent.Load<Texture2D>(
             "assets/Events/Sudoku_TV.png"
         );
@@ -146,14 +152,22 @@ internal sealed class ModEntry : Mod
         this.ResetSequenceState();
 
         this.Monitor.Log(
-            "Sudoku prototype v0.0.3 loaded. Daily Sudoku prototype is available after Sudoku arrives.",
+            "Cursed Signal v0.0.3.1 identity cleanup loaded. Daily Sudoku remains available after Sudoku arrives.",
             LogLevel.Info
         );
 
-        if (Game1.player.modData.TryGetValue(SeenKey, out string? raw) && raw == "true")
+        if (migratedKeys > 0)
         {
             this.Monitor.Log(
-                "Sudoku has already arrived in this save. Her custom NPC data is unlocked.",
+                $"Migrated {migratedKeys} legacy prototype state key(s) into the ronvotri.CursedSignal keyspace. Legacy keys were kept for rollback safety.",
+                LogLevel.Info
+            );
+        }
+
+        if (ModIdentity.HasArrivalBeenSeen(Game1.player))
+        {
+            this.Monitor.Log(
+                "Sudoku has already arrived in this save. Her Cursed Signal NPC data is unlocked.",
                 LogLevel.Info
             );
 
@@ -167,7 +181,7 @@ internal sealed class ModEntry : Mod
         if (!this.Config.EnableDailySudoku || this.dailySudoku is null)
             return;
 
-        if (Game1.player.modData.TryGetValue(SeenKey, out string? raw) && raw == "true")
+        if (ModIdentity.HasArrivalBeenSeen(Game1.player))
             this.dailySudoku.EnsureToday();
     }
 
@@ -182,12 +196,10 @@ internal sealed class ModEntry : Mod
         if (!e.Button.IsActionButton())
             return;
 
-        if (!Game1.player.modData.TryGetValue(SeenKey, out string? raw) || raw != "true")
+        if (!ModIdentity.HasArrivalBeenSeen(Game1.player))
             return;
 
-        NPC? sudoku = Utility.getAllCharacters()
-            .FirstOrDefault(p => p.Name == NpcId && p.currentLocation == Game1.currentLocation);
-
+        NPC? sudoku = this.FindSudoku(currentLocationOnly: true);
         if (sudoku is null)
             return;
 
@@ -456,7 +468,7 @@ internal sealed class ModEntry : Mod
 
         if (!force)
         {
-            if (Game1.player.modData.TryGetValue(SeenKey, out string? raw) && raw == "true")
+            if (ModIdentity.HasArrivalBeenSeen(Game1.player))
                 return;
 
             if (Game1.timeOfDay < this.Config.TestArrivalTime)
@@ -474,14 +486,14 @@ internal sealed class ModEntry : Mod
     {
         this.ResetSequenceState();
 
-        Game1.player.modData[SeenKey] = "true";
+        Game1.player.modData[ModIdentity.ArrivalSeenKey] = "true";
 
         Game1.drawObjectDialogue(
             "......\n\nNgươi...\n\n...có bút chì không?"
         );
 
         this.Monitor.Log(
-            "Sudoku's arrival finished. The save flag is now set; the custom NPC should be eligible to spawn on the next save load/day rollover.",
+            "Sudoku's arrival finished. The Cursed Signal save flag is now set; the custom NPC should be eligible to spawn on the next save load/day rollover.",
             LogLevel.Info
         );
     }
@@ -503,6 +515,19 @@ internal sealed class ModEntry : Mod
         this.frameIndex = 0;
     }
 
+    private NPC? FindSudoku(bool currentLocationOnly)
+    {
+        IEnumerable<NPC> candidates = Utility.getAllCharacters()
+            .Where(p => ModIdentity.IsSudokuNpcId(p.Name));
+
+        if (currentLocationOnly)
+            candidates = candidates.Where(p => p.currentLocation == Game1.currentLocation);
+
+        return candidates
+            .OrderBy(p => p.Name == ModIdentity.SudokuNpcId ? 0 : 1)
+            .FirstOrDefault();
+    }
+
     private void OpenDailySudoku(bool force)
     {
         if (!Context.IsWorldReady || this.dailySudoku is null)
@@ -513,7 +538,7 @@ internal sealed class ModEntry : Mod
             if (!this.Config.EnableDailySudoku)
                 return;
 
-            if (!Game1.player.modData.TryGetValue(SeenKey, out string? raw) || raw != "true")
+            if (!ModIdentity.HasArrivalBeenSeen(Game1.player))
                 return;
         }
 
@@ -580,10 +605,10 @@ internal sealed class ModEntry : Mod
         }
 
         this.CancelSequence();
-        Game1.player.modData.Remove(SeenKey);
+        ModIdentity.ClearArrivalFlags(Game1.player);
 
         this.Monitor.Log(
-            "Sudoku arrival flag cleared. If Sudoku already spawned in this save, this command intentionally doesn't delete her NPC instance.",
+            "Sudoku arrival flags cleared in both the Cursed Signal and legacy prototype keyspaces. Existing NPC instances are intentionally left alone.",
             LogLevel.Info
         );
     }
@@ -596,10 +621,10 @@ internal sealed class ModEntry : Mod
             return;
         }
 
-        Game1.player.modData[SeenKey] = "true";
+        Game1.player.modData[ModIdentity.ArrivalSeenKey] = "true";
 
         this.Monitor.Log(
-            "Sudoku unlock flag set. Save/reload or sleep to the next day to let Data/Characters spawn-if-missing logic add her.",
+            "Sudoku unlock flag set under ronvotri.CursedSignal. Save/reload or sleep to the next day to let Data/Characters spawn-if-missing logic add her.",
             LogLevel.Info
         );
     }
@@ -612,18 +637,14 @@ internal sealed class ModEntry : Mod
             return;
         }
 
-        bool seen =
-            Game1.player.modData.TryGetValue(SeenKey, out string? raw)
-            && raw == "true";
-
-        NPC? sudoku = Utility.getAllCharacters()
-            .FirstOrDefault(p => p.Name == NpcId);
+        bool seen = ModIdentity.HasArrivalBeenSeen(Game1.player);
+        NPC? sudoku = this.FindSudoku(currentLocationOnly: false);
 
         bool dailyClaimed = this.dailySudoku?.IsRewardClaimedToday() ?? false;
         SudokuPuzzle? dailyPuzzle = this.dailySudoku?.EnsureToday();
 
         this.Monitor.Log(
-            $"Sudoku status: arrivalSeen={seen}, npcPresent={sudoku is not null}, sequenceActive={this.sequenceActive}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
+            $"Sudoku status: arrivalSeen={seen}, npcPresent={sudoku is not null}, npcId={sudoku?.Name ?? "none"}, sequenceActive={this.sequenceActive}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
             LogLevel.Info
         );
     }
