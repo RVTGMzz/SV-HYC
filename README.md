@@ -1,8 +1,22 @@
-# Cursed Signal — v0.0.6-alpha.2
+# Hey! You’re Cursed! — v0.0.6-alpha.2
 
+Former working title: **Cursed Signal**  
 Vietnamese subtitle: **Chuyện Tâm Linh Không Đùa Được Đâu**
 
 > Core stabilization checkpoint. Build and runtime validation are still required on the real Stardew Valley + SMAPI install.
+
+## Rename / technical identity
+
+The public mod title is now **Hey! You’re Cursed!** and the repository is `ronvotri/HeyYoureCursed`.
+
+For save compatibility, the internal SMAPI identity remains unchanged for now:
+
+- `UniqueID`: `ronvotri.CursedSignal`
+- DLL: `CursedSignal.dll`
+- C# namespace: `CursedSignal`
+- Sudoku NPC ID: `ronvotri.CursedSignal_Sudoku`
+
+Changing those identifiers during the stabilization phase could orphan existing modData/NPC state, so the rename is intentionally user-facing first.
 
 ## Goal of this pass
 
