@@ -82,6 +82,29 @@ internal sealed partial class ModEntry
         }
     }
 
+    private void HideSudokuUntilDailySignal()
+    {
+        NPC? sudoku = this.EnsureSudokuCharacterExists();
+        if (sudoku is null)
+            return;
+
+        FarmHouse? farmHouse = Game1.currentLocation as FarmHouse
+            ?? sudoku.currentLocation as FarmHouse;
+        if (farmHouse is null)
+            return;
+
+        // Keep her loaded, but park her well outside the playable farmhouse until the TV signal runs.
+        // This avoids the normal NPC schedule making her visible before 8:00 AM.
+        Game1.warpCharacter(sudoku, farmHouse, new Vector2(-12f, -12f));
+        sudoku.ignoreScheduleToday = true;
+        sudoku.Halt();
+
+        this.Monitor.Log(
+            "Sudoku is hidden off-map until today's Cursed Signal materializes her.",
+            LogLevel.Trace
+        );
+    }
+
     private NPC? PlaceSudokuAfterArrival()
     {
         NPC? sudoku = this.EnsureSudokuCharacterExists();
