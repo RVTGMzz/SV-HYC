@@ -1,10 +1,10 @@
 {
-  "Name": "Chuyen Tam Linh Ko Dua Duoc Dau - Sudoku Prototype",
+  "Name": "Cursed Signal",
   "Author": "ronvotri",
   "Version": "0.0.3",
-  "Description": "Prototype for Sudoku's haunted-TV arrival, custom NPC, and daily 9x9 Sudoku minigame.",
-  "UniqueID": "ronvotri.chuyentamlinhkoduaduocdau",
-  "EntryDll": "ChuyenTamLinhKoDuaDuocDau.dll",
+  "Description": "A paranormal Stardew Valley mod about haunted signals, cursed tapes, Sudoku, and things that should probably stay inside the TV.",
+  "UniqueID": "ronvotri.CursedSignal",
+  "EntryDll": "CursedSignal.dll",
   "MinimumApiVersion": "4.0.0",
   "UpdateKeys": []
 }
