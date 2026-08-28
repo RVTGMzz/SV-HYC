@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 
 echo ==========================================
-echo   Cursed Signal v0.0.6-alpha.2
+echo   Hey! You're Cursed! v0.0.6-alpha.2
 echo   Stabilize Core - Debug Build
 echo ==========================================
 echo.
