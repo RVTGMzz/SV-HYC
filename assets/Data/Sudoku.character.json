@@ -1,5 +1,5 @@
 {
-  "ronvotri.CursedSignal_Sudoku": {
+  "ronvotri.HeyYoureCursed_Sudoku": {
     "DisplayName": "Sudoku",
     "Gender": "Female",
     "Age": "Adult",
@@ -13,12 +13,12 @@
     "PerfectionScore": false,
     "Calendar": "HiddenAlways",
     "SocialTab": "HiddenUntilMet",
-    "TextureName": "ronvotri.CursedSignal_Sudoku",
-    "Breather": false,
+    "TextureName": "ronvotri.HeyYoureCursed_Sudoku",
+    "Breather": true,
     "Shadow": {
       "Visible": false
     },
-    "UnlockConditions": "PLAYER_MOD_DATA Current ronvotri.CursedSignal/SudokuNpcEnabled true",
+    "UnlockConditions": "PLAYER_MOD_DATA Current ronvotri.HeyYoureCursed/SudokuNpcEnabled true",
     "SpawnIfMissing": true,
     "Home": [
       {
