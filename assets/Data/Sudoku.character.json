@@ -18,7 +18,7 @@
     "Shadow": {
       "Visible": false
     },
-    "UnlockConditions": "PLAYER_MOD_DATA Current ronvotri.CursedSignal/SudokuArrivalSeen true",
+    "UnlockConditions": "PLAYER_MOD_DATA Current ronvotri.CursedSignal/SudokuNpcEnabled true",
     "SpawnIfMissing": true,
     "Home": [
       {
