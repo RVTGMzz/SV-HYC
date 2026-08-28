@@ -85,7 +85,7 @@ internal sealed partial class ModEntry
         if (e.Button == SButton.MouseLeft)
         {
             Vector2 clickedTile = e.Cursor.GrabTile;
-            return Vector2.Distance(clickedTile, sudoku.Tile) <= 1.35f;
+            return Vector2.Distance(clickedTile, sudoku.Tile) <= 0.70f;
         }
 
         Vector2 facingOffset = Game1.player.FacingDirection switch
@@ -98,14 +98,13 @@ internal sealed partial class ModEntry
         };
 
         Vector2 targetTile = Game1.player.Tile + facingOffset;
-        return Vector2.Distance(targetTile, sudoku.Tile) <= 1.35f
-            || Vector2.Distance(Game1.player.Tile, sudoku.Tile) <= 1.05f;
+        return Vector2.Distance(targetTile, sudoku.Tile) <= 0.70f;
     }
 
     private void QueueDailySudokuOpen()
     {
         this.pendingSudokuMenuOpen = true;
-        this.pendingSudokuMenuDelayTicks = 8;
+        this.pendingSudokuMenuDelayTicks = 2;
         this.pendingSudokuMenuWaitTicks = 0;
         this.Monitor.Log("Daily Sudoku menu queued; waiting for Stardew's dialogue box to finish closing.", LogLevel.Trace);
     }
@@ -121,10 +120,12 @@ internal sealed partial class ModEntry
             new("tv", "Không. Tôi đang nói chuyện với cái TV.")
         };
 
+        NPC? sudoku = this.FindSudoku(currentLocationOnly: true);
         Game1.currentLocation.createQuestionDialogue(
             "Sudoku nhìn bạn không chớp mắt.^\"...Ngươi thấy ta?\"",
             responses,
-            new GameLocation.afterQuestionBehavior(this.OnFirstConversationSightAnswered)
+            new GameLocation.afterQuestionBehavior(this.OnFirstConversationSightAnswered),
+            sudoku
         );
     }
 
@@ -140,10 +141,12 @@ internal sealed partial class ModEntry
             new("hoe", "Không, nhưng tôi có cuốc.")
         };
 
+        NPC? sudoku = this.FindSudoku(currentLocationOnly: true);
         Game1.currentLocation.createQuestionDialogue(
             prompt,
             responses,
-            new GameLocation.afterQuestionBehavior(this.OnFirstConversationPencilAnswered)
+            new GameLocation.afterQuestionBehavior(this.OnFirstConversationPencilAnswered),
+            sudoku
         );
     }
 
@@ -161,10 +164,12 @@ internal sealed partial class ModEntry
             new("later", "Để mai.")
         };
 
+        NPC? sudoku = this.FindSudoku(currentLocationOnly: true);
         Game1.currentLocation.createQuestionDialogue(
             prompt,
             responses,
-            new GameLocation.afterQuestionBehavior(this.OnFirstConversationBoardAnswered)
+            new GameLocation.afterQuestionBehavior(this.OnFirstConversationBoardAnswered),
+            sudoku
         );
     }
 
@@ -187,10 +192,12 @@ internal sealed partial class ModEntry
             new("later", "Để sau.")
         };
 
+        NPC? sudoku = this.FindSudoku(currentLocationOnly: true);
         Game1.currentLocation.createQuestionDialogue(
             "Sudoku đưa cho bạn một tờ giấy.^\"...Bảng hôm nay.\"",
             responses,
-            new GameLocation.afterQuestionBehavior(this.OnDailySudokuPromptAnswered)
+            new GameLocation.afterQuestionBehavior(this.OnDailySudokuPromptAnswered),
+            sudoku
         );
     }
 
