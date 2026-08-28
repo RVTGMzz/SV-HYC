@@ -11,7 +11,7 @@ using StardewValley.Objects;
 
 namespace HeyYoureCursed;
 
-internal sealed partial class ModEntry : Mod
+internal sealed class ModEntry : Mod
 {
     private const int FrameWidth = 64;
     private const int FrameHeight = 64;
@@ -138,7 +138,7 @@ internal sealed partial class ModEntry : Mod
         this.LoadEventTexturesSafely();
 
         this.Monitor.Log(
-            "Hey! You’re Cursed! v0.0.6-alpha.7 loaded. TV targeting, portraits, and Sudoku-menu handoff fixes are active.",
+            "Hey! You’re Cursed! v0.0.6-alpha.11 loaded. Reliable Sudoku interaction + ghost visual pass is active.",
             LogLevel.Info
         );
 
@@ -151,6 +151,21 @@ internal sealed partial class ModEntry : Mod
         }
 
         this.ReconcileCoreState();
+
+        // Recovery for pre-alpha.10 test saves: those builds could reach later days without
+        // ever persisting the one-time intro completion flag. From day 2 onward, an installed
+        // VHS + completed arrival means Sudoku should behave as the daily puzzle NPC.
+        if (ModIdentity.HasArrivalBeenSeen(Game1.player)
+            && ModIdentity.IsCursedVhsInstalled(Game1.player)
+            && !ModIdentity.HasFirstConversationCompleted(Game1.player)
+            && Game1.Date.TotalDays >= 1)
+        {
+            Game1.player.modData[ModIdentity.FirstConversationCompletedKey] = "true";
+            this.Monitor.Log(
+                "Recovered a pre-alpha.10 test save: Sudoku intro marked complete so daily interaction opens the board directly.",
+                LogLevel.Info
+            );
+        }
 
         if (!ModIdentity.IsCursedVhsInstalled(Game1.player))
             this.EnsureCursedVhsGranted(showDialogue: false);
@@ -206,5 +221,6 @@ internal sealed partial class ModEntry : Mod
                 LogLevel.Error
             );
         }
+
     }
 }
