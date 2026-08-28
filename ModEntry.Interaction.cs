@@ -15,7 +15,21 @@ internal sealed partial class ModEntry
 {
     private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
     {
-        if (!Context.IsWorldReady || this.sequenceActive || Game1.activeClickableMenu is not null)
+        if (!Context.IsWorldReady || this.sequenceActive)
+            return;
+
+        // While the custom Sudoku menu is open, route controller input explicitly through
+        // SMAPI. This works even on setups where Stardew doesn't reliably forward every
+        // gamepad button to IClickableMenu.receiveGamePadButton.
+        if (Game1.activeClickableMenu is SudokuMenu sudokuMenu)
+        {
+            if (sudokuMenu.HandleSmapiInput(e.Button))
+                this.Helper.Input.Suppress(e.Button);
+
+            return;
+        }
+
+        if (Game1.activeClickableMenu is not null)
             return;
 
         bool isActionButton = e.Button.IsActionButton();
