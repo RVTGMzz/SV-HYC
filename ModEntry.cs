@@ -6,22 +6,27 @@ using StardewValley;
 using StardewValley.GameData.Characters;
 using StardewValley.GameData.Objects;
 using StardewValley.Locations;
+using StardewValley.Menus;
+using StardewValley.Objects;
 
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry : Mod
 {
+
     private const int FrameWidth = 64;
     private const int FrameHeight = 64;
     private const int FrameCount = 6;
 
     private ModConfig Config = null!;
     private Texture2D? tvArrivalSheet;
-    private Texture2D? wellBroadcastTexture;
     private DailySudokuService? dailySudoku;
 
     private bool sequenceActive;
     private bool sequenceIsFirstArrival;
+    private bool pendingSudokuMenuOpen;
+    private int pendingSudokuMenuDelayTicks;
+    private int pendingSudokuMenuWaitTicks;
     private int elapsedTicks;
     private int frameIndex;
 
@@ -41,13 +46,13 @@ internal sealed partial class ModEntry : Mod
         helper.Events.Input.ButtonPressed += this.OnTapeButtonPressed;
         helper.Events.Input.ButtonPressed += this.OnButtonPressed;
 
-        helper.ConsoleCommands.Add("sudoku_testarrival", "Start the current Cursed Signal sequence immediately while inside the farmhouse.", this.OnTestArrivalCommand);
+        helper.ConsoleCommands.Add("sudoku_testarrival", "Start the current Hey! You’re Cursed! sequence immediately while inside the farmhouse.", this.OnTestArrivalCommand);
         helper.ConsoleCommands.Add("sudoku_resetarrival", "Reset the full VHS/signal/Sudoku core flow and return one fresh test tape.", this.OnResetArrivalCommand);
         helper.ConsoleCommands.Add("sudoku_unlocknpc", "Set Sudoku's arrival flag and create the NPC immediately if possible.", this.OnUnlockNpcCommand);
-        helper.ConsoleCommands.Add("sudoku_status", "Print stabilized Cursed Signal core state for the current save.", this.OnStatusCommand);
+        helper.ConsoleCommands.Add("sudoku_status", "Print stabilized Hey! You’re Cursed! core state for the current save.", this.OnStatusCommand);
         helper.ConsoleCommands.Add("sudoku_open", "Open today's Sudoku board immediately for testing.", this.OnOpenDailyCommand);
         helper.ConsoleCommands.Add("sudoku_resetdaily", "Reset today's Sudoku board and reward flag for testing.", this.OnResetDailyCommand);
-        helper.ConsoleCommands.Add("cursedsignal_givevhs", "Give the Cursed VHS story item to the current player for testing.", this.OnGiveVhsCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_givevhs", "Give the Cursed VHS story item to the current player for testing.", this.OnGiveVhsCommand);
     }
 
     private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
@@ -55,7 +60,8 @@ internal sealed partial class ModEntry : Mod
         bool IsNpcAsset(string prefix)
         {
             return e.NameWithoutLocale.IsEquivalentTo($"{prefix}/{ModIdentity.SudokuNpcId}")
-                || e.NameWithoutLocale.IsEquivalentTo($"{prefix}/{ModIdentity.LegacySudokuNpcId}");
+                || e.NameWithoutLocale.IsEquivalentTo($"{prefix}/{ModIdentity.LegacySudokuNpcId}")
+                || e.NameWithoutLocale.IsEquivalentTo($"{prefix}/{ModIdentity.OlderLegacySudokuNpcId}");
         }
 
         if (e.NameWithoutLocale.IsEquivalentTo(ModIdentity.ItemTextureAsset))
@@ -112,12 +118,12 @@ internal sealed partial class ModEntry : Mod
             e.Edit(asset =>
             {
                 Dictionary<string, ObjectData>? custom = this.Helper.Data.ReadJsonFile<Dictionary<string, ObjectData>>(
-                    "assets/Data/CursedSignal.objects.json"
+                    "assets/Data/HeyYoureCursed.objects.json"
                 );
 
                 if (custom is null || !custom.TryGetValue(ModIdentity.CursedVhsItemId, out ObjectData? vhs))
                 {
-                    this.Monitor.Log("Couldn't read CursedSignal.objects.json; the Cursed VHS item was not injected.", LogLevel.Error);
+                    this.Monitor.Log("Couldn't read HeyYoureCursed.objects.json; the Cursed VHS item was not injected.", LogLevel.Error);
                     return;
                 }
 
@@ -133,14 +139,14 @@ internal sealed partial class ModEntry : Mod
         this.LoadEventTexturesSafely();
 
         this.Monitor.Log(
-            "Cursed Signal v0.0.6-alpha.2 loaded. Core stabilization pass is active.",
+            "Hey! You’re Cursed! v0.0.6-alpha.6 loaded. Interaction/intro stabilization is active.",
             LogLevel.Info
         );
 
         if (migratedKeys > 0)
         {
             this.Monitor.Log(
-                $"Migrated {migratedKeys} legacy prototype state key(s) into the ronvotri.CursedSignal keyspace. Legacy keys were kept for rollback safety.",
+                $"Migrated {migratedKeys} legacy prototype state key(s) into the ronvotri.HeyYoureCursed keyspace. Legacy keys were kept for rollback safety.",
                 LogLevel.Info
             );
         }
@@ -169,14 +175,15 @@ internal sealed partial class ModEntry : Mod
     private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
         this.ResetSequenceState();
+        this.pendingSudokuMenuOpen = false;
+        this.pendingSudokuMenuDelayTicks = 0;
+        this.pendingSudokuMenuWaitTicks = 0;
         this.tvArrivalSheet = null;
-        this.wellBroadcastTexture = null;
     }
 
     private void LoadEventTexturesSafely()
     {
         this.tvArrivalSheet = null;
-        this.wellBroadcastTexture = null;
 
         try
         {
@@ -200,72 +207,5 @@ internal sealed partial class ModEntry : Mod
                 LogLevel.Error
             );
         }
-
-        try
-        {
-            this.wellBroadcastTexture = this.Helper.ModContent.Load<Texture2D>("assets/Events/WellBroadcast.png");
-        }
-        catch (Exception ex)
-        {
-            this.Monitor.Log(
-                $"Couldn't load assets/Events/WellBroadcast.png. The first signal will skip the well image instead of crashing. {ex.Message}",
-                LogLevel.Error
-            );
-        }
-    }
-
-    private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
-    {
-        if (!this.Config.EnableDailySudoku || this.dailySudoku is null)
-            return;
-
-        if (!Context.IsWorldReady || this.sequenceActive || Game1.activeClickableMenu is not null)
-            return;
-
-        if (!e.Button.IsActionButton())
-            return;
-
-        if (!ModIdentity.HasArrivalBeenSeen(Game1.player))
-            return;
-
-        NPC? sudoku = this.FindSudoku(currentLocationOnly: true);
-        if (sudoku is null || sudoku.IsInvisible)
-            return;
-
-        float distance = Vector2.Distance(Game1.player.Tile, sudoku.Tile);
-        if (distance > 2.1f)
-            return;
-
-        if (this.dailySudoku.IsRewardClaimedToday())
-            return;
-
-        this.Helper.Input.Suppress(e.Button);
-        this.ShowDailySudokuPrompt();
-    }
-
-    private void ShowDailySudokuPrompt()
-    {
-        Response[] responses =
-        {
-            new("solve", "Giải."),
-            new("later", "Để sau.")
-        };
-
-        Game1.currentLocation.createQuestionDialogue(
-            "......^Bảng hôm nay.",
-            responses,
-            new GameLocation.afterQuestionBehavior(this.OnDailySudokuPromptAnswered)
-        );
-    }
-
-    private void OnDailySudokuPromptAnswered(Farmer who, string answer)
-    {
-        if (answer == "solve")
-        {
-            this.OpenDailySudoku(force: false);
-            return;
-        }
-
-        Game1.drawObjectDialogue("Sudoku nhìn bạn vài giây.^\"...Đừng điền bừa khi quay lại.\"");
     }
 }
