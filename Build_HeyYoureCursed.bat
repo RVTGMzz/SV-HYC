@@ -3,8 +3,8 @@ setlocal
 cd /d "%~dp0"
 
 echo ==========================================
-echo   Hey! You're Cursed! v0.0.6-alpha.11
-echo   Reliable NPC + Ghost Visual Fix
+echo   Hey! You're Cursed! v0.0.6-alpha.12
+echo   Daily Portrait Dialogue + Sudoku UI Polish
 echo ==========================================
 echo.
 
@@ -40,7 +40,7 @@ echo.
 echo ==========================================
 echo   BUILD FAILED
 echo   Copy the error lines above and send them
- echo   back to ChatGPT.
+echo   back to ChatGPT.
 echo ==========================================
 echo.
 pause
