@@ -28,7 +28,6 @@ internal sealed partial class ModEntry
         if (!this.Config.EnableDailySignal || e.NewLocation is not FarmHouse)
             return;
 
-        // If the player wasn't home at 8:00, fire today's signal the first time they return.
         if (Game1.timeOfDay >= this.Config.DailySignalTime)
             this.TryStartArrival(force: false);
     }
@@ -44,13 +43,12 @@ internal sealed partial class ModEntry
             return;
         }
 
+        Game1.player.Halt();
         this.elapsedTicks++;
 
         if (this.elapsedTicks == 1)
             Game1.playSound("ghost");
 
-        // After the first arrival, the VHS only needs a short burst of static/glitch each morning.
-        // Replaying the full well + crawl scene every day would become intrusive very quickly.
         if (!this.sequenceIsFirstArrival)
         {
             int repeatStaticEnd = Math.Max(1, this.Config.RepeatStaticTicks);
