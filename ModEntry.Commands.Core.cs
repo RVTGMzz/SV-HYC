@@ -42,7 +42,7 @@ internal sealed partial class ModEntry
     {
         if (!Context.IsWorldReady)
         {
-            this.Monitor.Log("Load a save before using sudoku_open.", LogLevel.Warn);
+            this.Monitor.Log("Load a save before using heyyourecursed_open.", LogLevel.Warn);
             return;
         }
 
@@ -53,7 +53,7 @@ internal sealed partial class ModEntry
     {
         if (!Context.IsWorldReady || this.dailySudoku is null)
         {
-            this.Monitor.Log("Load a save before using sudoku_resetdaily.", LogLevel.Warn);
+            this.Monitor.Log("Load a save before using heyyourecursed_resetdaily.", LogLevel.Warn);
             return;
         }
 
