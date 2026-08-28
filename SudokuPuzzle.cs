@@ -1,4 +1,4 @@
-namespace CursedSignal;
+namespace HeyYoureCursed;
 
 internal sealed class SudokuPuzzle
 {
