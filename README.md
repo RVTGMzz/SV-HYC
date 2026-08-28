@@ -1,94 +1,52 @@
-# Cursed Signal — v0.0.4 prototype
+# Cursed Signal — v0.0.5-alpha.1
 
 Vietnamese subtitle: **Chuyện Tâm Linh Không Đùa Được Đâu**
 
-> Status: source-complete prototype, **not yet compiled or tested inside Stardew Valley/SMAPI**.
+> v0.0.4 compiled successfully on a real Stardew/SMAPI setup. v0.0.5 changes the VHS/TV story gate and still needs one compile/runtime pass.
 
-## v0.0.4 — Cursed VHS & Daily Interaction
+## v0.0.5 — VHS Installation Gate
 
-This branch builds on the identity-cleanup work from v0.0.3.1.
+The Cursed VHS is now the thing that arms the haunting instead of being a reward after Sudoku appears.
 
-### Cursed VHS
+### Prototype flow
 
-Sudoku's arrival now leaves behind a real custom object:
+1. The player receives the `Cursed VHS` story item for testing.
+2. Its description hints that it should be used directly on the farmhouse TV.
+3. Hold the tape, stand close to a TV, and press the action button.
+4. The tape is consumed and marked as permanently installed in the TV.
+5. Before installation, no automatic haunted-TV signal can run.
+6. Once installed, the signal is armed for **8:00 AM every day**.
+7. If the player is outside at 8:00, the signal can run the first time they return to the farmhouse that day.
+8. The first successful signal unlocks/spawns Sudoku; later days can activate the signal again.
 
-- item ID: `(O)ronvotri.CursedSignal_CursedVHS`
-- display name: `Cursed VHS`
-- custom 16×16 item icon
-- unsellable / unshippable / ungiftable story item
-- label description hints at the 9×9 Sudoku motif
+If the tape is installed after 8:00 AM, the first automatic activation waits until the next morning instead of firing immediately.
 
-The VHS is granted once after Sudoku's TV arrival. Existing prototype saves which already have the arrival flag receive it on load/day start if they haven't received it before.
+### Story state
 
-### Daily interaction
+- `ronvotri.CursedSignal/CursedVHSGranted`
+- `ronvotri.CursedSignal/CursedVHSInstalled`
+- `ronvotri.CursedSignal/DailySignalDay`
+- existing Sudoku arrival/NPC keys remain for save compatibility.
 
-Talking to Sudoku before today's reward has been claimed no longer jumps straight into the board.
+### Daily Sudoku
 
-The prototype now asks:
-
-- `Giải.`
-- `Để sau.`
-
-Choosing `Giải.` opens today's saved 9×9 board. Choosing `Để sau.` closes the interaction and leaves the puzzle available for later.
-
-After today's reward has already been claimed, the mod stops intercepting the action button so normal NPC dialogue can happen.
-
-### Item reward pool
-
-Daily Sudoku rewards are now primarily **items** instead of only gold.
-
-`assets/Data/Sudoku.rewards.json` contains weighted reward pools for:
-
-- Easy
-- Normal
-- Hard
-
-Current examples include Coffee, Omni Geodes, gems, Battery Packs, Iridium Bars, and food. The reward is deterministic for a given save/day and is still claimable only once per day.
-
-The old gold values remain in `config.json` as a safe fallback if the item reward pool is missing or an item can't be created.
-
-### Save compatibility
-
-v0.0.4 keeps the v0.0.3.1 identity migration:
-
-- new keyspace: `ronvotri.CursedSignal/...`
-- legacy keyspace is read and copied forward
-- old keys are intentionally not deleted during this prototype phase
-- legacy Sudoku NPC IDs are still recognized to avoid duplicate NPCs
-
-## Existing prototype flow
-
-1. Stay in the farmhouse until 7:00 AM (temporary test trigger).
-2. TV static begins.
-3. A distorted well appears.
-4. The screen glitches.
-5. Sudoku crawls out of the TV.
-6. The arrival flag is saved.
-7. A Cursed VHS is recovered.
-8. Sudoku becomes eligible as a persistent custom NPC.
-9. Each day gets a deterministic Sudoku puzzle.
-10. Talk to Sudoku → choose `Giải.` or `Để sau.`
-11. Solve correctly → receive one daily item reward.
+Daily Sudoku and the weighted item reward pools from v0.0.4 remain intact. Talk to Sudoku and choose `Giải.` or `Để sau.`; a solved board grants one reward per day.
 
 ## Console commands
 
-- `sudoku_testarrival`
-- `sudoku_resetarrival`
-- `sudoku_unlocknpc`
-- `sudoku_status`
+- `cursedsignal_givevhs` — get the VHS for testing before installation.
+- `sudoku_resetarrival` — clear arrival, VHS-install, and daily-signal story flags for a fresh test.
+- `sudoku_testarrival` — force the haunted-TV sequence regardless of the tape gate.
+- `sudoku_status` — prints VHS installed state, whether today's signal ran, and Sudoku NPC state.
 - `sudoku_open`
 - `sudoku_resetdaily`
-- `cursedsignal_givevhs`
+- `sudoku_unlocknpc`
 
-## Still intentionally deferred
+## Still deferred
 
-- final cursed-tape acquisition quest before the TV event;
-- putting the VHS into/using it on the TV as an actual interaction;
+- the final quest/location where the player discovers the tape;
+- a custom TV/VCR visual showing the tape physically inserted;
+- a shorter repeat-day signal animation;
 - full i18n/localization;
 - friendship/heart-event progression;
-- animated portrait reactions;
-- pencil-note candidates;
-- conflict/mistake highlighting;
-- multiplayer authority and sync validation;
-- controller polish and real-device testing;
-- final reward balance.
+- multiplayer validation and controller polish.
