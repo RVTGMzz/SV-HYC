@@ -1,4 +1,6 @@
-# Chuyện Tâm Linh Ko Đùa Được Đâu — Sudoku prototype v0.0.3
+# Cursed Signal — Sudoku prototype v0.0.3
+
+> Vietnamese subtitle: **Chuyện Tâm Linh Ko Đùa Được Đâu**
 
 Development branch for **v0.0.3: Daily Sudoku**.
 
