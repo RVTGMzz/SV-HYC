@@ -1,4 +1,4 @@
-namespace ChuyenTamLinhKoDuaDuocDau;
+namespace CursedSignal;
 
 internal sealed class SudokuPuzzle
 {
