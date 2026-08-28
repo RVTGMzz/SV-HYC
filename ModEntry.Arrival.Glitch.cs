@@ -86,13 +86,15 @@ internal sealed partial class ModEntry
                 return;
         }
 
+        this.sequenceIsFirstArrival = !ModIdentity.HasArrivalBeenSeen(Game1.player);
         this.sequenceActive = true;
         this.elapsedTicks = 0;
         this.frameIndex = 0;
+
         this.Monitor.Log(
-            force
-                ? "Cursed Signal arrival sequence started by debug command."
-                : "The installed Cursed VHS activated today's 8:00 AM signal.",
+            this.sequenceIsFirstArrival
+                ? "Cursed Signal full first-arrival sequence started."
+                : "Cursed Signal short repeat-morning sequence started.",
             LogLevel.Info
         );
     }
