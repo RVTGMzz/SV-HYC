@@ -12,7 +12,9 @@ internal sealed partial class SudokuMenu
         b.Draw(Game1.staminaRect, panel, new Color(18, 24, 34) * 0.96f);
         this.DrawBorder(b, panel, 4, new Color(95, 125, 148));
 
-        string title = "SUDOKU — BẢNG MỖI NGÀY";
+        string title = this.mode == SudokuPlayMode.Stage
+            ? $"SUDOKU — STAGE {this.stageIndex + 1:00}"
+            : "SUDOKU — DAILY CHALLENGE";
         Vector2 titleSize = Game1.dialogueFont.MeasureString(title);
         b.DrawString(
             Game1.dialogueFont,
@@ -21,7 +23,9 @@ internal sealed partial class SudokuMenu
             new Color(215, 230, 238)
         );
 
-        string sub = $"{this.puzzle.Difficulty}  •  {this.puzzle.Id}";
+        string sub = this.mode == SudokuPlayMode.Stage
+            ? $"{this.puzzle.Difficulty}  •  {this.stageIndex + 1}/{this.service.GetStageCount()}  •  không có daily reward"
+            : $"{this.puzzle.Difficulty}  •  {this.puzzle.Id}  •  thưởng 1 lần/ngày";
         Vector2 subSize = Game1.smallFont.MeasureString(sub);
         b.DrawString(
             Game1.smallFont,
@@ -42,11 +46,12 @@ internal sealed partial class SudokuMenu
         b.Draw(Game1.staminaRect, footer, new Color(12, 18, 27) * 0.90f);
         this.DrawBorder(b, footer, 1, new Color(65, 88, 106));
 
+        string backLabel = this.returnToStageSelect is null ? "đóng" : "danh sách";
         string hint = this.controllerModeSeen
             ? this.numberPickerOpen
                 ? "←/→: chọn số   •   A: điền   •   X: xóa   •   B: hủy"
-                : "D-pad/LS: di chuyển   •   A: chọn số   •   X: xóa\nLB/RB: ô trống   •   Y/Start: kiểm tra   •   B: đóng"
-            : "Chuột/←↑↓→: chọn ô   •   1–9: điền\nDelete: xóa   •   Enter: kiểm tra   •   Esc: đóng";
+                : $"D-pad/LS: di chuyển   •   A: chọn số   •   X: xóa\nLB/RB: ô trống   •   Y/Start: kiểm tra   •   B: {backLabel}"
+            : $"Chuột/←↑↓→: chọn ô   •   1–9: điền\nDelete: xóa   •   Enter: kiểm tra   •   Esc: {backLabel}";
 
         string wrappedHint = WrapText(Game1.smallFont, hint, footer.Width - 28);
         b.DrawString(
@@ -71,7 +76,7 @@ internal sealed partial class SudokuMenu
 
     private void DrawGrid(SpriteBatch b)
     {
-        string board = this.service.GetBoard(this.puzzle);
+        string board = this.service.GetBoard(this.puzzle, this.mode);
         char selectedValue = board[this.selectedRow * 9 + this.selectedColumn];
 
         for (int row = 0; row < 9; row++)
@@ -227,5 +232,4 @@ internal sealed partial class SudokuMenu
 
         return string.Join("\n", output);
     }
-
 }
