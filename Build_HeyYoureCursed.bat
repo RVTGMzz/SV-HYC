@@ -3,8 +3,8 @@ setlocal
 cd /d "%~dp0"
 
 echo ==========================================
-echo   Hey! You're Cursed! v0.0.7-alpha.2.2.5.4
-echo   Vietnamese Man Label Hotfix
+echo   Hey! You're Cursed! v0.0.7-alpha.3
+echo   Story Hook + Pencil Gate
 echo ==========================================
 echo.
 
@@ -40,7 +40,7 @@ echo.
 echo ==========================================
 echo   BUILD FAILED
 echo   Copy the error lines above and send them
-echo   back to ChatGPT.
+ echo   back to ChatGPT.
 echo ==========================================
 echo.
 pause
