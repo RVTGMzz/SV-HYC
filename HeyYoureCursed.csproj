@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <ModFolderName>HeyYoureCursed</ModFolderName>
-    <Version>0.0.6-alpha.12</Version>
+    <Version>0.0.6-alpha.13</Version>
   </PropertyGroup>
 
   <ItemGroup>
