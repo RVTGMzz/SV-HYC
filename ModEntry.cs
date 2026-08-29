@@ -54,6 +54,7 @@ internal sealed partial class ModEntry : Mod
         helper.ConsoleCommands.Add("heyyourecursed_talk", "Open Sudoku's roommate interaction hub immediately for testing.", this.OnOpenTalkCommand);
         helper.ConsoleCommands.Add("heyyourecursed_resetdaily", "Reset today's Sudoku board and reward flag for testing.", this.OnResetDailyCommand);
         helper.ConsoleCommands.Add("heyyourecursed_givevhs", "Give the Cursed VHS story item to the current player for testing.", this.OnGiveVhsCommand);
+        this.RegisterAlpha22Features(helper);
     }
 
     private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
@@ -147,7 +148,7 @@ internal sealed partial class ModEntry : Mod
         this.LoadEventTexturesSafely();
 
         this.Monitor.Log(
-            "Hey! You’re Cursed! v0.0.7-alpha.2.1 loaded. Active farmhouse roommate behavior + contextual activity dialogue are active.",
+            "Hey! You’re Cursed! v0.0.7-alpha.2.2 loaded. Ghost hover + no-shadow presentation and test commands are active.",
             LogLevel.Info
         );
 
