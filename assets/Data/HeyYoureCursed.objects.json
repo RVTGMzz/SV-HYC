@@ -2,7 +2,7 @@
   "ronvotri.HeyYoureCursed_CursedVHS": {
     "Name": "Cursed VHS",
     "DisplayName": "Cursed VHS",
-    "Description": "Một cuộn VHS cũ không nhãn. Có lẽ nó sẽ hoạt động nếu bạn dùng trực tiếp lên TV trong nhà.",
+    "Description": "An old unlabeled VHS tape.",
     "Type": "Basic",
     "Category": 0,
     "Price": 0,
@@ -15,6 +15,25 @@
     "ExcludeFromShippingCollection": true,
     "ContextTags": [
       "hey_youre_cursed_vhs",
+      "hey_youre_cursed_story_item"
+    ]
+  },
+  "ronvotri.HeyYoureCursed_Pencil": {
+    "Name": "HeyYoureCursed Pencil",
+    "DisplayName": "Pencil",
+    "Description": "An ordinary HB pencil.",
+    "Type": "Basic",
+    "Category": 0,
+    "Price": 0,
+    "Texture": "Mods/ronvotri.HeyYoureCursed/Items",
+    "SpriteIndex": 1,
+    "Edibility": -300,
+    "CanBeGivenAsGift": false,
+    "CanBeTrashed": true,
+    "ExcludeFromRandomSale": true,
+    "ExcludeFromShippingCollection": true,
+    "ContextTags": [
+      "hey_youre_cursed_pencil",
       "hey_youre_cursed_story_item"
     ]
   }
