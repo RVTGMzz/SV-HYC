@@ -9,16 +9,32 @@ internal sealed partial class ModEntry
     internal static string T(string key)
     {
         if (I18n is null)
-            return key;
+            return Alpha3TranslationFallback.Get(key, english: false);
 
-        return I18n.Get(key).ToString();
+        string translated = I18n.Get(key).ToString();
+        bool missing = string.Equals(translated, key, StringComparison.OrdinalIgnoreCase)
+            || translated.StartsWith("(no translation:", StringComparison.OrdinalIgnoreCase);
+        if (!missing)
+            return translated;
+
+        string localeProbe = I18n.Get("hub.option.play").ToString();
+        bool english = string.Equals(localeProbe, "Play Sudoku", StringComparison.OrdinalIgnoreCase);
+        return Alpha3TranslationFallback.Get(key, english);
     }
 
     internal static string T(string key, object tokens)
     {
         if (I18n is null)
-            return key;
+            return Alpha3TranslationFallback.Get(key, english: false);
 
-        return I18n.Get(key, tokens).ToString();
+        string translated = I18n.Get(key, tokens).ToString();
+        bool missing = string.Equals(translated, key, StringComparison.OrdinalIgnoreCase)
+            || translated.StartsWith("(no translation:", StringComparison.OrdinalIgnoreCase);
+        if (!missing)
+            return translated;
+
+        string localeProbe = I18n.Get("hub.option.play").ToString();
+        bool english = string.Equals(localeProbe, "Play Sudoku", StringComparison.OrdinalIgnoreCase);
+        return Alpha3TranslationFallback.Get(key, english);
     }
 }
