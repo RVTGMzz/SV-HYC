@@ -48,7 +48,7 @@ internal sealed partial class ModEntry
         {
             e.Edit(asset =>
             {
-                Dictionary<string, BigCraftableData> data = asset.AsDictionary<string, BigCraftableData>().Data;
+                var data = asset.AsDictionary<string, BigCraftableData>().Data;
                 data[ModIdentity.OccultCabinetItemId] = new BigCraftableData
                 {
                     Name = ModIdentity.OccultCabinetItemId,
@@ -77,7 +77,7 @@ internal sealed partial class ModEntry
                     return;
                 }
 
-                Dictionary<string, ObjectData> data = asset.AsDictionary<string, ObjectData>().Data;
+                var data = asset.AsDictionary<string, ObjectData>().Data;
                 foreach ((string id, ObjectData item) in custom)
                 {
                     if (id == ModIdentity.CursedVhsItemId)
@@ -100,7 +100,7 @@ internal sealed partial class ModEntry
         {
             e.Edit(asset =>
             {
-                Dictionary<string, ShopData> shops = asset.AsDictionary<string, ShopData>().Data;
+                var shops = asset.AsDictionary<string, ShopData>().Data;
                 if (!shops.TryGetValue("SeedShop", out ShopData? pierre))
                 {
                     this.Monitor.Log("Pierre's SeedShop wasn't found; the story Pencil couldn't be added.", LogLevel.Warn);
