@@ -36,8 +36,28 @@ internal static class ModIdentity
     public const string CursedVhsQualifiedItemId = "(O)" + CursedVhsItemId;
     public const string CursedVhsGrantedKey = UniqueId + "/CursedVHSGranted";
     public const string CursedVhsInstalledKey = UniqueId + "/CursedVHSInstalled";
+    public const string VhsOriginStorySeenKey = UniqueId + "/VhsOriginStorySeen";
+    public const string PencilItemId = UniqueId + "_Pencil";
+    public const string PencilQualifiedItemId = "(O)" + PencilItemId;
+    public const string PencilAcceptedKey = UniqueId + "/PencilAccepted";
+    public const string SaloonInvitationReceivedKey = UniqueId + "/SaloonInvitationReceived";
+    public const string SaloonInviteShownDayKey = UniqueId + "/SaloonInviteShownDay";
+    public const string SaloonPrologueSeenKey = UniqueId + "/SaloonPrologueSeen";
+    public const string SaloonPrologueCompletedDayKey = UniqueId + "/SaloonPrologueCompletedDay";
+    public const string SaloonPrologueChoiceKey = UniqueId + "/SaloonPrologueChoice";
+    public const string SudokuActivatedDayKey = UniqueId + "/SudokuActivatedDay";
+    public const string WizardRevealSeenKey = UniqueId + "/WizardRevealSeen";
+    public const string WizardRevealChoiceKey = UniqueId + "/WizardRevealChoice";
+    public const string OccultCabinetUnlockedKey = UniqueId + "/OccultCabinetUnlocked";
+    public const string OccultCabinetGiftedKey = UniqueId + "/OccultCabinetGifted";
+    public const string ActiveHauntingIdKey = UniqueId + "/ActiveHauntingId";
+    public const string SudokuSealedKey = UniqueId + "/SudokuSealed";
+    public const string SudokuSealedDayKey = UniqueId + "/SudokuSealedDay";
+    public const string OccultCabinetItemId = UniqueId + "_OccultCabinet";
+    public const string OccultCabinetQualifiedItemId = "(BC)" + OccultCabinetItemId;
     public const string DailySignalDayKey = UniqueId + "/DailySignalDay";
     public const string ItemTextureAsset = "Mods/" + UniqueId + "/Items";
+    public const string BigCraftableTextureAsset = "Mods/" + UniqueId + "/BigCraftables";
 
     public const string DailySudokuPrefix = UniqueId + "/DailySudoku/";
 
@@ -85,20 +105,14 @@ internal static class ModIdentity
         int migrated = 0;
         string[] scalarSuffixes =
         {
-            "SudokuArrivalSeen",
-            "SudokuNpcEnabled",
-            "FirstConversationCompleted",
-            "CursedVHSGranted",
-            "CursedVHSInstalled",
-            "DailySignalDay",
-            "DailyDialogueDay",
-            "SudokuSolvedCount",
-            "SudokuTrust",
-            "SocialInteractionDay",
-            "WelcomeHomeDay",
-            "SpiritEvePlanYear",
-            "SpiritEveScareMode",
-            "SpiritEveAftermathYear"
+            "SudokuArrivalSeen", "SudokuNpcEnabled", "FirstConversationCompleted",
+            "CursedVHSGranted", "CursedVHSInstalled", "VhsOriginStorySeen", "PencilAccepted",
+            "SaloonInvitationReceived", "SaloonInviteShownDay", "SaloonPrologueSeen",
+            "SaloonPrologueCompletedDay", "SaloonPrologueChoice", "SudokuActivatedDay",
+            "WizardRevealSeen", "WizardRevealChoice", "OccultCabinetUnlocked", "OccultCabinetGifted",
+            "ActiveHauntingId", "SudokuSealed", "SudokuSealedDay", "DailySignalDay", "DailyDialogueDay",
+            "SudokuSolvedCount", "SudokuTrust", "SocialInteractionDay", "WelcomeHomeDay",
+            "SpiritEvePlanYear", "SpiritEveScareMode", "SpiritEveAftermathYear"
         };
 
         foreach (string suffix in scalarSuffixes)
@@ -140,87 +154,27 @@ internal static class ModIdentity
         return migrated;
     }
 
-    public static bool HasFirstConversationCompleted(Farmer player)
-    {
-        return player.modData.TryGetValue(FirstConversationCompletedKey, out string? value)
-            && value == "true";
-    }
-
-    public static bool HasDailyDialogueRunToday(Farmer player)
-    {
-        int day = Game1.Date.TotalDays;
-        return player.modData.TryGetValue(DailyDialogueDayKey, out string? raw)
-            && int.TryParse(raw, out int storedDay)
-            && storedDay == day;
-    }
-
-    public static void MarkDailyDialogueRunToday(Farmer player)
-    {
-        player.modData[DailyDialogueDayKey] = Game1.Date.TotalDays.ToString();
-    }
-
-    public static int GetSudokuSolvedCount(Farmer player)
-    {
-        return player.modData.TryGetValue(SudokuSolvedCountKey, out string? raw)
-            && int.TryParse(raw, out int count)
-            && count > 0
-                ? count
-                : 0;
-    }
-
-    public static int GetSudokuTrust(Farmer player)
-    {
-        return player.modData.TryGetValue(SudokuTrustKey, out string? raw)
-            && int.TryParse(raw, out int trust)
-            && trust > 0
-                ? Math.Clamp(trust, 0, 30)
-                : 0;
-    }
+    public static bool HasFirstConversationCompleted(Farmer player) => player.modData.TryGetValue(FirstConversationCompletedKey, out string? value) && value == "true";
+    public static bool HasDailyDialogueRunToday(Farmer player) => player.modData.TryGetValue(DailyDialogueDayKey, out string? raw) && int.TryParse(raw, out int storedDay) && storedDay == Game1.Date.TotalDays;
+    public static void MarkDailyDialogueRunToday(Farmer player) => player.modData[DailyDialogueDayKey] = Game1.Date.TotalDays.ToString();
+    public static int GetSudokuSolvedCount(Farmer player) => player.modData.TryGetValue(SudokuSolvedCountKey, out string? raw) && int.TryParse(raw, out int count) && count > 0 ? count : 0;
+    public static int GetSudokuTrust(Farmer player) => player.modData.TryGetValue(SudokuTrustKey, out string? raw) && int.TryParse(raw, out int trust) && trust > 0 ? Math.Clamp(trust, 0, 30) : 0;
 
     public static bool TryGainDailyTrust(Farmer player, int amount = 1)
     {
         int day = Game1.Date.TotalDays;
-        bool alreadyGained = player.modData.TryGetValue(SocialInteractionDayKey, out string? raw)
-            && int.TryParse(raw, out int storedDay)
-            && storedDay == day;
-
-        if (alreadyGained)
-            return false;
-
+        bool alreadyGained = player.modData.TryGetValue(SocialInteractionDayKey, out string? raw) && int.TryParse(raw, out int storedDay) && storedDay == day;
+        if (alreadyGained) return false;
         int next = Math.Clamp(GetSudokuTrust(player) + Math.Max(1, amount), 0, 30);
         player.modData[SudokuTrustKey] = next.ToString();
         player.modData[SocialInteractionDayKey] = day.ToString();
         return true;
     }
 
-    public static bool HasWelcomeHomeRunToday(Farmer player)
-    {
-        int day = Game1.Date.TotalDays;
-        return player.modData.TryGetValue(WelcomeHomeDayKey, out string? raw)
-            && int.TryParse(raw, out int storedDay)
-            && storedDay == day;
-    }
-
-    public static void MarkWelcomeHomeRunToday(Farmer player)
-    {
-        player.modData[WelcomeHomeDayKey] = Game1.Date.TotalDays.ToString();
-    }
-
-    public static bool HasSpiritEvePlanForCurrentYear(Farmer player)
-    {
-        int year = Game1.year;
-        return player.modData.TryGetValue(SpiritEvePlanYearKey, out string? raw)
-            && int.TryParse(raw, out int storedYear)
-            && storedYear == year;
-    }
-
-    public static string GetSpiritEveScareMode(Farmer player)
-    {
-        return HasSpiritEvePlanForCurrentYear(player)
-            && player.modData.TryGetValue(SpiritEveScareModeKey, out string? value)
-                ? value
-                : "gentle";
-    }
+    public static bool HasWelcomeHomeRunToday(Farmer player) => player.modData.TryGetValue(WelcomeHomeDayKey, out string? raw) && int.TryParse(raw, out int storedDay) && storedDay == Game1.Date.TotalDays;
+    public static void MarkWelcomeHomeRunToday(Farmer player) => player.modData[WelcomeHomeDayKey] = Game1.Date.TotalDays.ToString();
+    public static bool HasSpiritEvePlanForCurrentYear(Farmer player) => player.modData.TryGetValue(SpiritEvePlanYearKey, out string? raw) && int.TryParse(raw, out int storedYear) && storedYear == Game1.year;
+    public static string GetSpiritEveScareMode(Farmer player) => HasSpiritEvePlanForCurrentYear(player) && player.modData.TryGetValue(SpiritEveScareModeKey, out string? value) ? value : "gentle";
 
     public static bool SetSpiritEveScareMode(Farmer player, string mode)
     {
@@ -230,56 +184,23 @@ internal static class ModIdentity
         return firstPlanThisYear;
     }
 
-    public static bool HasSpiritEveAftermathSeenForCurrentYear(Farmer player)
-    {
-        return player.modData.TryGetValue(SpiritEveAftermathYearKey, out string? raw)
-            && int.TryParse(raw, out int storedYear)
-            && storedYear == Game1.year;
-    }
-
-    public static void MarkSpiritEveAftermathSeen(Farmer player)
-    {
-        player.modData[SpiritEveAftermathYearKey] = Game1.year.ToString();
-    }
-
-    public static bool IsCursedVhsInstalled(Farmer player)
-    {
-        return player.modData.TryGetValue(CursedVhsInstalledKey, out string? value)
-            && value == "true";
-    }
-
-    public static bool HasDailySignalRunToday(Farmer player)
-    {
-        int day = Game1.Date.TotalDays;
-        return player.modData.TryGetValue(DailySignalDayKey, out string? raw)
-            && int.TryParse(raw, out int storedDay)
-            && storedDay == day;
-    }
-
-    public static void MarkDailySignalRunToday(Farmer player)
-    {
-        player.modData[DailySignalDayKey] = Game1.Date.TotalDays.ToString();
-    }
+    public static bool HasSpiritEveAftermathSeenForCurrentYear(Farmer player) => player.modData.TryGetValue(SpiritEveAftermathYearKey, out string? raw) && int.TryParse(raw, out int storedYear) && storedYear == Game1.year;
+    public static void MarkSpiritEveAftermathSeen(Farmer player) => player.modData[SpiritEveAftermathYearKey] = Game1.year.ToString();
+    public static bool IsCursedVhsInstalled(Farmer player) => player.modData.TryGetValue(CursedVhsInstalledKey, out string? value) && value == "true";
+    public static bool HasDailySignalRunToday(Farmer player) => player.modData.TryGetValue(DailySignalDayKey, out string? raw) && int.TryParse(raw, out int storedDay) && storedDay == Game1.Date.TotalDays;
+    public static void MarkDailySignalRunToday(Farmer player) => player.modData[DailySignalDayKey] = Game1.Date.TotalDays.ToString();
 
     public static void ClearArrivalFlags(Farmer player)
     {
         string[] suffixes =
         {
-            "SudokuArrivalSeen",
-            "SudokuNpcEnabled",
-            "FirstConversationCompleted",
-            "CursedVHSGranted",
-            "CursedVHSInstalled",
-            "DailySignalDay",
-            "DailyDialogueDay",
-            "SudokuSolvedCount",
-            "StageProgressMigrated",
-            "SudokuTrust",
-            "SocialInteractionDay",
-            "WelcomeHomeDay",
-            "SpiritEvePlanYear",
-            "SpiritEveScareMode",
-            "SpiritEveAftermathYear"
+            "SudokuArrivalSeen", "SudokuNpcEnabled", "FirstConversationCompleted", "CursedVHSGranted",
+            "CursedVHSInstalled", "VhsOriginStorySeen", "PencilAccepted", "SaloonInvitationReceived",
+            "SaloonInviteShownDay", "SaloonPrologueSeen", "SaloonPrologueCompletedDay", "SaloonPrologueChoice",
+            "SudokuActivatedDay", "WizardRevealSeen", "WizardRevealChoice", "OccultCabinetUnlocked",
+            "OccultCabinetGifted", "ActiveHauntingId", "SudokuSealed", "SudokuSealedDay", "DailySignalDay",
+            "DailyDialogueDay", "SudokuSolvedCount", "StageProgressMigrated", "SudokuTrust", "SocialInteractionDay",
+            "WelcomeHomeDay", "SpiritEvePlanYear", "SpiritEveScareMode", "SpiritEveAftermathYear"
         };
 
         foreach (string suffix in suffixes)
@@ -296,19 +217,12 @@ internal static class ModIdentity
 
         string[] dynamicPrefixes =
         {
-            StageClearedPrefix,
-            StageBoardPrefix,
-            LegacyUniqueId + "/SudokuStageCleared/",
-            LegacyUniqueId + "/SudokuStageBoard/",
-            OlderLegacyUniqueId + "/SudokuStageCleared/",
-            OlderLegacyUniqueId + "/SudokuStageBoard/"
+            StageClearedPrefix, StageBoardPrefix,
+            LegacyUniqueId + "/SudokuStageCleared/", LegacyUniqueId + "/SudokuStageBoard/",
+            OlderLegacyUniqueId + "/SudokuStageCleared/", OlderLegacyUniqueId + "/SudokuStageBoard/"
         };
 
-        foreach (string key in player.modData.Keys
-                     .Where(k => dynamicPrefixes.Any(prefix => k.StartsWith(prefix, StringComparison.Ordinal)))
-                     .ToArray())
-        {
+        foreach (string key in player.modData.Keys.Where(k => dynamicPrefixes.Any(prefix => k.StartsWith(prefix, StringComparison.Ordinal))).ToArray())
             player.modData.Remove(key);
-        }
     }
 }
