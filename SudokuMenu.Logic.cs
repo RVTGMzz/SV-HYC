@@ -15,21 +15,45 @@ internal sealed partial class SudokuMenu
             return;
         }
 
-        this.service.SetCell(this.puzzle, this.selectedRow, this.selectedColumn, value);
+        this.service.SetCell(this.puzzle, this.mode, this.selectedRow, this.selectedColumn, value);
         this.statusText = value == 0 ? "Đã xóa ô." : $"Đã điền {value}.";
         Game1.playSound("smallSelect");
     }
 
     private void CheckBoard()
     {
-        if (!this.service.IsSolved(this.puzzle))
+        if (!this.service.IsSolved(this.puzzle, this.mode))
         {
             this.statusText = "......Sai. Nhìn lại hàng, cột và ô 3×3.";
             Game1.playSound("cancel");
             return;
         }
 
-        string? reward = this.service.ClaimReward(this.puzzle);
+        if (this.mode == SudokuPlayMode.Stage)
+        {
+            bool firstClear = this.service.CompleteStage(this.puzzle);
+            int total = this.service.GetStageCount();
+
+            if (firstClear)
+            {
+                int cleared = this.service.GetSolvedCount();
+                string unlockText = this.stageIndex + 1 < total
+                    ? $" Stage {this.stageIndex + 2:00} đã mở."
+                    : " Bạn đã hoàn thành toàn bộ 18 Stage hiện tại.";
+
+                this.statusText = $"Đúng. Stage {this.stageIndex + 1:00} hoàn thành!{unlockText} Tiến độ: {cleared}/{total}.";
+                Game1.playSound("purchase");
+            }
+            else
+            {
+                this.statusText = $"Đúng. Stage {this.stageIndex + 1:00} đã hoàn thành trước đó; chơi lại không tăng tiến độ.";
+                Game1.playSound("coin");
+            }
+
+            return;
+        }
+
+        string? reward = this.service.ClaimDailyReward(this.puzzle);
         if (!string.IsNullOrWhiteSpace(reward))
         {
             this.statusText = $"Đúng. Sudoku đẩy sang cho bạn {reward}. 'Đừng hiểu lầm. Không phải quà.'";
@@ -37,9 +61,18 @@ internal sealed partial class SudokuMenu
         }
         else
         {
-            this.statusText = "Đúng rồi. Nhưng phần thưởng hôm nay ngươi đã lấy rồi.";
+            this.statusText = "Đúng rồi. Nhưng phần thưởng Daily Challenge hôm nay đã nhận rồi.";
             Game1.playSound("coin");
         }
+    }
+
+    private void CloseOrReturn()
+    {
+        Game1.playSound("cancel");
+        Game1.activeClickableMenu = null;
+
+        if (this.returnToStageSelect is not null)
+            this.returnToStageSelect();
     }
 
     private void OpenNumberPicker()
@@ -52,7 +85,7 @@ internal sealed partial class SudokuMenu
             return;
         }
 
-        string board = this.service.GetBoard(this.puzzle);
+        string board = this.service.GetBoard(this.puzzle, this.mode);
         char current = board[index];
         this.numberPickerValue = current is >= '1' and <= '9' ? current - '0' : 1;
         this.numberPickerOpen = true;
