@@ -3,8 +3,8 @@ setlocal
 cd /d "%~dp0"
 
 echo ==========================================
-echo   Hey! You're Cursed! v0.0.6-alpha.12
-echo   Daily Portrait Dialogue + Sudoku UI Polish
+echo   Hey! You're Cursed! v0.0.6-alpha.13
+echo   Stage Select + Unique Clear Progression
 echo ==========================================
 echo.
 
