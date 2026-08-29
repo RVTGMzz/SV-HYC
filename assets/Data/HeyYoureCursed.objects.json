@@ -13,10 +13,7 @@
     "CanBeTrashed": false,
     "ExcludeFromRandomSale": true,
     "ExcludeFromShippingCollection": true,
-    "ContextTags": [
-      "hey_youre_cursed_vhs",
-      "hey_youre_cursed_story_item"
-    ]
+    "ContextTags": ["hey_youre_cursed_vhs", "hey_youre_cursed_story_item"]
   },
   "ronvotri.HeyYoureCursed_Pencil": {
     "Name": "HeyYoureCursed Pencil",
@@ -25,16 +22,13 @@
     "Type": "Basic",
     "Category": 0,
     "Price": 0,
-    "Texture": "Mods/ronvotri.HeyYoureCursed/Items",
-    "SpriteIndex": 1,
+    "Texture": "Mods/ronvotri.HeyYoureCursed/Pencil",
+    "SpriteIndex": 0,
     "Edibility": -300,
     "CanBeGivenAsGift": false,
     "CanBeTrashed": true,
     "ExcludeFromRandomSale": true,
     "ExcludeFromShippingCollection": true,
-    "ContextTags": [
-      "hey_youre_cursed_pencil",
-      "hey_youre_cursed_story_item"
-    ]
+    "ContextTags": ["hey_youre_cursed_pencil", "hey_youre_cursed_story_item"]
   }
 }
