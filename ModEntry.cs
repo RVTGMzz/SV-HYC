@@ -148,7 +148,7 @@ internal sealed partial class ModEntry : Mod
         this.LoadEventTexturesSafely();
 
         this.Monitor.Log(
-            "Hey! You’re Cursed! v0.0.7-alpha.2.2 loaded. Ghost hover + no-shadow presentation and test commands are active.",
+            "Hey! You’re Cursed! v0.0.7-alpha.2.2.1 loaded. ChaCha-like ghost sway/bob + no-shadow presentation and test commands are active.",
             LogLevel.Info
         );
 
