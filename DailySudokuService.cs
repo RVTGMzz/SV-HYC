@@ -13,6 +13,7 @@ internal sealed class DailySudokuService
     private readonly IMonitor monitor;
     private readonly ModConfig config;
     private readonly List<SudokuPuzzle> puzzles;
+    private readonly List<SudokuPuzzle> stages;
     private readonly List<SudokuRewardEntry> rewards;
 
     public DailySudokuService(IModHelper helper, IMonitor monitor, ModConfig config)
@@ -26,6 +27,11 @@ internal sealed class DailySudokuService
 
         this.puzzles = this.puzzles
             .Where(p => p.Puzzle.Length == 81 && p.Solution.Length == 81)
+            .ToList();
+
+        this.stages = this.puzzles
+            .OrderBy(p => DifficultyRank(p.Difficulty))
+            .ThenBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         this.rewards = helper.Data.ReadJsonFile<List<SudokuRewardEntry>>(
@@ -48,26 +54,107 @@ internal sealed class DailySudokuService
             this.monitor.Log("Daily Sudoku item reward pool is empty or invalid; gold fallback will be used.", LogLevel.Warn);
     }
 
+    public int GetStageCount() => this.stages.Count;
+
+    public SudokuPuzzle? GetStage(int stageIndex)
+    {
+        this.EnsureStageProgressMigration();
+
+        return stageIndex >= 0 && stageIndex < this.stages.Count
+            ? this.stages[stageIndex]
+            : null;
+    }
+
+    public IReadOnlyList<SudokuPuzzle> GetStages()
+    {
+        this.EnsureStageProgressMigration();
+        return this.stages;
+    }
+
+    public bool IsStageUnlocked(int stageIndex)
+    {
+        this.EnsureStageProgressMigration();
+
+        if (stageIndex < 0 || stageIndex >= this.stages.Count)
+            return false;
+
+        return stageIndex == 0 || this.IsStageCleared(stageIndex - 1);
+    }
+
+    public bool IsStageCleared(int stageIndex)
+    {
+        if (stageIndex < 0 || stageIndex >= this.stages.Count || !Context.IsWorldReady)
+            return false;
+
+        return IsTrue(Game1.player, ModIdentity.StageClearedPrefix + this.stages[stageIndex].Id);
+    }
+
+    public bool IsStageCleared(string puzzleId)
+    {
+        if (!Context.IsWorldReady)
+            return false;
+
+        return IsTrue(Game1.player, ModIdentity.StageClearedPrefix + puzzleId);
+    }
+
+    public void PrepareStageForPlay(int stageIndex)
+    {
+        if (!Context.IsWorldReady || stageIndex < 0 || stageIndex >= this.stages.Count)
+            return;
+
+        SudokuPuzzle puzzle = this.stages[stageIndex];
+        string boardKey = ModIdentity.StageBoardPrefix + puzzle.Id;
+
+        // Unfinished Stages resume from their saved board. Cleared Stages replay from a fresh
+        // copy so "play again" is an actual puzzle, not an already-completed grid.
+        if (this.IsStageCleared(stageIndex))
+        {
+            Game1.player.modData[boardKey] = puzzle.Puzzle;
+            return;
+        }
+
+        if (!Game1.player.modData.TryGetValue(boardKey, out string? board) || board.Length != 81)
+            Game1.player.modData[boardKey] = puzzle.Puzzle;
+    }
+
+    public int GetSolvedCount()
+    {
+        this.EnsureStageProgressMigration();
+
+        if (!Context.IsWorldReady)
+            return 0;
+
+        return this.stages.Count(p => IsTrue(Game1.player, ModIdentity.StageClearedPrefix + p.Id));
+    }
+
     public SudokuPuzzle? EnsureToday()
     {
         if (!Context.IsWorldReady || this.puzzles.Count == 0)
             return null;
 
         ModIdentity.MigrateLegacyPlayerData(Game1.player);
+        this.EnsureStageProgressMigration();
 
         int day = Game1.Date.TotalDays;
-        SudokuPuzzle puzzle = this.SelectPuzzleForToday(day);
-
         bool sameDay =
             Game1.player.modData.TryGetValue(DayKey, out string? dayRaw)
             && int.TryParse(dayRaw, out int storedDay)
             && storedDay == day;
 
-        bool samePuzzle =
-            Game1.player.modData.TryGetValue(PuzzleIdKey, out string? id)
-            && id == puzzle.Id;
+        // Once today's challenge has been chosen, keep that exact puzzle for the entire day.
+        // Clearing a Stage can raise the player's difficulty tier, but it must not replace an
+        // in-progress Daily Challenge until tomorrow.
+        SudokuPuzzle? storedPuzzle = null;
+        if (sameDay && Game1.player.modData.TryGetValue(PuzzleIdKey, out string? storedId))
+        {
+            storedPuzzle = this.puzzles.FirstOrDefault(p =>
+                p.Id.Equals(storedId, StringComparison.OrdinalIgnoreCase)
+            );
+        }
 
-        if (!sameDay || !samePuzzle)
+        SudokuPuzzle puzzle = storedPuzzle ?? this.SelectPuzzleForToday(day);
+
+        if (!sameDay || storedPuzzle is null)
         {
             Game1.player.modData[DayKey] = day.ToString();
             Game1.player.modData[PuzzleIdKey] = puzzle.Id;
@@ -81,37 +168,58 @@ internal sealed class DailySudokuService
         return puzzle;
     }
 
-    public string GetBoard(SudokuPuzzle puzzle)
+    public string GetBoard(SudokuPuzzle puzzle, SudokuPlayMode mode)
     {
+        if (!Context.IsWorldReady)
+            return puzzle.Puzzle;
+
+        if (mode == SudokuPlayMode.Stage)
+        {
+            string key = ModIdentity.StageBoardPrefix + puzzle.Id;
+            if (Game1.player.modData.TryGetValue(key, out string? board) && board.Length == 81)
+                return board;
+
+            Game1.player.modData[key] = puzzle.Puzzle;
+            return puzzle.Puzzle;
+        }
+
         this.EnsureToday();
 
-        if (Game1.player.modData.TryGetValue(BoardKey, out string? board) && board.Length == 81)
-            return board;
+        if (Game1.player.modData.TryGetValue(BoardKey, out string? dailyBoard) && dailyBoard.Length == 81)
+            return dailyBoard;
 
         return puzzle.Puzzle;
     }
 
-    public void SetCell(SudokuPuzzle puzzle, int row, int column, int value)
+    public void SetCell(SudokuPuzzle puzzle, SudokuPlayMode mode, int row, int column, int value)
     {
-        if (row < 0 || row > 8 || column < 0 || column > 8 || value < 0 || value > 9)
+        if (!Context.IsWorldReady || row < 0 || row > 8 || column < 0 || column > 8 || value < 0 || value > 9)
             return;
 
         int index = row * 9 + column;
         if (puzzle.Puzzle[index] != '0')
             return;
 
-        char[] board = this.GetBoard(puzzle).ToCharArray();
+        char[] board = this.GetBoard(puzzle, mode).ToCharArray();
         board[index] = value == 0 ? '0' : (char)('0' + value);
-        Game1.player.modData[BoardKey] = new string(board);
+
+        string key = mode == SudokuPlayMode.Stage
+            ? ModIdentity.StageBoardPrefix + puzzle.Id
+            : BoardKey;
+
+        Game1.player.modData[key] = new string(board);
     }
 
-    public bool IsSolved(SudokuPuzzle puzzle)
+    public bool IsSolved(SudokuPuzzle puzzle, SudokuPlayMode mode)
     {
-        return this.GetBoard(puzzle) == puzzle.Solution;
+        return this.GetBoard(puzzle, mode) == puzzle.Solution;
     }
 
     public bool IsRewardClaimedToday()
     {
+        if (!Context.IsWorldReady)
+            return false;
+
         ModIdentity.MigrateLegacyPlayerData(Game1.player);
 
         int day = Game1.Date.TotalDays;
@@ -120,18 +228,10 @@ internal sealed class DailySudokuService
             && claimedDay == day;
     }
 
-    public int GetSolvedCount()
+    /// <summary>Claims the reward for today's Daily Challenge. Stage clears never grant this reward.</summary>
+    public string? ClaimDailyReward(SudokuPuzzle puzzle)
     {
-        ModIdentity.MigrateLegacyPlayerData(Game1.player);
-        return ModIdentity.GetSudokuSolvedCount(Game1.player);
-    }
-
-    /// <summary>
-    /// Claims today's reward and returns a player-facing description, or null if the reward couldn't be claimed.
-    /// </summary>
-    public string? ClaimReward(SudokuPuzzle puzzle)
-    {
-        if (!this.IsSolved(puzzle) || this.IsRewardClaimedToday())
+        if (!this.IsSolved(puzzle, SudokuPlayMode.DailyChallenge) || this.IsRewardClaimedToday())
             return null;
 
         string rewardDescription;
@@ -168,32 +268,116 @@ internal sealed class DailySudokuService
         }
 
         Game1.player.modData[ClaimedDayKey] = Game1.Date.TotalDays.ToString();
-        int solvedCount = ModIdentity.IncrementSudokuSolvedCount(Game1.player);
 
         this.monitor.Log(
-            $"Daily Sudoku solved: {puzzle.Id} ({puzzle.Difficulty}), reward={rewardDescription}, totalSolved={solvedCount}.",
+            $"Daily Sudoku solved: {puzzle.Id} ({puzzle.Difficulty}), reward={rewardDescription}. Stage bond progress is unchanged.",
             LogLevel.Info
         );
 
         return rewardDescription;
     }
 
+    /// <summary>
+    /// Marks a Stage as cleared. Returns true only on the first clear of that unique Stage.
+    /// </summary>
+    public bool CompleteStage(SudokuPuzzle puzzle)
+    {
+        if (!Context.IsWorldReady || !this.IsSolved(puzzle, SudokuPlayMode.Stage))
+            return false;
+
+        int stageIndex = this.stages.FindIndex(p => p.Id.Equals(puzzle.Id, StringComparison.OrdinalIgnoreCase));
+        if (stageIndex < 0)
+            return false;
+
+        string key = ModIdentity.StageClearedPrefix + puzzle.Id;
+        bool firstClear = !IsTrue(Game1.player, key);
+
+        if (firstClear)
+        {
+            Game1.player.modData[key] = "true";
+            int uniqueClears = this.GetSolvedCount();
+
+            Game1.player.modData[ModIdentity.SudokuSolvedCountKey] = uniqueClears.ToString();
+
+            this.monitor.Log(
+                $"Sudoku Stage cleared: index={stageIndex + 1}/{this.stages.Count}, puzzle={puzzle.Id}, uniqueClears={uniqueClears}.",
+                LogLevel.Info
+            );
+        }
+
+        return firstClear;
+    }
+
     public void ResetTodayForTesting()
     {
+        if (!Context.IsWorldReady)
+            return;
+
         string[] suffixes = { "Day", "PuzzleId", "Board", "ClaimedDay" };
 
         foreach (string suffix in suffixes)
-        {
             Game1.player.modData.Remove(ModIdentity.DailySudokuPrefix + suffix);
+
+        Game1.player.modData.Remove(ModIdentity.DailyDialogueDayKey);
+    }
+
+    public void ResetStageProgressForTesting()
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        foreach (string key in Game1.player.modData.Keys
+                     .Where(p => p.StartsWith(ModIdentity.StageClearedPrefix, StringComparison.Ordinal)
+                              || p.StartsWith(ModIdentity.StageBoardPrefix, StringComparison.Ordinal))
+                     .ToArray())
+        {
+            Game1.player.modData.Remove(key);
         }
 
-        // Reset the day's full portrait conversation too, but keep lifetime solve progress.
-        Game1.player.modData.Remove(ModIdentity.DailyDialogueDayKey);
+        Game1.player.modData.Remove(ModIdentity.StageProgressMigratedKey);
+        Game1.player.modData[ModIdentity.SudokuSolvedCountKey] = "0";
+    }
+
+    private void EnsureStageProgressMigration()
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        ModIdentity.MigrateLegacyPlayerData(Game1.player);
+
+        if (IsTrue(Game1.player, ModIdentity.StageProgressMigratedKey))
+            return;
+
+        bool alreadyHasStageData = this.stages.Any(p =>
+            Game1.player.modData.ContainsKey(ModIdentity.StageClearedPrefix + p.Id)
+            || Game1.player.modData.ContainsKey(ModIdentity.StageBoardPrefix + p.Id)
+        );
+
+        int legacySolvedCount = ModIdentity.GetSudokuSolvedCount(Game1.player);
+
+        if (!alreadyHasStageData && legacySolvedCount > 0)
+        {
+            int migrated = Math.Min(legacySolvedCount, this.stages.Count);
+            for (int i = 0; i < migrated; i++)
+                Game1.player.modData[ModIdentity.StageClearedPrefix + this.stages[i].Id] = "true";
+
+            this.monitor.Log(
+                $"Migrated alpha.12 Sudoku progress into Stage progression: {migrated}/{this.stages.Count} early Stages marked clear.",
+                LogLevel.Info
+            );
+        }
+
+        int uniqueClears = this.stages.Count(p =>
+            IsTrue(Game1.player, ModIdentity.StageClearedPrefix + p.Id)
+        );
+
+        Game1.player.modData[ModIdentity.SudokuSolvedCountKey] = uniqueClears.ToString();
+        Game1.player.modData[ModIdentity.StageProgressMigratedKey] = "true";
     }
 
     private SudokuPuzzle SelectPuzzleForToday(int day)
     {
-        string difficulty = this.GetDifficultyForPlayer();
+        string difficulty = this.GetDailyDifficultyFromStageProgress();
         List<SudokuPuzzle> pool = this.puzzles
             .Where(p => p.Difficulty.Equals(difficulty, StringComparison.OrdinalIgnoreCase))
             .ToList();
@@ -204,6 +388,16 @@ internal sealed class DailySudokuService
         long seed = unchecked((long)Game1.uniqueIDForThisGame + day * 7919L);
         int index = (int)Math.Abs(seed % pool.Count);
         return pool[index];
+    }
+
+    private string GetDailyDifficultyFromStageProgress()
+    {
+        int cleared = this.GetSolvedCount();
+        if (cleared >= 12)
+            return "Hard";
+        if (cleared >= 6)
+            return "Normal";
+        return "Easy";
     }
 
     private SudokuRewardEntry? SelectRewardForToday(SudokuPuzzle puzzle)
@@ -248,22 +442,20 @@ internal sealed class DailySudokuService
         return $"{gold}g";
     }
 
-    private string GetDifficultyForPlayer()
+    private static int DifficultyRank(string difficulty)
     {
-        Friendship? friendship = null;
+        return difficulty.ToLowerInvariant() switch
+        {
+            "easy" => 0,
+            "normal" => 1,
+            "hard" => 2,
+            _ => 99
+        };
+    }
 
-        if (Game1.player.friendshipData.TryGetValue(ModIdentity.SudokuNpcId, out Friendship? current))
-            friendship = current;
-        else if (Game1.player.friendshipData.TryGetValue(ModIdentity.LegacySudokuNpcId, out Friendship? legacy))
-            friendship = legacy;
-
-        if (friendship is null)
-            return "Easy";
-
-        if (friendship.Points >= 2000)
-            return "Hard";
-        if (friendship.Points >= 1000)
-            return "Normal";
-        return "Easy";
+    private static bool IsTrue(Farmer player, string key)
+    {
+        return player.modData.TryGetValue(key, out string? value)
+            && value.Equals("true", StringComparison.OrdinalIgnoreCase);
     }
 }
