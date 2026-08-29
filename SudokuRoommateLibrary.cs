@@ -213,7 +213,7 @@ internal static class SudokuRoommateLibrary
         return new SudokuRoommateDialogue
         {
             PortraitIndex = portrait,
-            Lines = keys.Select(ModEntry.T).ToArray()
+            Lines = keys.Select(key => ModEntry.T(key)).ToArray()
         };
     }
 }
