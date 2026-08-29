@@ -140,7 +140,7 @@ internal sealed partial class ModEntry : Mod
         this.LoadEventTexturesSafely();
 
         this.Monitor.Log(
-            "Hey! You’re Cursed! v0.0.6-alpha.13 loaded. Stage Select + unique clear progression is active.",
+            "Hey! You’re Cursed! v0.0.6-alpha.13.1 loaded. Stage Select + unique clear progression hotfix is active.",
             LogLevel.Info
         );
 
