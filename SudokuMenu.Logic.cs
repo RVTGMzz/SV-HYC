@@ -37,7 +37,7 @@ internal sealed partial class SudokuMenu
             {
                 int cleared = this.service.GetSolvedCount();
                 string unlockText = this.stageIndex + 1 < total
-                    ? $" Stage {this.stageIndex + 2:00} đã mở."
+                    ? $" Stage {this.stageIndex + 2:00} sẽ mở vào ngày mai."
                     : " Bạn đã hoàn thành toàn bộ 18 Stage hiện tại. Endless Practice đã mở.";
                 this.statusText = $"Đúng. Stage {this.stageIndex + 1:00} hoàn thành!{unlockText} Tiến độ: {cleared}/{total}.";
                 Game1.playSound("purchase");
