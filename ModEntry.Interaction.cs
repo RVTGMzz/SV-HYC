@@ -214,9 +214,9 @@ internal sealed partial class ModEntry
 
         if (!this.Config.EnableDailySudoku || this.dailySudoku is null)
         {
-            Texture2D? portraits = this.LoadSudokuPortraitTexture();
+            Texture2D? disabledPortraits = this.LoadSudokuPortraitTexture();
             Game1.activeClickableMenu = new SudokuConversationMenu(
-                portraits,
+                disabledPortraits,
                 portraitIndex: 1,
                 lines: new[] { "\"...Hôm nay không có bảng.\"" },
                 question: "Sudoku nhìn sang chỗ khác.",
