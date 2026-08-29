@@ -3,8 +3,8 @@ setlocal
 cd /d "%~dp0"
 
 echo ==========================================
-echo   Hey! You're Cursed! v0.0.7-alpha.3
-echo   Story Hook + Pencil Gate
+echo   Hey! You're Cursed! v0.0.7-alpha.3.1
+echo   Player Thought + First VHS Clue
 echo ==========================================
 echo.
 
