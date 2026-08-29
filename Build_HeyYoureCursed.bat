@@ -3,8 +3,8 @@ setlocal
 cd /d "%~dp0"
 
 echo ==========================================
-echo   Hey! You're Cursed! v0.0.7-alpha.2.2.5
-echo   UI Continuity + Rounded Dialogue + Bilingual Polish
+echo   Hey! You're Cursed! v0.0.7-alpha.2.2.5.1
+echo   Localization Select Compile Hotfix
 echo ==========================================
 echo.
 
