@@ -97,6 +97,9 @@ internal sealed class SudokuConversationMenu : IClickableMenu
 
     public override void performHoverAction(int x, int y)
     {
+        if (this.controllerModeSeen)
+            return;
+
         if (this.PrimaryButton.Contains(x, y))
             this.selectedChoice = 0;
         else if (this.SecondaryButton.Contains(x, y))
