@@ -58,19 +58,29 @@ internal sealed partial class ModEntry
         }
 
         this.CancelSequence();
-
         int removedNpcCount = this.RemoveAllSudokuInstances();
         int removedTapeCount = this.RemoveAllCursedVhsFromInventory();
+        int removedCabinetCount = this.RemoveAllOccultCabinetsForTesting();
+        int removedPencils = 0;
+
+        for (int i = Game1.player.Items.Count - 1; i >= 0; i--)
+        {
+            Item? item = Game1.player.Items[i];
+            if (item?.QualifiedItemId != ModIdentity.PencilQualifiedItemId)
+                continue;
+
+            removedPencils += Math.Max(1, item.Stack);
+            Game1.player.Items[i] = null;
+        }
 
         ModIdentity.ClearArrivalFlags(Game1.player);
         this.dailySudoku?.ResetTodayForTesting();
-
-        // A reset is meant to produce a deterministic fresh test state: no ghost,
-        // no installed tape, no Stage progress, and exactly one VHS ready to insert again.
-        this.EnsureCursedVhsGranted(showDialogue: false);
+        this.ResetSaloonPrologueRuntime();
+        this.ResetOccultCabinetRuntime();
+        this.QueueSaloonInvitationIfNeeded();
 
         this.Monitor.Log(
-            $"Core reset complete. Removed NPCs={removedNpcCount}, removed VHS copies={removedTapeCount}. One fresh Cursed VHS was returned to the player.",
+            $"Core reset complete. Removed NPCs={removedNpcCount}, VHS copies={removedTapeCount}, pencils={removedPencils}, cabinets={removedCabinetCount}. Fresh Saloon prologue state restored; no VHS will appear until the gathering is completed.",
             LogLevel.Info
         );
     }
@@ -85,6 +95,8 @@ internal sealed partial class ModEntry
 
         Game1.player.modData[ModIdentity.ArrivalSeenKey] = "true";
         Game1.player.modData[ModIdentity.SudokuNpcEnabledKey] = "true";
+        Game1.player.modData[ModIdentity.ActiveHauntingIdKey] = "Sudoku";
+        Game1.player.modData.Remove(ModIdentity.SudokuSealedKey);
         NPC? sudoku = this.EnsureSudokuCharacterExists();
 
         this.Monitor.Log(
@@ -108,25 +120,27 @@ internal sealed partial class ModEntry
         NPC? sudoku = this.FindSudoku(currentLocationOnly: false);
         bool dailyClaimed = this.dailySudoku?.IsRewardClaimedToday() ?? false;
         SudokuPuzzle? dailyPuzzle = this.dailySudoku?.EnsureToday();
-        bool npcEnabled =
-            Game1.player.modData.TryGetValue(ModIdentity.SudokuNpcEnabledKey, out string? enabled)
-            && enabled == "true";
-        bool vhsGranted =
-            Game1.player.modData.TryGetValue(ModIdentity.CursedVhsGrantedKey, out string? vhs)
-            && vhs == "true";
+        bool npcEnabled = Game1.player.modData.TryGetValue(ModIdentity.SudokuNpcEnabledKey, out string? enabled) && enabled == "true";
+        bool vhsGranted = Game1.player.modData.TryGetValue(ModIdentity.CursedVhsGrantedKey, out string? vhs) && vhs == "true";
         bool vhsInstalled = ModIdentity.IsCursedVhsInstalled(Game1.player);
         bool signalRanToday = ModIdentity.HasDailySignalRunToday(Game1.player);
         bool dailyDialogueToday = ModIdentity.HasDailyDialogueRunToday(Game1.player);
         int solvedCount = this.dailySudoku?.GetSolvedCount() ?? ModIdentity.GetSudokuSolvedCount(Game1.player);
         int stageCount = this.dailySudoku?.GetStageCount() ?? 0;
         int vhsInventoryCount = this.CountCursedVhsInInventory();
+        bool prologueSeen = this.HasSaloonPrologueSeen();
+        int daysSinceActivation = this.GetDaysSinceSudokuActivation();
+        bool wizardSeen = this.HasWizardRevealSeen();
+        bool cabinetUnlocked = this.IsOccultCabinetUnlocked();
+        string activeHaunting = this.GetActiveHauntingId();
+        bool sudokuSealed = this.IsSudokuSealed();
 
         string npcLocation = sudoku?.currentLocation?.NameOrUniqueName ?? "none";
         string npcTile = sudoku is null ? "none" : sudoku.Tile.ToString();
         string npcInvisible = sudoku is null ? "n/a" : sudoku.IsInvisible.ToString();
 
         this.Monitor.Log(
-            $"Hey! You’re Cursed! core status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcCount={allSudoku.Count}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, npcInvisible={npcInvisible}, vhsGranted={vhsGranted}, vhsInstalled={vhsInstalled}, vhsInventoryCount={vhsInventoryCount}, signalRanToday={signalRanToday}, sequenceActive={this.sequenceActive}, firstSequence={this.sequenceIsFirstArrival}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, stageCleared={solvedCount}/{stageCount}, dailyDialogueToday={dailyDialogueToday}, activeMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
+            $"Hey! You’re Cursed! alpha.3.4 status: prologueSeen={prologueSeen}, arrivalSeen={seen}, npcEnabled={npcEnabled}, npcCount={allSudoku.Count}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, npcInvisible={npcInvisible}, vhsGranted={vhsGranted}, vhsInstalled={vhsInstalled}, vhsInventoryCount={vhsInventoryCount}, signalRanToday={signalRanToday}, sequenceActive={this.sequenceActive}, firstSequence={this.sequenceIsFirstArrival}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, stageCleared={solvedCount}/{stageCount}, trust={ModIdentity.GetSudokuTrust(Game1.player)}/30, dailyDialogueToday={dailyDialogueToday}, daysSinceSudokuActivation={daysSinceActivation}, wizardRevealSeen={wizardSeen}, cabinetUnlocked={cabinetUnlocked}, activeHaunting={activeHaunting}, sudokuSealed={sudokuSealed}, activeMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
             LogLevel.Info
         );
     }
