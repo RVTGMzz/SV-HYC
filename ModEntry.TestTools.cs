@@ -12,7 +12,7 @@ internal sealed partial class ModEntry
         helper.ConsoleCommands.Add("heyyourecursed_test_trust", "Set Sudoku Trust directly (0-30).", this.OnTestTrustCommand);
         helper.ConsoleCommands.Add("heyyourecursed_test_stages", "Set the number of unique cleared Sudoku Stages directly.", this.OnTestStagesCommand);
         helper.ConsoleCommands.Add("heyyourecursed_test_endless", "Mark all current Stages clear and unlock Endless Practice.", this.OnTestEndlessCommand);
-        helper.ConsoleCommands.Add("heyyourecursed_test_spiriteve", "Set Spirit's Eve test mode: gentle, wild, lewis, or reset.", this.OnTestSpiritEveCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_test_spiriteve", "Set Spirit's Eve test mode: gentle, wild/free, lewis, or reset.", this.OnTestSpiritEveCommand);
         helper.ConsoleCommands.Add("heyyourecursed_test_help", "List Hey! You’re Cursed! developer/test commands.", this.OnTestHelpCommand);
     }
 
@@ -127,7 +127,13 @@ internal sealed partial class ModEntry
         if (!this.TryRequireWorld(command))
             return;
 
-        string mode = args.Length > 0 ? args[0].Trim().ToLowerInvariant() : "";
+        string mode = args.Length > 0
+            ? args[0].Trim().TrimStart('/').ToLowerInvariant()
+            : "";
+
+        if (mode == "wild")
+            mode = "free";
+
         if (mode == "reset")
         {
             Game1.player.modData.Remove(ModIdentity.SpiritEvePlanYearKey);
@@ -138,9 +144,9 @@ internal sealed partial class ModEntry
             return;
         }
 
-        if (mode is not ("gentle" or "wild" or "lewis"))
+        if (mode is not ("gentle" or "free" or "lewis"))
         {
-            this.Monitor.Log("Usage: heyyourecursed_test_spiriteve <gentle|wild|lewis|reset>", LogLevel.Info);
+            this.Monitor.Log("Usage: heyyourecursed_test_spiriteve <gentle|wild|free|lewis|reset>", LogLevel.Info);
             return;
         }
 
@@ -160,7 +166,7 @@ internal sealed partial class ModEntry
             + "  heyyourecursed_test_trust <0-30> — set Trust directly.\n"
             + "  heyyourecursed_test_stages <0-18> — set unique Stage clears directly.\n"
             + "  heyyourecursed_test_endless — clear all current Stages and unlock Endless Practice.\n"
-            + "  heyyourecursed_test_spiriteve <gentle|wild|lewis|reset> — set/reset Spirit's Eve test state.\n"
+            + "  heyyourecursed_test_spiriteve <gentle|wild|free|lewis|reset> — set/reset Spirit's Eve test state (wild = free/Cứ tự nhiên).\n"
             + "Existing: heyyourecursed_talk, heyyourecursed_stages, heyyourecursed_open, heyyourecursed_status, heyyourecursed_resetdaily, heyyourecursed_resetarrival.",
             LogLevel.Info
         );
