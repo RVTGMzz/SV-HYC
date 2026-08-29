@@ -3,8 +3,8 @@ setlocal
 cd /d "%~dp0"
 
 echo ==========================================
-echo   Hey! You're Cursed! v0.0.7-alpha.2.2.1
-echo   ChaCha-like Ghost Hover Hotfix + Test Shortcuts
+echo   Hey! You're Cursed! v0.0.7-alpha.2.2.2
+echo   Ghost Hover Compile Hotfix + Test Shortcuts
 echo ==========================================
 echo.
 
