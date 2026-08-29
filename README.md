@@ -1,4 +1,12 @@
-# Hey! You’re Cursed! — v0.0.7-alpha.2.2
+# Hey! You’re Cursed! — v0.0.7-alpha.2.2.1
+
+## alpha.2.2.1 — ChaCha-like hover height hotfix
+
+- Fixes the alpha.2.2 visual offset that could lift Sudoku far too high in the farmhouse.
+- Replaces the slow Y-only bob with the same proven motion language used by ChaCha's follower actor in Cardcha: a tiny horizontal sway plus a faster vertical bob around a modest base lift.
+- Sudoku now uses approximately `X ±1.8` and `Y ±2.5` around a `-5` draw offset, instead of the old `-11 ±3.5` Y-only offset.
+- World tile, collision, pathfinding, interaction distance, Trust, Stage progression, Endless Practice, and test shortcuts are unchanged.
+- Sudoku remains shadowless.
 
 ## alpha.2.2 — Ghost Hover Visual Pass + test shortcuts
 
