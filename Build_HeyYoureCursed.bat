@@ -3,8 +3,8 @@ setlocal
 cd /d "%~dp0"
 
 echo ==========================================
-echo   Hey! You're Cursed! v0.0.7-alpha.2.1
-echo   Active Roommate Compile Hotfix + Contextual Activity
+echo   Hey! You're Cursed! v0.0.7-alpha.2.2
+echo   Ghost Hover Visual Pass + Test Shortcuts
 echo ==========================================
 echo.
 
