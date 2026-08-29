@@ -127,6 +127,31 @@ internal sealed class DailySudokuService
         return this.stages.Count(p => IsTrue(Game1.player, ModIdentity.StageClearedPrefix + p.Id));
     }
 
+    public bool IsEndlessPracticeUnlocked()
+    {
+        return this.stages.Count > 0 && this.GetSolvedCount() >= this.stages.Count;
+    }
+
+    public SudokuPuzzle? PrepareNextPracticePuzzle()
+    {
+        if (!Context.IsWorldReady || this.stages.Count == 0 || !this.IsEndlessPracticeUnlocked())
+            return null;
+
+        int cursor = 0;
+        if (Game1.player.modData.TryGetValue(ModIdentity.PracticeCursorKey, out string? raw))
+            int.TryParse(raw, out cursor);
+
+        long seed = unchecked((long)Game1.uniqueIDForThisGame ^ 0x5EEDBEEFL);
+        int offset = (int)((seed & long.MaxValue) % this.stages.Count);
+        int index = (offset + Math.Abs(cursor)) % this.stages.Count;
+        SudokuPuzzle puzzle = this.stages[index];
+
+        Game1.player.modData[ModIdentity.PracticeCursorKey] = (cursor + 1).ToString();
+        Game1.player.modData[ModIdentity.PracticePuzzleIdKey] = puzzle.Id;
+        Game1.player.modData[ModIdentity.PracticeBoardKey] = puzzle.Puzzle;
+        return puzzle;
+    }
+
     public SudokuPuzzle? EnsureToday()
     {
         if (!Context.IsWorldReady || this.puzzles.Count == 0)
@@ -183,6 +208,23 @@ internal sealed class DailySudokuService
             return puzzle.Puzzle;
         }
 
+        if (mode == SudokuPlayMode.Practice)
+        {
+            bool samePuzzle = Game1.player.modData.TryGetValue(ModIdentity.PracticePuzzleIdKey, out string? practiceId)
+                && practiceId.Equals(puzzle.Id, StringComparison.OrdinalIgnoreCase);
+
+            if (samePuzzle
+                && Game1.player.modData.TryGetValue(ModIdentity.PracticeBoardKey, out string? practiceBoard)
+                && practiceBoard.Length == 81)
+            {
+                return practiceBoard;
+            }
+
+            Game1.player.modData[ModIdentity.PracticePuzzleIdKey] = puzzle.Id;
+            Game1.player.modData[ModIdentity.PracticeBoardKey] = puzzle.Puzzle;
+            return puzzle.Puzzle;
+        }
+
         this.EnsureToday();
 
         if (Game1.player.modData.TryGetValue(BoardKey, out string? dailyBoard) && dailyBoard.Length == 81)
@@ -203,9 +245,15 @@ internal sealed class DailySudokuService
         char[] board = this.GetBoard(puzzle, mode).ToCharArray();
         board[index] = value == 0 ? '0' : (char)('0' + value);
 
-        string key = mode == SudokuPlayMode.Stage
-            ? ModIdentity.StageBoardPrefix + puzzle.Id
-            : BoardKey;
+        string key = mode switch
+        {
+            SudokuPlayMode.Stage => ModIdentity.StageBoardPrefix + puzzle.Id,
+            SudokuPlayMode.Practice => ModIdentity.PracticeBoardKey,
+            _ => BoardKey
+        };
+
+        if (mode == SudokuPlayMode.Practice)
+            Game1.player.modData[ModIdentity.PracticePuzzleIdKey] = puzzle.Id;
 
         Game1.player.modData[key] = new string(board);
     }
@@ -319,6 +367,7 @@ internal sealed class DailySudokuService
             Game1.player.modData.Remove(ModIdentity.DailySudokuPrefix + suffix);
 
         Game1.player.modData.Remove(ModIdentity.DailyDialogueDayKey);
+        Game1.player.modData.Remove(ModIdentity.SocialInteractionDayKey);
     }
 
     public void ResetStageProgressForTesting()
@@ -335,6 +384,9 @@ internal sealed class DailySudokuService
         }
 
         Game1.player.modData.Remove(ModIdentity.StageProgressMigratedKey);
+        Game1.player.modData.Remove(ModIdentity.PracticePuzzleIdKey);
+        Game1.player.modData.Remove(ModIdentity.PracticeBoardKey);
+        Game1.player.modData.Remove(ModIdentity.PracticeCursorKey);
         Game1.player.modData[ModIdentity.SudokuSolvedCountKey] = "0";
     }
 

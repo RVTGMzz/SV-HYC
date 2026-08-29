@@ -1,8 +1,8 @@
 {
   "Name": "Hey! You’re Cursed!",
   "Author": "ronvotri",
-  "Version": "0.0.6-alpha.13.1",
-  "Description": "A paranormal Stardew Valley mod about a cursed VHS, a ghost who materializes from your TV, awkward conversations, and daily Sudoku.",
+  "Version": "0.0.7-alpha.2.1",
+  "Description": "A paranormal Stardew Valley mod about a cursed VHS, a ghost roommate, daily conversations, Spirit's Eve, and Sudoku progression.",
   "UniqueID": "ronvotri.HeyYoureCursed",
   "EntryDll": "HeyYoureCursed.dll",
   "MinimumApiVersion": "4.0.0",

@@ -23,7 +23,6 @@ internal sealed partial class ModEntry : Mod
 
     private bool sequenceActive;
     private bool sequenceIsFirstArrival;
-    // Kept for compatibility with the split Arrival.Events partial; alpha.13 no longer queues dialogue handoffs.
     private bool pendingSudokuMenuOpen;
     private int pendingSudokuMenuDelayTicks;
     private int pendingSudokuMenuWaitTicks;
@@ -52,6 +51,7 @@ internal sealed partial class ModEntry : Mod
         helper.ConsoleCommands.Add("heyyourecursed_status", "Print stabilized Hey! You’re Cursed! core state for the current save.", this.OnStatusCommand);
         helper.ConsoleCommands.Add("heyyourecursed_open", "Open today's Sudoku Daily Challenge immediately for testing.", this.OnOpenDailyCommand);
         helper.ConsoleCommands.Add("heyyourecursed_stages", "Open the Sudoku Stage Select hub immediately for testing.", this.OnOpenStagesCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_talk", "Open Sudoku's roommate interaction hub immediately for testing.", this.OnOpenTalkCommand);
         helper.ConsoleCommands.Add("heyyourecursed_resetdaily", "Reset today's Sudoku board and reward flag for testing.", this.OnResetDailyCommand);
         helper.ConsoleCommands.Add("heyyourecursed_givevhs", "Give the Cursed VHS story item to the current player for testing.", this.OnGiveVhsCommand);
     }
@@ -92,6 +92,12 @@ internal sealed partial class ModEntry : Mod
         if (IsNpcAsset("Characters/schedules"))
         {
             e.LoadFromModFile<Dictionary<string, string>>("assets/Schedules/Sudoku.json", AssetLoadPriority.Exclusive);
+            return;
+        }
+
+        if (e.NameWithoutLocale.IsEquivalentTo("Data/Festivals/fall27"))
+        {
+            e.Edit(asset => this.EditSpiritEveFestival(asset.AsDictionary<string, string>().Data), AssetEditPriority.Late);
             return;
         }
 
@@ -137,10 +143,11 @@ internal sealed partial class ModEntry : Mod
     {
         int migratedKeys = ModIdentity.MigrateLegacyPlayerData(Game1.player);
         this.ResetSequenceState();
+        this.ResetSudokuRoommateBehavior();
         this.LoadEventTexturesSafely();
 
         this.Monitor.Log(
-            "Hey! You’re Cursed! v0.0.6-alpha.13.1 loaded. Stage Select + unique clear progression hotfix is active.",
+            "Hey! You’re Cursed! v0.0.7-alpha.2.1 loaded. Active farmhouse roommate behavior + contextual activity dialogue are active.",
             LogLevel.Info
         );
 
@@ -153,10 +160,8 @@ internal sealed partial class ModEntry : Mod
         }
 
         this.ReconcileCoreState();
+        this.Helper.GameContent.InvalidateCache("Data/Festivals/fall27");
 
-        // Recovery for early test saves: those builds could reach later days without
-        // ever persisting the one-time intro completion flag. From day 2 onward, an installed
-        // VHS + completed arrival means Sudoku should use the normal daily conversation flow.
         if (ModIdentity.HasArrivalBeenSeen(Game1.player)
             && ModIdentity.IsCursedVhsInstalled(Game1.player)
             && !ModIdentity.HasFirstConversationCompleted(Game1.player)
@@ -174,11 +179,14 @@ internal sealed partial class ModEntry : Mod
 
         if (ModIdentity.HasArrivalBeenSeen(Game1.player) && this.Config.EnableDailySudoku)
             this.dailySudoku?.EnsureToday();
+
+        this.RefreshSudokuRoommateActivity(force: true);
     }
 
     private void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
         this.ResetSequenceState();
+        this.ResetSudokuRoommateBehavior();
         this.ReconcileCoreState();
 
         if (!ModIdentity.IsCursedVhsInstalled(Game1.player))
@@ -191,6 +199,7 @@ internal sealed partial class ModEntry : Mod
     private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
         this.ResetSequenceState();
+        this.ResetSudokuRoommateBehavior();
         this.tvArrivalSheet = null;
     }
 

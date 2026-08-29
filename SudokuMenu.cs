@@ -32,8 +32,8 @@ internal sealed partial class SudokuMenu : IClickableMenu
         Action? returnToStageSelect = null
     )
         : base(
-            Game1.viewport.Width / 2 - GetMenuWidth() / 2,
-            Game1.viewport.Height / 2 - GetMenuHeight() / 2,
+            Game1.uiViewport.Width / 2 - GetMenuWidth() / 2,
+            Game1.uiViewport.Height / 2 - GetMenuHeight() / 2,
             GetMenuWidth(),
             GetMenuHeight(),
             showUpperRightCloseButton: true
@@ -48,8 +48,8 @@ internal sealed partial class SudokuMenu : IClickableMenu
         this.SelectFirstEditableCell();
     }
 
-    private static int GetMenuWidth() => Math.Clamp(Game1.viewport.Width - 64, 600, 700);
-    private static int GetMenuHeight() => Math.Clamp(Game1.viewport.Height - 48, 650, 820);
+    private static int GetMenuWidth() => Math.Clamp(Game1.uiViewport.Width - 64, 600, 700);
+    private static int GetMenuHeight() => Math.Clamp(Game1.uiViewport.Height - 48, 650, 820);
 
     private int GridSize => this.cellSize * 9;
     private int GridX => this.xPositionOnScreen + (this.width - this.GridSize) / 2;
@@ -70,7 +70,6 @@ internal sealed partial class SudokuMenu : IClickableMenu
         this.numberPickerOpen = false;
 
         base.receiveLeftClick(x, y, playSound);
-
         if (Game1.activeClickableMenu != this)
             return;
 
@@ -96,7 +95,6 @@ internal sealed partial class SudokuMenu : IClickableMenu
                 this.NumberButtonSize,
                 this.NumberButtonSize
             );
-
             if (rect.Contains(x, y))
             {
                 this.EnterNumber(n);
@@ -147,32 +145,22 @@ internal sealed partial class SudokuMenu : IClickableMenu
             case Keys.Delete:
             case Keys.D0:
             case Keys.NumPad0:
-                this.EnterNumber(0);
-                return;
+                this.EnterNumber(0); return;
             case Keys.Enter:
-                this.CheckBoard();
-                return;
+                this.CheckBoard(); return;
             case Keys.Left:
-                this.MoveSelection(0, -1);
-                return;
+                this.MoveSelection(0, -1); return;
             case Keys.Right:
-                this.MoveSelection(0, 1);
-                return;
+                this.MoveSelection(0, 1); return;
             case Keys.Up:
-                this.MoveSelection(-1, 0);
-                return;
+                this.MoveSelection(-1, 0); return;
             case Keys.Down:
-                this.MoveSelection(1, 0);
-                return;
+                this.MoveSelection(1, 0); return;
         }
 
         base.receiveKeyPress(key);
     }
 
-    /// <summary>
-    /// Handle controller input through SMAPI. This is the primary controller path because it
-    /// works even when Stardew doesn't forward a particular gamepad button to receiveGamePadButton.
-    /// </summary>
     internal bool HandleSmapiInput(SButton button)
     {
         bool isControllerInput = button is
@@ -187,7 +175,6 @@ internal sealed partial class SudokuMenu : IClickableMenu
             return false;
 
         this.controllerModeSeen = true;
-
         if (this.numberPickerOpen)
             return this.HandleNumberPickerInput(button);
 
@@ -195,41 +182,31 @@ internal sealed partial class SudokuMenu : IClickableMenu
         {
             case SButton.DPadLeft:
             case SButton.LeftThumbstickLeft:
-                this.MoveSelection(0, -1);
-                return true;
+                this.MoveSelection(0, -1); return true;
             case SButton.DPadRight:
             case SButton.LeftThumbstickRight:
-                this.MoveSelection(0, 1);
-                return true;
+                this.MoveSelection(0, 1); return true;
             case SButton.DPadUp:
             case SButton.LeftThumbstickUp:
-                this.MoveSelection(-1, 0);
-                return true;
+                this.MoveSelection(-1, 0); return true;
             case SButton.DPadDown:
             case SButton.LeftThumbstickDown:
-                this.MoveSelection(1, 0);
-                return true;
+                this.MoveSelection(1, 0); return true;
             case SButton.ControllerA:
-                this.OpenNumberPicker();
-                return true;
+                this.OpenNumberPicker(); return true;
             case SButton.ControllerX:
-                this.EnterNumber(0);
-                return true;
+                this.EnterNumber(0); return true;
             case SButton.ControllerY:
             case SButton.ControllerStart:
-                this.CheckBoard();
-                return true;
+                this.CheckBoard(); return true;
             case SButton.LeftShoulder:
             case SButton.LeftTrigger:
-                this.MoveToNextEditable(-1);
-                return true;
+                this.MoveToNextEditable(-1); return true;
             case SButton.RightShoulder:
             case SButton.RightTrigger:
-                this.MoveToNextEditable(1);
-                return true;
+                this.MoveToNextEditable(1); return true;
             case SButton.ControllerB:
-                this.CloseOrReturn();
-                return true;
+                this.CloseOrReturn(); return true;
         }
 
         return false;

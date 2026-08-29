@@ -13,13 +13,10 @@ internal sealed partial class ModEntry
         if (!Context.IsWorldReady || this.sequenceActive)
             return;
 
-        // Custom menus get an explicit SMAPI controller path so gamepad behavior stays
-        // consistent even when Stardew doesn't forward every controller button itself.
         if (Game1.activeClickableMenu is SudokuMenu sudokuMenu)
         {
             if (sudokuMenu.HandleSmapiInput(e.Button))
                 this.Helper.Input.Suppress(e.Button);
-
             return;
         }
 
@@ -27,7 +24,13 @@ internal sealed partial class ModEntry
         {
             if (conversationMenu.HandleSmapiInput(e.Button))
                 this.Helper.Input.Suppress(e.Button);
+            return;
+        }
 
+        if (Game1.activeClickableMenu is SudokuChoiceMenu choiceMenu)
+        {
+            if (choiceMenu.HandleSmapiInput(e.Button))
+                this.Helper.Input.Suppress(e.Button);
             return;
         }
 
@@ -35,7 +38,6 @@ internal sealed partial class ModEntry
         {
             if (stageSelectMenu.HandleSmapiInput(e.Button))
                 this.Helper.Input.Suppress(e.Button);
-
             return;
         }
 
@@ -48,6 +50,9 @@ internal sealed partial class ModEntry
             return;
 
         if (!ModIdentity.HasArrivalBeenSeen(Game1.player))
+            return;
+
+        if (this.IsAtSpiritEveFestival())
             return;
 
         NPC? sudoku = this.FindSudoku(currentLocationOnly: true);
@@ -98,24 +103,11 @@ internal sealed partial class ModEntry
 
         switch (Game1.player.FacingDirection)
         {
-            case 0:
-                forward = -delta.Y;
-                sideways = Math.Abs(delta.X);
-                break;
-            case 1:
-                forward = delta.X;
-                sideways = Math.Abs(delta.Y);
-                break;
-            case 2:
-                forward = delta.Y;
-                sideways = Math.Abs(delta.X);
-                break;
-            case 3:
-                forward = -delta.X;
-                sideways = Math.Abs(delta.Y);
-                break;
-            default:
-                return false;
+            case 0: forward = -delta.Y; sideways = Math.Abs(delta.X); break;
+            case 1: forward = delta.X; sideways = Math.Abs(delta.Y); break;
+            case 2: forward = delta.Y; sideways = Math.Abs(delta.X); break;
+            case 3: forward = -delta.X; sideways = Math.Abs(delta.Y); break;
+            default: return false;
         }
 
         return forward >= 0.10f && forward <= 1.75f && sideways <= 0.80f;
@@ -147,15 +139,10 @@ internal sealed partial class ModEntry
     private void ShowFirstConversation()
     {
         Texture2D? portraits = this.LoadSudokuPortraitTexture();
-
         Game1.activeClickableMenu = new SudokuConversationMenu(
             portraits,
             portraitIndex: 6,
-            lines: new[]
-            {
-                "Sudoku nhìn bạn không chớp mắt.",
-                "\"...Ngươi thấy ta?\""
-            },
+            lines: new[] { "Sudoku nhìn bạn không chớp mắt.", "\"...Ngươi thấy ta?\"" },
             question: "Trả lời thế nào?",
             primaryLabel: "Ừ. Rõ lắm.",
             secondaryLabel: "Tôi đang nói với TV.",
@@ -168,20 +155,9 @@ internal sealed partial class ModEntry
     private void ShowFirstConversationPencil(bool tvAnswer)
     {
         Texture2D? portraits = this.LoadSudokuPortraitTexture();
-
         string[] lines = tvAnswer
-            ? new[]
-            {
-                "\"Tốt.\"",
-                "Sudoku liếc sang chiếc TV. \"...Nó nói chuyện dễ hiểu hơn ngươi.\"",
-                "\"...Có bút chì không?\""
-            }
-            : new[]
-            {
-                "Sudoku im lặng vài giây.",
-                "\"...Phiền thật.\"",
-                "\"...Ngươi có bút chì không?\""
-            };
+            ? new[] { "\"Tốt.\"", "Sudoku liếc sang chiếc TV. \"...Nó nói chuyện dễ hiểu hơn ngươi.\"", "\"...Có bút chì không?\"" }
+            : new[] { "Sudoku im lặng vài giây.", "\"...Phiền thật.\"", "\"...Ngươi có bút chì không?\"" };
 
         Game1.activeClickableMenu = new SudokuConversationMenu(
             portraits,
@@ -199,11 +175,9 @@ internal sealed partial class ModEntry
     private void CompleteFirstConversation(bool broughtHoe)
     {
         Game1.player.modData[ModIdentity.FirstConversationCompletedKey] = "true";
-
         string preface = broughtHoe
             ? "\"......\"  \"Đừng dùng thứ đó lên bảng.\""
             : "\"...Được.\"";
-
         this.ShowDailySudokuConversation(preface, forceFresh: true);
     }
 
@@ -212,7 +186,8 @@ internal sealed partial class ModEntry
         if (!Context.IsWorldReady)
             return;
 
-        if (!this.Config.EnableDailySudoku || this.dailySudoku is null)
+        DailySudokuService? sudokuService = this.dailySudoku;
+        if (!this.Config.EnableDailySudoku || sudokuService is null)
         {
             Texture2D? disabledPortraits = this.LoadSudokuPortraitTexture();
             Game1.activeClickableMenu = new SudokuConversationMenu(
@@ -229,47 +204,37 @@ internal sealed partial class ModEntry
             return;
         }
 
-        int solvedCount = this.dailySudoku.GetSolvedCount();
-        bool solvedToday = this.dailySudoku.IsRewardClaimedToday();
+        int solvedCount = sudokuService.GetSolvedCount();
+        bool solvedToday = sudokuService.IsRewardClaimedToday();
         bool repeatTalk = !forceFresh && ModIdentity.HasDailyDialogueRunToday(Game1.player);
-
         if (!repeatTalk)
             ModIdentity.MarkDailyDialogueRunToday(Game1.player);
 
-        SudokuDailyDialogue dialogue = SudokuDialogueLibrary.GetForToday(
-            solvedCount,
-            repeatTalk,
-            solvedToday
-        );
-
+        SudokuDailyDialogue dialogue = SudokuDialogueLibrary.GetForToday(solvedCount, repeatTalk, solvedToday);
         List<string> lines = new();
         if (!string.IsNullOrWhiteSpace(preface))
             lines.Add(preface);
-        lines.AddRange(dialogue.Lines);
 
-        int totalStages = this.dailySudoku.GetStageCount();
-        string progressText = solvedCount switch
+        int portraitIndex = dialogue.PortraitIndex;
+        if (this.TryConsumeSpiritEveAftermath(out string[] aftermathLines, out int aftermathPortrait))
         {
-            0 => $"Tiến độ Stage: 0/{totalStages} • Sudoku vẫn chưa tin bạn lắm.",
-            1 => $"Tiến độ Stage: 1/{totalStages} • Mối liên kết vừa bắt đầu.",
-            _ => $"Tiến độ Stage: {solvedCount}/{totalStages}"
-        };
+            lines.AddRange(aftermathLines);
+            portraitIndex = aftermathPortrait;
+        }
+        else
+        {
+            lines.AddRange(dialogue.Lines);
+        }
 
-        Texture2D? portraits = this.LoadSudokuPortraitTexture();
-        Game1.activeClickableMenu = new SudokuConversationMenu(
-            portraits,
-            dialogue.PortraitIndex,
-            lines,
-            dialogue.Question,
-            primaryLabel: "Chơi",
-            secondaryLabel: "Để sau",
-            progressText: progressText,
-            onPrimary: this.ShowSudokuStageSelect,
-            onSecondary: () => { }
+        this.ShowSudokuInteractionHub(
+            openingLines: lines,
+            portraitIndex: portraitIndex,
+            question: dialogue.Question,
+            markDailyDialogue: false
         );
 
         this.Monitor.Log(
-            $"Sudoku daily conversation opened: solvedCount={solvedCount}, repeatTalk={repeatTalk}, solvedToday={solvedToday}, portrait={dialogue.PortraitIndex}.",
+            $"Sudoku roommate hub opened: stageClears={solvedCount}, trust={ModIdentity.GetSudokuTrust(Game1.player)}, repeatTalk={repeatTalk}, solvedToday={solvedToday}, portrait={portraitIndex}.",
             LogLevel.Trace
         );
     }

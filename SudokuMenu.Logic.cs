@@ -33,14 +33,12 @@ internal sealed partial class SudokuMenu
         {
             bool firstClear = this.service.CompleteStage(this.puzzle);
             int total = this.service.GetStageCount();
-
             if (firstClear)
             {
                 int cleared = this.service.GetSolvedCount();
                 string unlockText = this.stageIndex + 1 < total
                     ? $" Stage {this.stageIndex + 2:00} đã mở."
-                    : " Bạn đã hoàn thành toàn bộ 18 Stage hiện tại.";
-
+                    : " Bạn đã hoàn thành toàn bộ 18 Stage hiện tại. Endless Practice đã mở.";
                 this.statusText = $"Đúng. Stage {this.stageIndex + 1:00} hoàn thành!{unlockText} Tiến độ: {cleared}/{total}.";
                 Game1.playSound("purchase");
             }
@@ -49,7 +47,13 @@ internal sealed partial class SudokuMenu
                 this.statusText = $"Đúng. Stage {this.stageIndex + 1:00} đã hoàn thành trước đó; chơi lại không tăng tiến độ.";
                 Game1.playSound("coin");
             }
+            return;
+        }
 
+        if (this.mode == SudokuPlayMode.Practice)
+        {
+            this.statusText = "Đúng. Endless Practice hoàn thành — không thưởng, không tăng Puzzle Bond.";
+            Game1.playSound("coin");
             return;
         }
 
@@ -70,7 +74,6 @@ internal sealed partial class SudokuMenu
     {
         Game1.playSound("cancel");
         Game1.activeClickableMenu = null;
-
         if (this.returnToStageSelect is not null)
             this.returnToStageSelect();
     }
@@ -101,48 +104,33 @@ internal sealed partial class SudokuMenu
             case SButton.LeftThumbstickLeft:
             case SButton.LeftShoulder:
             case SButton.LeftTrigger:
-                this.ChangePicker(-1);
-                return true;
+                this.ChangePicker(-1); return true;
             case SButton.DPadRight:
             case SButton.LeftThumbstickRight:
             case SButton.RightShoulder:
             case SButton.RightTrigger:
-                this.ChangePicker(1);
-                return true;
+                this.ChangePicker(1); return true;
             case SButton.ControllerA:
-                this.EnterNumber(this.numberPickerValue);
-                this.numberPickerOpen = false;
-                return true;
+                this.EnterNumber(this.numberPickerValue); this.numberPickerOpen = false; return true;
             case SButton.ControllerX:
-                this.EnterNumber(0);
-                this.numberPickerOpen = false;
-                return true;
+                this.EnterNumber(0); this.numberPickerOpen = false; return true;
             case SButton.ControllerB:
-                this.numberPickerOpen = false;
-                this.statusText = "Đã hủy chọn số.";
-                Game1.playSound("cancel");
-                return true;
+                this.numberPickerOpen = false; this.statusText = "Đã hủy chọn số."; Game1.playSound("cancel"); return true;
             case SButton.DPadUp:
             case SButton.LeftThumbstickUp:
-                this.ChangePicker(-1);
-                return true;
+                this.ChangePicker(-1); return true;
             case SButton.DPadDown:
             case SButton.LeftThumbstickDown:
-                this.ChangePicker(1);
-                return true;
+                this.ChangePicker(1); return true;
         }
-
         return true;
     }
 
     private void ChangePicker(int delta)
     {
         this.numberPickerValue += delta;
-        if (this.numberPickerValue > 9)
-            this.numberPickerValue = 1;
-        else if (this.numberPickerValue < 1)
-            this.numberPickerValue = 9;
-
+        if (this.numberPickerValue > 9) this.numberPickerValue = 1;
+        else if (this.numberPickerValue < 1) this.numberPickerValue = 9;
         Game1.playSound("shiny4");
     }
 
@@ -161,9 +149,7 @@ internal sealed partial class SudokuMenu
         for (int step = 1; step <= 81; step++)
         {
             int index = (start + delta * step) % 81;
-            if (index < 0)
-                index += 81;
-
+            if (index < 0) index += 81;
             if (this.puzzle.Puzzle[index] == '0')
             {
                 this.selectedRow = index / 9;

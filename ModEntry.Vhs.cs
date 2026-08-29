@@ -23,6 +23,7 @@ internal sealed partial class ModEntry
         ModIdentity.MarkDailySignalRunToday(Game1.player);
 
         NPC? sudoku = this.PlaceSudokuAfterArrival();
+        this.BeginSudokuRoommateBehaviorAfterArrival();
 
         if (firstArrival)
             this.ShowFirstConversation();
@@ -54,7 +55,6 @@ internal sealed partial class ModEntry
         if (inventoryCount != 1)
         {
             this.RemoveAllCursedVhsFromInventory();
-
             try
             {
                 Item tape = ItemRegistry.Create(ModIdentity.CursedVhsQualifiedItemId, 1);
@@ -68,7 +68,6 @@ internal sealed partial class ModEntry
         }
 
         Game1.player.modData[ModIdentity.CursedVhsGrantedKey] = "true";
-
         if (showDialogue)
         {
             Game1.drawObjectDialogue(
