@@ -71,7 +71,7 @@ internal sealed class DailySudokuService
         return this.stages;
     }
 
-    public bool IsStageUnlocked(int stageIndex)
+    public bool IsStageSequenceReady(int stageIndex)
     {
         this.EnsureStageProgressMigration();
 
@@ -79,6 +79,40 @@ internal sealed class DailySudokuService
             return false;
 
         return stageIndex == 0 || this.IsStageCleared(stageIndex - 1);
+    }
+
+    public bool HasClearedNewStageToday()
+    {
+        if (!Context.IsWorldReady)
+            return false;
+
+        return Game1.player.modData.TryGetValue(ModIdentity.StageClearDayKey, out string? raw)
+            && int.TryParse(raw, out int clearDay)
+            && clearDay == Game1.Date.TotalDays;
+    }
+
+    public bool IsStageLockedUntilTomorrow(int stageIndex)
+    {
+        if (stageIndex < 0 || stageIndex >= this.stages.Count)
+            return false;
+
+        if (this.IsStageCleared(stageIndex))
+            return false;
+
+        return this.IsStageSequenceReady(stageIndex) && this.HasClearedNewStageToday();
+    }
+
+    public bool IsStageUnlocked(int stageIndex)
+    {
+        this.EnsureStageProgressMigration();
+
+        if (stageIndex < 0 || stageIndex >= this.stages.Count)
+            return false;
+
+        if (this.IsStageCleared(stageIndex))
+            return true;
+
+        return this.IsStageSequenceReady(stageIndex) && !this.HasClearedNewStageToday();
     }
 
     public bool IsStageCleared(int stageIndex)
@@ -105,8 +139,6 @@ internal sealed class DailySudokuService
         SudokuPuzzle puzzle = this.stages[stageIndex];
         string boardKey = ModIdentity.StageBoardPrefix + puzzle.Id;
 
-        // Unfinished Stages resume from their saved board. Cleared Stages replay from a fresh
-        // copy so "play again" is an actual puzzle, not an already-completed grid.
         if (this.IsStageCleared(stageIndex))
         {
             Game1.player.modData[boardKey] = puzzle.Puzzle;
@@ -166,9 +198,6 @@ internal sealed class DailySudokuService
             && int.TryParse(dayRaw, out int storedDay)
             && storedDay == day;
 
-        // Once today's challenge has been chosen, keep that exact puzzle for the entire day.
-        // Clearing a Stage can raise the player's difficulty tier, but it must not replace an
-        // in-progress Daily Challenge until tomorrow.
         SudokuPuzzle? storedPuzzle = null;
         if (sameDay && Game1.player.modData.TryGetValue(PuzzleIdKey, out string? storedId))
         {
@@ -276,7 +305,6 @@ internal sealed class DailySudokuService
             && claimedDay == day;
     }
 
-    /// <summary>Claims the reward for today's Daily Challenge. Stage clears never grant this reward.</summary>
     public string? ClaimDailyReward(SudokuPuzzle puzzle)
     {
         if (!this.IsSolved(puzzle, SudokuPlayMode.DailyChallenge) || this.IsRewardClaimedToday())
@@ -325,9 +353,6 @@ internal sealed class DailySudokuService
         return rewardDescription;
     }
 
-    /// <summary>
-    /// Marks a Stage as cleared. Returns true only on the first clear of that unique Stage.
-    /// </summary>
     public bool CompleteStage(SudokuPuzzle puzzle)
     {
         if (!Context.IsWorldReady || !this.IsSolved(puzzle, SudokuPlayMode.Stage))
@@ -342,13 +367,23 @@ internal sealed class DailySudokuService
 
         if (firstClear)
         {
+            if (this.HasClearedNewStageToday())
+            {
+                this.monitor.Log(
+                    $"Blocked extra same-day Stage clear for puzzle={puzzle.Id}; one new Stage was already cleared on day {Game1.Date.TotalDays}.",
+                    LogLevel.Trace
+                );
+                return false;
+            }
+
             Game1.player.modData[key] = "true";
+            Game1.player.modData[ModIdentity.StageClearDayKey] = Game1.Date.TotalDays.ToString();
             int uniqueClears = this.GetSolvedCount();
 
             Game1.player.modData[ModIdentity.SudokuSolvedCountKey] = uniqueClears.ToString();
 
             this.monitor.Log(
-                $"Sudoku Stage cleared: index={stageIndex + 1}/{this.stages.Count}, puzzle={puzzle.Id}, uniqueClears={uniqueClears}.",
+                $"Sudoku Stage cleared: index={stageIndex + 1}/{this.stages.Count}, puzzle={puzzle.Id}, uniqueClears={uniqueClears}, day={Game1.Date.TotalDays}.",
                 LogLevel.Info
             );
         }
@@ -387,6 +422,7 @@ internal sealed class DailySudokuService
         Game1.player.modData.Remove(ModIdentity.PracticePuzzleIdKey);
         Game1.player.modData.Remove(ModIdentity.PracticeBoardKey);
         Game1.player.modData.Remove(ModIdentity.PracticeCursorKey);
+        Game1.player.modData.Remove(ModIdentity.StageClearDayKey);
         Game1.player.modData[ModIdentity.SudokuSolvedCountKey] = "0";
     }
 
