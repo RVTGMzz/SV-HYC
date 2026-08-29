@@ -1,4 +1,25 @@
-# Hey! You’re Cursed! — v0.0.7-alpha.2.1
+# Hey! You’re Cursed! — v0.0.7-alpha.2.2
+
+## alpha.2.2 — Ghost Hover Visual Pass + test shortcuts
+
+- Sudoku now floats continuously with a small visual-only vertical bob while idle and while gliding.
+- Her tile position, collision, interaction distance, save state, and farmhouse pathfinding are unchanged.
+- Sudoku remains shadowless through her `Data/Characters` definition (`Shadow.Visible=false`); runtime shadow offset is also kept disabled.
+- Added developer/test commands so progression features can be tested without manually solving every board.
+
+### Fast test commands
+
+- `heyyourecursed_test_solve` — instantly solves the Sudoku board currently open and runs the normal completion/reward logic.
+- `heyyourecursed_test_profile fresh` — 0 stages, Trust 0.
+- `heyyourecursed_test_profile early` — 3 stages, Trust 3.
+- `heyyourecursed_test_profile mid` — 7 stages, Trust 8.
+- `heyyourecursed_test_profile late` — 13 stages, Trust 18.
+- `heyyourecursed_test_profile complete` — all stages, Trust 30, Endless Practice unlocked.
+- `heyyourecursed_test_trust <0-30>` — set Trust directly.
+- `heyyourecursed_test_stages <0-18>` — set unique Stage clears directly.
+- `heyyourecursed_test_endless` — clear all current Stages and unlock Endless Practice.
+- `heyyourecursed_test_spiriteve <gentle|wild|lewis|reset>` — set/reset Spirit’s Eve test state.
+- `heyyourecursed_test_help` — print the test command list in the SMAPI console.
 
 ## alpha.2.1 — Compile hotfix
 
@@ -162,7 +183,14 @@ Successful builds deploy to:
 
 ## Useful test commands
 
-- `heyyourecursed_talk` — open the new roommate interaction hub
+- `heyyourecursed_test_help` — print all alpha.2.2 shortcuts
+- `heyyourecursed_test_solve` — auto-solve the currently open board
+- `heyyourecursed_test_profile <fresh|early|mid|late|complete>` — jump progression/Trust state
+- `heyyourecursed_test_trust <0-30>` — set Trust
+- `heyyourecursed_test_stages <0-18>` — set unique Stage clears
+- `heyyourecursed_test_endless` — unlock Endless Practice
+- `heyyourecursed_test_spiriteve <gentle|wild|lewis|reset>` — set Spirit's Eve state
+- `heyyourecursed_talk` — open the roommate interaction hub
 - `heyyourecursed_stages` — open Stage Select
 - `heyyourecursed_open` — open today's Daily Challenge
 - `heyyourecursed_status` — reports Puzzle Bond, Trust, current roommate activity, Endless unlock, and Spirit's Eve mode
