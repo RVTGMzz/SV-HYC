@@ -18,6 +18,9 @@ internal static class ModIdentity
     public const string FirstConversationCompletedKey = UniqueId + "/FirstConversationCompleted";
     public const string DailyDialogueDayKey = UniqueId + "/DailyDialogueDay";
     public const string SudokuSolvedCountKey = UniqueId + "/SudokuSolvedCount";
+    public const string StageProgressMigratedKey = UniqueId + "/StageProgressMigrated";
+    public const string StageClearedPrefix = UniqueId + "/SudokuStageCleared/";
+    public const string StageBoardPrefix = UniqueId + "/SudokuStageBoard/";
 
     public const string CursedVhsItemId = UniqueId + "_CursedVHS";
     public const string CursedVhsQualifiedItemId = "(O)" + CursedVhsItemId;
@@ -140,6 +143,10 @@ internal static class ModIdentity
         player.modData[DailyDialogueDayKey] = Game1.Date.TotalDays.ToString();
     }
 
+    /// <summary>
+    /// Legacy alpha.12 counter. Alpha.13 keeps it synchronized to the number of unique Stage clears
+    /// so old saves and diagnostics remain meaningful.
+    /// </summary>
     public static int GetSudokuSolvedCount(Farmer player)
     {
         return player.modData.TryGetValue(SudokuSolvedCountKey, out string? raw)
@@ -147,13 +154,6 @@ internal static class ModIdentity
             && count > 0
                 ? count
                 : 0;
-    }
-
-    public static int IncrementSudokuSolvedCount(Farmer player)
-    {
-        int next = GetSudokuSolvedCount(player) + 1;
-        player.modData[SudokuSolvedCountKey] = next.ToString();
-        return next;
     }
 
     public static bool IsCursedVhsInstalled(Farmer player)
@@ -186,7 +186,8 @@ internal static class ModIdentity
             "CursedVHSInstalled",
             "DailySignalDay",
             "DailyDialogueDay",
-            "SudokuSolvedCount"
+            "SudokuSolvedCount",
+            "StageProgressMigrated"
         };
 
         foreach (string suffix in suffixes)
@@ -194,6 +195,23 @@ internal static class ModIdentity
             player.modData.Remove(UniqueId + "/" + suffix);
             foreach (string legacyPrefix in LegacyPrefixes)
                 player.modData.Remove(legacyPrefix + "/" + suffix);
+        }
+
+        string[] dynamicPrefixes =
+        {
+            StageClearedPrefix,
+            StageBoardPrefix,
+            LegacyUniqueId + "/SudokuStageCleared/",
+            LegacyUniqueId + "/SudokuStageBoard/",
+            OlderLegacyUniqueId + "/SudokuStageCleared/",
+            OlderLegacyUniqueId + "/SudokuStageBoard/"
+        };
+
+        foreach (string key in player.modData.Keys
+                     .Where(k => dynamicPrefixes.Any(prefix => k.StartsWith(prefix, StringComparison.Ordinal)))
+                     .ToArray())
+        {
+            player.modData.Remove(key);
         }
     }
 }
