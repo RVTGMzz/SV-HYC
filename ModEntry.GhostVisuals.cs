@@ -44,7 +44,7 @@ internal sealed partial class ModEntry
 
         if (sudoku.IsInvisible)
         {
-            sudoku.drawOffset.Value = Vector2.Zero;
+            sudoku.drawOffset = Vector2.Zero;
             return;
         }
 
@@ -52,6 +52,6 @@ internal sealed partial class ModEntry
         float swayX = (float)Math.Sin(seconds * 2.2d + 0.4d) * GhostHoverHorizontalAmplitude;
         float bobY = (float)Math.Sin(seconds * 3.6d) * GhostHoverVerticalAmplitude - GhostHoverBaseLift;
 
-        sudoku.drawOffset.Value = new Vector2(swayX, bobY);
+        sudoku.drawOffset = new Vector2(swayX, bobY);
     }
 }
