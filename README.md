@@ -1,76 +1,111 @@
-# Hey! You’re Cursed! — v0.0.6-alpha.12
+# Hey! You’re Cursed! — v0.0.6-alpha.13
 
-A paranormal Stardew Valley mod about a cursed VHS, Sudoku, and a ghost who slowly becomes less threatening the more puzzles you solve together.
+A paranormal Stardew Valley mod about a cursed VHS, Sudoku, and a ghost who slowly stops pretending she does not enjoy your company.
 
-## alpha.12 — Daily portrait dialogue + Sudoku UI polish
+## alpha.13 — Stage Select + unique-clear progression
 
-This build replaces the fragile vanilla question-dialogue handoff with a purpose-built Sudoku conversation menu.
+This build turns the Sudoku system into two connected modes instead of one random daily board.
 
-### Daily Sudoku conversation
+### Flow
 
-- Talking to Sudoku no longer jumps straight into the board.
-- The first interaction each day shows 1–2 short lines with Sudoku's portrait, then asks whether you want to play.
-- `Chơi` opens today's Sudoku board; `Để sau` closes the conversation cleanly.
-- Talking again on the same day uses a shorter repeat line instead of replaying the full daily dialogue.
-- If today's puzzle was already solved, the prompt becomes an invitation to reopen the board instead of granting another reward.
+1. Talk to Sudoku.
+2. Her portrait conversation plays for the day.
+3. Choose **Chơi**.
+4. The **Sudoku Stage Select** hub opens.
+5. Choose either:
+   - **Daily Challenge** — repeatable once per day for the normal item/gold reward.
+   - **Stage 01–18** — permanent progression; clearing a unique Stage advances Sudoku's bond dialogue.
 
-### Relationship through puzzle progress
+### Stage progression
 
-Sudoku's tone is driven by the number of daily boards successfully solved:
+There are currently 18 fixed Stages:
 
-- 0–2 solves: threatening / unsettling.
-- 3–6 solves: less hostile, still defensive.
-- 7–12 solves: familiar and noticeably softer.
-- 13+ solves: openly attached, though she still tries to deny it.
+- Easy 01–06
+- Normal 07–12
+- Hard 13–18
 
-Dialogue is deterministic per save/day so reloading doesn't constantly reroll her mood. Multiple portrait frames are used across progression stages instead of leaving the portrait sheet unused.
+Stages unlock sequentially. Replaying a cleared Stage is allowed, but it does **not** increase progression again and does not grant the Daily Challenge reward.
 
-### First meeting
+The bond/progression counter is now the number of **unique Stages cleared**, not the number of daily rewards claimed:
 
-The one-time introduction now uses the same custom portrait conversation UI, including the TV joke and pencil/hoe branch. After the intro, Sudoku immediately continues into the daily invitation flow. This removes the old `DialogueBox -> callback -> SudokuMenu` failure path entirely.
+- 0–2: creepy / threatening
+- 3–6: less hostile
+- 7–12: familiar
+- 13–17: close
+- 18/18: completion dialogue pool
 
-### Sudoku menu layout
+Old alpha.12 `SudokuSolvedCount` save data is migrated once into the first N cleared Stages (capped at 18), then the unique Stage-clear set becomes the source of truth.
 
-- Responsive grid size based on viewport height.
-- `XÓA` and `KIỂM TRA` stay in their own action row.
-- Controller/keyboard instructions now live in a dedicated footer panel below the buttons.
-- Status text is wrapped inside the footer instead of overlapping the controls.
-- Controller-first controls remain intact.
+### Daily Challenge
 
-### Ghost visual
+Daily Challenge remains the only repeatable daily reward source.
 
-- World sprite stays at 85% opacity.
-- Sprite remains lifted slightly above the floor.
-- No shadow, preserving the floating ghost look.
+Its difficulty follows Stage progress instead of vanilla friendship:
 
-## Controller layout
+- 0–5 unique clears → Easy
+- 6–11 → Normal
+- 12+ → Hard
 
-Conversation:
-- D-pad / left stick: choose response.
-- A: confirm.
-- B: decline / close.
+Finishing Daily Challenge does not increase Stage/bond progress.
 
-Sudoku:
-- D-pad or left stick: move cell.
-- A: open number picker.
-- Left/right: choose 1–9.
-- A again: place number.
-- X: erase.
-- Y or Start: check board.
-- B: cancel picker / close board.
-- LB/RB or LT/RT: jump to previous/next editable cell.
+### Menu/controller
+
+Stage Select supports mouse, keyboard, D-pad, and left stick.
+
+- D-pad / Left Stick: move selection
+- A: open selected Daily Challenge / Stage
+- B: close
+- Cleared Stages show a completion mark
+- Locked Stages cannot be opened
+- The first uncleared unlocked Stage is preferred when moving down from Daily Challenge
+
+The Sudoku board keeps the controller-first controls from alpha.12:
+
+- D-pad / Left Stick: move cell
+- A: open number picker
+- Left/Right: select 1–9
+- A again: place number
+- X: erase
+- Y / Start: check
+- LB/RB or LT/RT: previous/next editable cell
+- B / Esc: return to Stage Select when the board was opened from the hub
+
+The footer remains separated from the action buttons so instructions do not overlap the UI.
+
+## Sudoku content
+
+Current puzzle bank: **18 boards total**.
+
+- 6 Easy
+- 6 Normal
+- 6 Hard
+
+These 18 boards are the complete current Stage set. No Chapter 2/Stage 19–36 content is being added yet.
+
+## Ghost presentation
+
+Sudoku keeps the alpha.11 ghost pass:
+
+- 85% world-sprite opacity
+- sprite shifted slightly upward
+- no shadow
+
+Her portrait remains fully opaque in conversation UI.
 
 ## Build
 
-Double-click `Build_HeyYoureCursed.bat` while Stardew Valley and SMAPI are closed.
+Close Stardew Valley and SMAPI, then double-click:
+
+`Build_HeyYoureCursed.bat`
 
 Successful builds deploy to:
 
-`Stardew Valley/Mods/HeyYoureCursed`
+`Mods/HeyYoureCursed`
 
 ## Useful test commands
 
-- `heyyourecursed_open`
+- `heyyourecursed_stages` — open Stage Select directly
+- `heyyourecursed_open` — open today's Daily Challenge directly
 - `heyyourecursed_status`
 - `heyyourecursed_resetdaily`
 - `heyyourecursed_resetarrival`
@@ -78,4 +113,4 @@ Successful builds deploy to:
 - `heyyourecursed_testarrival`
 - `heyyourecursed_givevhs`
 
-`heyyourecursed_status` now also reports total solved Sudoku boards and whether today's full daily conversation has already played.
+`heyyourecursed_status` reports Stage clear progress and today's Daily Challenge state.
