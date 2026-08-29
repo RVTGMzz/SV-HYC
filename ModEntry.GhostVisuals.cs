@@ -18,9 +18,12 @@ internal sealed partial class ModEntry
         this.UpdateSudokuGhostVisuals();
     }
 
-    private const float GhostHoverBaseLiftPixels = 11f;
-    private const float GhostHoverAmplitudePixels = 3.5f;
-    private const double GhostHoverCycleSeconds = 2.8;
+    // Match the motion language that already works well for ChaCha in Cardcha:
+    // a small horizontal fairy/ghost sway plus a faster vertical bob around a modest lift.
+    // These are drawOffset units, not world/tile movement, so interaction and pathfinding stay fixed.
+    private const float GhostHoverBaseLift = 5f;
+    private const float GhostHoverVerticalAmplitude = 2.5f;
+    private const float GhostHoverHorizontalAmplitude = 1.8f;
 
     /// <summary>
     /// Applies a visual-only floating offset to Sudoku. Her world position, tile, collision,
@@ -36,7 +39,7 @@ internal sealed partial class ModEntry
             return;
 
         // Data/Characters already declares Shadow.Visible=false. Keep shadow offset disabled too,
-        // so other game code can't accidentally make the shadow follow the floating sprite.
+        // so other game code can't accidentally make a shadow follow the floating sprite.
         sudoku.shouldShadowBeOffset = false;
 
         if (sudoku.IsInvisible)
@@ -46,9 +49,9 @@ internal sealed partial class ModEntry
         }
 
         double seconds = Game1.currentGameTime.TotalGameTime.TotalSeconds;
-        float bob = (float)Math.Sin(seconds * Math.PI * 2d / GhostHoverCycleSeconds)
-            * GhostHoverAmplitudePixels;
+        float swayX = (float)Math.Sin(seconds * 2.2d + 0.4d) * GhostHoverHorizontalAmplitude;
+        float bobY = (float)Math.Sin(seconds * 3.6d) * GhostHoverVerticalAmplitude - GhostHoverBaseLift;
 
-        sudoku.drawOffset.Value = new Vector2(0f, -GhostHoverBaseLiftPixels + bob);
+        sudoku.drawOffset.Value = new Vector2(swayX, bobY);
     }
 }
