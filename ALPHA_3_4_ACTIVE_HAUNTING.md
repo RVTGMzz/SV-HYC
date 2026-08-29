@@ -1,7 +1,5 @@
 # v0.0.7-alpha.3.4 — Active Haunting + Seal/Unseal Sudoku
 
-> Windows test ZIP is the canonical alpha.3.4 test source until this pass is compile/game-tested and promoted into the repository's older split-source layout.
-
 ## Active Haunting foundation
 
 - The Occult Cabinet is the permanent switchboard for hauntings.
@@ -10,15 +8,20 @@
 - Sealing Sudoku removes her NPC from the world but preserves Trust, all 18 Stage clears, Daily Sudoku data, Endless progression, and story flags.
 - Unsealing restores Sudoku immediately with the same progression.
 - A sealed Sudoku does not respawn from the daily TV signal and does not appear at Spirit's Eve.
+- The framework becomes freely available after the seven-day Wizard/Cabinet milestone; 18/18 is completion of Sudoku's Case, not a prerequisite to switch hauntings.
 
 ## Cabinet UI
 
-The placed Occult Cabinet now exposes two slots:
+The placed Occult Cabinet exposes two slots:
 
 - **Active Connection**
 - **Sealed**
 
-With only Sudoku implemented, the player can seal/unseal the Cursed VHS. Future ghosts can reuse the same one-active-haunting contract without resetting existing entities.
+With only Sudoku implemented, the player can seal/unseal the Cursed VHS. Future ghosts reuse the same one-active-haunting contract and keep their own progression/minigame state.
+
+## Future Case rule
+
+After the initial seven-day tutorial period with Sudoku, future hauntings should be selectable non-linearly. A future ghost may have its own 18-minigame track, but the mod should not force Ghost A 18/18 → Ghost B → Ghost C.
 
 ## Character response
 
