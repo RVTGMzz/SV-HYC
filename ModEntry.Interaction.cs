@@ -31,6 +31,14 @@ internal sealed partial class ModEntry
             return;
         }
 
+        if (Game1.activeClickableMenu is SudokuStageSelectMenu stageSelectMenu)
+        {
+            if (stageSelectMenu.HandleSmapiInput(e.Button))
+                this.Helper.Input.Suppress(e.Button);
+
+            return;
+        }
+
         if (Game1.activeClickableMenu is not null)
             return;
 
@@ -239,11 +247,12 @@ internal sealed partial class ModEntry
             lines.Add(preface);
         lines.AddRange(dialogue.Lines);
 
+        int totalStages = this.dailySudoku.GetStageCount();
         string progressText = solvedCount switch
         {
-            0 => "Hai người chưa giải bảng nào cùng nhau.",
-            1 => "Đã giải cùng nhau: 1 bảng",
-            _ => $"Đã giải cùng nhau: {solvedCount} bảng"
+            0 => $"Tiến độ Stage: 0/{totalStages} • Sudoku vẫn chưa tin bạn lắm.",
+            1 => $"Tiến độ Stage: 1/{totalStages} • Mối liên kết vừa bắt đầu.",
+            _ => $"Tiến độ Stage: {solvedCount}/{totalStages}"
         };
 
         Texture2D? portraits = this.LoadSudokuPortraitTexture();
@@ -252,10 +261,10 @@ internal sealed partial class ModEntry
             dialogue.PortraitIndex,
             lines,
             dialogue.Question,
-            primaryLabel: solvedToday ? "Mở bảng" : "Chơi",
+            primaryLabel: "Chơi",
             secondaryLabel: "Để sau",
             progressText: progressText,
-            onPrimary: () => this.OpenDailySudoku(force: false),
+            onPrimary: this.ShowSudokuStageSelect,
             onSecondary: () => { }
         );
 
@@ -264,5 +273,4 @@ internal sealed partial class ModEntry
             LogLevel.Trace
         );
     }
-
 }
