@@ -9,21 +9,21 @@ internal sealed partial class ModEntry
 {
     private void RegisterAlpha22Features(IModHelper helper)
     {
-        // alpha.2.2.5: initialize SMAPI i18n before any custom Sudoku menu is opened.
         I18n = helper.Translation;
         helper.Events.GameLoop.UpdateTicked += this.OnGhostVisualUpdateTicked;
         helper.Events.Input.ButtonPressed += this.OnAlpha224ControllerFallbackButtonPressed;
         this.RegisterAlpha22TestCommands(helper);
+        this.RegisterAlpha3Features(helper);
     }
 
     private void OnGhostVisualUpdateTicked(object? sender, UpdateTickedEventArgs e)
     {
+        if (!Context.IsWorldReady || this.IsSudokuSealed())
+            return;
+
         this.UpdateSudokuGhostVisuals();
     }
 
-    // The main input router historically returned early while the TV sequence flag was active.
-    // If a custom Sudoku menu is already visible during that transient state, give it a fallback
-    // controller path so mouse and controller never disagree about whether the menu is usable.
     private void OnAlpha224ControllerFallbackButtonPressed(object? sender, ButtonPressedEventArgs e)
     {
         if (!Context.IsWorldReady || !this.sequenceActive)
@@ -31,6 +31,9 @@ internal sealed partial class ModEntry
 
         bool handled = Game1.activeClickableMenu switch
         {
+            OccultCabinetMenu menu => menu.HandleSmapiInput(e.Button),
+            WizardRevealMenu menu => menu.HandleSmapiInput(e.Button),
+            SaloonPrologueMenu menu => menu.HandleSmapiInput(e.Button),
             SudokuMenu menu => menu.HandleSmapiInput(e.Button),
             SudokuConversationMenu menu => menu.HandleSmapiInput(e.Button),
             SudokuChoiceMenu menu => menu.HandleSmapiInput(e.Button),
@@ -48,7 +51,7 @@ internal sealed partial class ModEntry
 
     private void UpdateSudokuGhostVisuals()
     {
-        if (!Context.IsWorldReady)
+        if (!Context.IsWorldReady || this.IsSudokuSealed())
             return;
 
         NPC? sudoku = this.FindSudoku(currentLocationOnly: false);
