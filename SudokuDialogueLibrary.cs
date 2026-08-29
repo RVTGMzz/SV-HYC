@@ -44,6 +44,12 @@ internal static class SudokuDialogueLibrary
             D(3, new[] { "Ta bắt đầu hiểu vì sao người sống thích thói quen.", "Ngươi về, ta đưa bảng. Khá ổn." }, "Ngồi với ta một lát nhé?"),
             D(4, new[] { "Ta giữ chỗ này cho ngươi rồi.", "Đừng bắt ta thừa nhận là ta thích có người chơi cùng." }, "Bắt đầu nhé?"),
             D(3, new[] { "Hôm nay ta chọn một bảng vừa đủ khó.", "Ta muốn xem ngươi còn tiến bộ đến đâu." }, "Chơi với ta chứ?" )
+        },
+        new[]
+        {
+            D(4, new[] { "Mười tám bảng.", "Ngươi đã giải hết những gì ta mang theo... vậy mà vẫn quay lại." }, "Hôm nay vẫn chơi với ta chứ?"),
+            D(3, new[] { "Ta không còn Stage nào để khóa ngươi lại nữa.", "...Nhưng Daily Challenge thì vẫn còn." }, "Ngồi lại với ta nhé?"),
+            D(4, new[] { "Có lẽ ta đã hết lý do để bắt ngươi ở lại.", "May mà ngươi hình như không cần lý do." }, "Chơi cùng ta một lát chứ?")
         }
     };
 
@@ -52,7 +58,8 @@ internal static class SudokuDialogueLibrary
         D(6, new[] { "...Lại nữa?" }, "Muốn làm tiếp không?"),
         D(0, new[] { "Ngươi quay lại rồi." }, "Mở bảng tiếp chứ?"),
         D(4, new[] { "Ta vẫn giữ bảng đây." }, "Chơi tiếp nhé?"),
-        D(3, new[] { "Ta biết ngươi sẽ quay lại." }, "Cùng chơi tiếp nhé?" )
+        D(3, new[] { "Ta biết ngươi sẽ quay lại." }, "Cùng chơi tiếp nhé?"),
+        D(4, new[] { "...Ta vẫn ở đây." }, "Chơi thêm một bảng chứ?")
     };
 
     public static SudokuDailyDialogue GetForToday(int solvedCount, bool repeatTalk, bool solvedToday)
@@ -62,7 +69,8 @@ internal static class SudokuDialogueLibrary
             <= 2 => 0,
             <= 6 => 1,
             <= 12 => 2,
-            _ => 3
+            <= 17 => 3,
+            _ => 4
         };
 
         SudokuDailyDialogue[] pool = repeatTalk
@@ -80,7 +88,7 @@ internal static class SudokuDialogueLibrary
         {
             Lines = result.Lines,
             PortraitIndex = result.PortraitIndex,
-            Question = stage >= 2 ? "Muốn nhìn lại bảng hôm nay với ta không?" : "Muốn mở lại bảng hôm nay không?"
+            Question = stage >= 2 ? "Hôm nay vẫn muốn chơi với ta thêm không?" : "Muốn chơi thêm một bảng không?"
         };
     }
 
