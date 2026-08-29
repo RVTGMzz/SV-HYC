@@ -10,12 +10,34 @@ internal sealed partial class ModEntry
     private void RegisterAlpha22Features(IModHelper helper)
     {
         helper.Events.GameLoop.UpdateTicked += this.OnGhostVisualUpdateTicked;
+        helper.Events.Input.ButtonPressed += this.OnAlpha224ControllerFallbackButtonPressed;
         this.RegisterAlpha22TestCommands(helper);
     }
 
     private void OnGhostVisualUpdateTicked(object? sender, UpdateTickedEventArgs e)
     {
         this.UpdateSudokuGhostVisuals();
+    }
+
+    // The main input router historically returned early while the TV sequence flag was active.
+    // If a custom Sudoku menu is already visible during that transient state, give it a fallback
+    // controller path so mouse and controller never disagree about whether the menu is usable.
+    private void OnAlpha224ControllerFallbackButtonPressed(object? sender, ButtonPressedEventArgs e)
+    {
+        if (!Context.IsWorldReady || !this.sequenceActive)
+            return;
+
+        bool handled = Game1.activeClickableMenu switch
+        {
+            SudokuMenu menu => menu.HandleSmapiInput(e.Button),
+            SudokuConversationMenu menu => menu.HandleSmapiInput(e.Button),
+            SudokuChoiceMenu menu => menu.HandleSmapiInput(e.Button),
+            SudokuStageSelectMenu menu => menu.HandleSmapiInput(e.Button),
+            _ => false
+        };
+
+        if (handled)
+            this.Helper.Input.Suppress(e.Button);
     }
 
     // Match the motion language that already works well for ChaCha in Cardcha:
@@ -38,8 +60,6 @@ internal sealed partial class ModEntry
         if (sudoku is null)
             return;
 
-        // Data/Characters already declares Shadow.Visible=false. Keep shadow offset disabled too,
-        // so other game code can't accidentally make a shadow follow the floating sprite.
         sudoku.shouldShadowBeOffset = false;
 
         if (sudoku.IsInvisible)
