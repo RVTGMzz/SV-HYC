@@ -15,25 +15,32 @@ internal sealed partial class ModEntry
 {
     private void OnTimeChanged(object? sender, TimeChangedEventArgs e)
     {
-        if (this.Config.EnableDailySignal && e.NewTime >= this.Config.DailySignalTime)
+        this.HandleSaloonPrologueTimeChanged(e);
+
+        if (this.Config.EnableDailySignal && e.NewTime >= this.Config.DailySignalTime && !this.IsSudokuSealed())
             this.TryStartArrival(force: false);
 
-        this.RefreshSudokuRoommateActivity(force: false);
+        if (!this.IsSudokuSealed())
+            this.RefreshSudokuRoommateActivity(force: false);
     }
 
     private void OnWarped(object? sender, WarpedEventArgs e)
     {
+        this.HandleSaloonPrologueWarped(e);
+
         if (this.sequenceActive && e.OldLocation is FarmHouse && e.NewLocation is not FarmHouse)
             this.CancelSequence();
 
         if (this.Config.EnableDailySignal
+            && !this.IsSudokuSealed()
             && e.NewLocation is FarmHouse
             && Game1.timeOfDay >= this.Config.DailySignalTime)
         {
             this.TryStartArrival(force: false);
         }
 
-        this.HandleSudokuRoommateWarp(e.OldLocation, e.NewLocation);
+        if (!this.IsSudokuSealed())
+            this.HandleSudokuRoommateWarp(e.OldLocation, e.NewLocation);
     }
 
     private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
@@ -41,9 +48,20 @@ internal sealed partial class ModEntry
         if (!Context.IsWorldReady)
             return;
 
+        this.UpdateSaloonPrologueUi();
+        this.PollSaloonPrologueStart();
+        this.UpdateOccultCabinetStoryUi();
+
         if (!this.sequenceActive)
         {
-            this.UpdateSudokuRoommateBehavior();
+            if (!this.IsSudokuSealed())
+                this.UpdateSudokuRoommateBehavior();
+            return;
+        }
+
+        if (this.IsSudokuSealed())
+        {
+            this.CancelSequence();
             return;
         }
 
