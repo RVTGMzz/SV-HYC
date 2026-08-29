@@ -23,7 +23,7 @@ internal sealed partial class ModEntry : Mod
 
     private bool sequenceActive;
     private bool sequenceIsFirstArrival;
-    // Kept for compatibility with the split Arrival.Events partial; alpha.12 no longer queues dialogue handoffs.
+    // Kept for compatibility with the split Arrival.Events partial; alpha.13 no longer queues dialogue handoffs.
     private bool pendingSudokuMenuOpen;
     private int pendingSudokuMenuDelayTicks;
     private int pendingSudokuMenuWaitTicks;
@@ -50,7 +50,8 @@ internal sealed partial class ModEntry : Mod
         helper.ConsoleCommands.Add("heyyourecursed_resetarrival", "Reset the full VHS/signal/Sudoku core flow and return one fresh test tape.", this.OnResetArrivalCommand);
         helper.ConsoleCommands.Add("heyyourecursed_unlocknpc", "Set Sudoku's arrival flag and create the NPC immediately if possible.", this.OnUnlockNpcCommand);
         helper.ConsoleCommands.Add("heyyourecursed_status", "Print stabilized Hey! You’re Cursed! core state for the current save.", this.OnStatusCommand);
-        helper.ConsoleCommands.Add("heyyourecursed_open", "Open today's Sudoku board immediately for testing.", this.OnOpenDailyCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_open", "Open today's Sudoku Daily Challenge immediately for testing.", this.OnOpenDailyCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_stages", "Open the Sudoku Stage Select hub immediately for testing.", this.OnOpenStagesCommand);
         helper.ConsoleCommands.Add("heyyourecursed_resetdaily", "Reset today's Sudoku board and reward flag for testing.", this.OnResetDailyCommand);
         helper.ConsoleCommands.Add("heyyourecursed_givevhs", "Give the Cursed VHS story item to the current player for testing.", this.OnGiveVhsCommand);
     }
@@ -139,7 +140,7 @@ internal sealed partial class ModEntry : Mod
         this.LoadEventTexturesSafely();
 
         this.Monitor.Log(
-            "Hey! You’re Cursed! v0.0.6-alpha.12 loaded. Daily portrait dialogue + Sudoku UI polish is active.",
+            "Hey! You’re Cursed! v0.0.6-alpha.13 loaded. Stage Select + unique clear progression is active.",
             LogLevel.Info
         );
 
@@ -219,6 +220,5 @@ internal sealed partial class ModEntry : Mod
                 LogLevel.Error
             );
         }
-
     }
 }
