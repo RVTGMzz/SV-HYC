@@ -89,6 +89,9 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
 
     public override void performHoverAction(int x, int y)
     {
+        if (this.controllerModeSeen)
+            return;
+
         for (int i = 0; i < this.options.Length; i++)
         {
             if (this.GetOptionRect(i).Contains(x, y))
