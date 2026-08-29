@@ -13,6 +13,9 @@ internal sealed partial class SudokuMenu : IClickableMenu
 
     private readonly DailySudokuService service;
     private readonly SudokuPuzzle puzzle;
+    private readonly SudokuPlayMode mode;
+    private readonly int stageIndex;
+    private readonly Action? returnToStageSelect;
 
     private int selectedRow;
     private int selectedColumn;
@@ -21,7 +24,13 @@ internal sealed partial class SudokuMenu : IClickableMenu
     private int numberPickerValue = 1;
     private string statusText = "Chọn một ô trống, rồi điền số 1–9.";
 
-    public SudokuMenu(DailySudokuService service, SudokuPuzzle puzzle)
+    public SudokuMenu(
+        DailySudokuService service,
+        SudokuPuzzle puzzle,
+        SudokuPlayMode mode = SudokuPlayMode.DailyChallenge,
+        int stageIndex = -1,
+        Action? returnToStageSelect = null
+    )
         : base(
             Game1.viewport.Width / 2 - GetMenuWidth() / 2,
             Game1.viewport.Height / 2 - GetMenuHeight() / 2,
@@ -32,6 +41,9 @@ internal sealed partial class SudokuMenu : IClickableMenu
     {
         this.service = service;
         this.puzzle = puzzle;
+        this.mode = mode;
+        this.stageIndex = stageIndex;
+        this.returnToStageSelect = returnToStageSelect;
         this.cellSize = Math.Clamp((this.height - 330) / 9, 34, 48);
         this.SelectFirstEditableCell();
     }
@@ -112,7 +124,7 @@ internal sealed partial class SudokuMenu : IClickableMenu
 
         if (key == Keys.Escape)
         {
-            this.exitThisMenu();
+            this.CloseOrReturn();
             return;
         }
 
@@ -216,7 +228,7 @@ internal sealed partial class SudokuMenu : IClickableMenu
                 this.MoveToNextEditable(1);
                 return true;
             case SButton.ControllerB:
-                this.exitThisMenu();
+                this.CloseOrReturn();
                 return true;
         }
 
@@ -225,7 +237,6 @@ internal sealed partial class SudokuMenu : IClickableMenu
 
     public override void receiveGamePadButton(Buttons button)
     {
-        // Fallback for gamepad paths that bypass SMAPI's ButtonPressed event.
         SButton? mapped = button switch
         {
             Buttons.DPadLeft => SButton.DPadLeft,
@@ -247,5 +258,4 @@ internal sealed partial class SudokuMenu : IClickableMenu
 
         base.receiveGamePadButton(button);
     }
-
 }
