@@ -18,38 +18,38 @@ internal static class SudokuRoommateLibrary
     {
         new[]
         {
-            D(6, "...Ngươi muốn nói chuyện?", "Ta không có gì để nói. ...Nhưng ngươi có thể ngồi đó."),
-            D(1, "Người sống nói chuyện rất nhiều.", "Ngươi thì... tạm chịu được."),
-            D(0, "Đừng hỏi ta chết thế nào.", "Ta cũng chưa hỏi tại sao ngươi trồng từng ấy củ cải."),
-            D(6, "Ngươi không cần giải bảng mà vẫn đứng đây sao?", "...Kỳ lạ.")
+            D(6, "roommate.talk.0.0.a", "roommate.talk.0.0.b"),
+            D(1, "roommate.talk.0.1.a", "roommate.talk.0.1.b"),
+            D(0, "roommate.talk.0.2.a", "roommate.talk.0.2.b"),
+            D(6, "roommate.talk.0.3.a", "roommate.talk.0.3.b")
         },
         new[]
         {
-            D(0, "Hôm nay ngươi về sớm hơn.", "Ta chỉ nhận ra thôi. Đừng nghĩ nhiều."),
-            D(2, "Ta bắt đầu phân biệt được tiếng chân của ngươi.", "Điều đó không có nghĩa là ta chờ."),
-            D(5, "Ngươi có một thói quen rất lạ.", "Ngày nào cũng quay lại nói chuyện với một con ma."),
-            D(0, "Căn nhà này bớt yên hơn trước.", "...Không tệ.")
+            D(0, "roommate.talk.1.0.a", "roommate.talk.1.0.b"),
+            D(2, "roommate.talk.1.1.a", "roommate.talk.1.1.b"),
+            D(5, "roommate.talk.1.2.a", "roommate.talk.1.2.b"),
+            D(0, "roommate.talk.1.3.a", "roommate.talk.1.3.b")
         },
         new[]
         {
-            D(4, "Ta đã định kể ngươi một chuyện.", "...Quên rồi. Mai hỏi lại."),
-            D(5, "Hôm nay của ngươi thế nào?", "Không cần kể hết. Ta chỉ... hỏi thôi."),
-            D(4, "Ta nghĩ ta đã quen với tiếng cửa mở khi ngươi về.", "Đừng thay cái cửa."),
-            D(3, "Ngươi không cần lúc nào cũng mang bảng ra.", "Ngồi một chút cũng được.")
+            D(4, "roommate.talk.2.0.a", "roommate.talk.2.0.b"),
+            D(5, "roommate.talk.2.1.a", "roommate.talk.2.1.b"),
+            D(4, "roommate.talk.2.2.a", "roommate.talk.2.2.b"),
+            D(3, "roommate.talk.2.3.a", "roommate.talk.2.3.b")
         },
         new[]
         {
-            D(3, "Ngươi về rồi.", "...Tốt."),
-            D(4, "Ta thích những ngày ngươi ở nhà lâu hơn.", "Đừng bắt ta nói lại."),
-            D(3, "Có lẽ người sống gọi thứ này là... quen thuộc.", "Ta chưa quyết định có thích từ đó không."),
-            D(4, "Nếu một ngày ta không ở cạnh TV nữa...", "Ngươi vẫn sẽ tìm ta chứ?")
+            D(3, "roommate.talk.3.0.a", "roommate.talk.3.0.b"),
+            D(4, "roommate.talk.3.1.a", "roommate.talk.3.1.b"),
+            D(3, "roommate.talk.3.2.a", "roommate.talk.3.2.b"),
+            D(4, "roommate.talk.3.3.a", "roommate.talk.3.3.b")
         },
         new[]
         {
-            D(4, "Ta không còn cần bảng Sudoku để giữ ngươi ngồi lại nữa, phải không?", "...Tốt."),
-            D(3, "Ta đã đợi ngươi.", "Lần này ta không định phủ nhận."),
-            D(4, "Ngôi nhà này trước đây là của ngươi.", "Bây giờ... có lẽ ta cũng ở đây."),
-            D(3, "Hôm nay không chơi cũng được.", "Ta chỉ muốn biết ngươi đã về.")
+            D(4, "roommate.talk.4.0.a", "roommate.talk.4.0.b"),
+            D(3, "roommate.talk.4.1.a", "roommate.talk.4.1.b"),
+            D(4, "roommate.talk.4.2.a", "roommate.talk.4.2.b"),
+            D(3, "roommate.talk.4.3.a", "roommate.talk.4.3.b")
         }
     };
 
@@ -57,55 +57,55 @@ internal static class SudokuRoommateLibrary
     {
         [SudokuActivityKind.TvWatch] = new[]
         {
-            D(1, "Ta đang nhìn cái TV.", "Nó yên lặng hơn nơi ta từng ở bên kia."),
-            D(0, "TV vừa nhiễu một nhịp khi ngươi bước vào.", "Không phải ta. ...Lần này."),
-            D(4, "Ta đang xem cái màn hình đen.", "Nó phản chiếu căn nhà khá rõ. Cả ngươi nữa.")
+            D(1, "roommate.activity.tv.0.a", "roommate.activity.tv.0.b"),
+            D(0, "roommate.activity.tv.1.a", "roommate.activity.tv.1.b"),
+            D(4, "roommate.activity.tv.2.a", "roommate.activity.tv.2.b")
         },
         [SudokuActivityKind.FurnitureWatch] = new[]
         {
-            D(0, "Ta đang quan sát đồ đạc của ngươi.", "Người sống có rất nhiều thứ chỉ để... đặt những thứ khác lên trên."),
-            D(5, "Cái ghế này ở vị trí khác hôm qua.", "Ta không di chuyển nó. Có lẽ."),
-            D(4, "Ta đang học cách một căn nhà thay đổi khi có người sống trong đó.", "Ngươi thay đổi nó khá nhiều.")
+            D(0, "roommate.activity.furniture.0.a", "roommate.activity.furniture.0.b"),
+            D(5, "roommate.activity.furniture.1.a", "roommate.activity.furniture.1.b"),
+            D(4, "roommate.activity.furniture.2.a", "roommate.activity.furniture.2.b")
         },
         [SudokuActivityKind.PetWatch] = new[]
         {
-            D(2, "Nó nhìn thấy ta.", "Ta nghĩ nó biết ta đứng đây từ trước khi ngươi biết."),
-            D(4, "Con vật này không sợ ta.", "...Ta chưa quyết định đó là xúc phạm hay lời khen."),
-            D(3, "Nó cứ đi theo ta bằng mắt.", "Có lẽ nó thích ta hơn ngươi.")
+            D(2, "roommate.activity.pet.0.a", "roommate.activity.pet.0.b"),
+            D(4, "roommate.activity.pet.1.a", "roommate.activity.pet.1.b"),
+            D(3, "roommate.activity.pet.2.a", "roommate.activity.pet.2.b")
         },
         [SudokuActivityKind.HouseListening] = new[]
         {
-            D(6, "Ta đang nghe căn nhà.", "Gỗ kêu khác nhau ở từng giờ."),
-            D(0, "Ta đang đếm những tiếng động trong tường.", "Đến bảy mươi ba thì ngươi thường mở cửa."),
-            D(4, "Căn nhà có âm thanh khác khi ngươi ở trong này.", "Ta nhận ra điều đó gần đây.")
+            D(6, "roommate.activity.listen.0.a", "roommate.activity.listen.0.b"),
+            D(0, "roommate.activity.listen.1.a", "roommate.activity.listen.1.b"),
+            D(4, "roommate.activity.listen.2.a", "roommate.activity.listen.2.b")
         },
         [SudokuActivityKind.DoorWatch] = new[]
         {
-            D(5, "Ta đang nghe cửa.", "Ta biết ngươi sắp về trước khi tay ngươi chạm vào nó."),
-            D(0, "Người sống luôn dùng cửa.", "Rất có nguyên tắc."),
-            D(3, "Ta đứng đây một lúc thôi.", "...Không phải để đợi ngươi.")
+            D(5, "roommate.activity.door.0.a", "roommate.activity.door.0.b"),
+            D(0, "roommate.activity.door.1.a", "roommate.activity.door.1.b"),
+            D(3, "roommate.activity.door.2.a", "roommate.activity.door.2.b")
         },
         [SudokuActivityKind.QuietCorner] = new[]
         {
-            D(6, "Góc này yên hơn.", "Ta thích nghe ngôi nhà từ đây."),
-            D(1, "Ta không trốn.", "Ta chỉ chọn chỗ ít người sống đi ngang qua."),
-            D(0, "...Không làm gì cả.", "Người sống cũng làm vậy đôi khi, đúng không?")
+            D(6, "roommate.activity.corner.0.a", "roommate.activity.corner.0.b"),
+            D(1, "roommate.activity.corner.1.a", "roommate.activity.corner.1.b"),
+            D(0, "roommate.activity.corner.2.a", "roommate.activity.corner.2.b")
         },
         [SudokuActivityKind.WaitingForPlayer] = new[]
         {
-            D(4, "Ta đang đợi ngươi về.", "...Đó cũng được tính là một hoạt động."),
-            D(3, "Ta đã để chỗ cạnh đây trống.", "Không có lý do gì đặc biệt."),
-            D(4, "Ta định chọn một bảng cho ngươi.", "Rồi ta nhớ ra chúng ta không nhất thiết phải chơi mới nói chuyện được.")
+            D(4, "roommate.activity.wait.0.a", "roommate.activity.wait.0.b"),
+            D(3, "roommate.activity.wait.1.a", "roommate.activity.wait.1.b"),
+            D(4, "roommate.activity.wait.2.a", "roommate.activity.wait.2.b")
         }
     };
 
     private static readonly SudokuRoommateDialogue[] StrangePool =
     {
-        D(6, "TV vừa bật một khung hình mà ta không nhận ra.", "Ta đã tắt nó. Có lẽ."),
-        D(1, "Có thứ gì đó đứng ngoài cửa lúc nãy.", "Nó bỏ đi khi ta nhìn lại."),
-        D(0, "Gương trong nhà phản chiếu ngươi chậm hơn một nhịp.", "...Đừng lo. Hôm nay thôi."),
-        D(5, "Con vật trong nhà cứ nhìn qua vai ngươi.", "Ta không đứng ở đó."),
-        D(2, "Đêm qua có tiếng gõ từ phía trong TV.", "Ta không trả lời.")
+        D(6, "roommate.strange.0.a", "roommate.strange.0.b"),
+        D(1, "roommate.strange.1.a", "roommate.strange.1.b"),
+        D(0, "roommate.strange.2.a", "roommate.strange.2.b"),
+        D(5, "roommate.strange.3.a", "roommate.strange.3.b"),
+        D(2, "roommate.strange.4.a", "roommate.strange.4.b")
     };
 
     public static SudokuRoommateDialogue GetNaturalTalk(int trust, int stageClears)
@@ -135,23 +135,23 @@ internal static class SudokuRoommateLibrary
         {
             <= 6 => new[]
             {
-                "Sudoku khẽ quay đầu. \"...Ngươi về rồi.\"",
-                "Sudoku nhìn về phía cửa. \"Ta nghe thấy ngươi từ ngoài kia.\""
+                ModEntry.T("roommate.welcome.0.0"),
+                ModEntry.T("roommate.welcome.0.1")
             },
             <= 12 => new[]
             {
-                "Sudoku nhìn bạn một lúc. \"Hôm nay ngươi về muộn hơn.\"",
-                "\"...Ngươi về rồi.\" Sudoku quay lại việc đang làm."
+                ModEntry.T("roommate.welcome.1.0"),
+                ModEntry.T("roommate.welcome.1.1")
             },
             <= 20 => new[]
             {
-                "Sudoku khẽ nghiêng đầu. \"Ngươi về rồi. ...Tốt.\"",
-                "\"Ta biết là ngươi sẽ về.\" Sudoku nói như thể đó là chuyện hiển nhiên."
+                ModEntry.T("roommate.welcome.2.0"),
+                ModEntry.T("roommate.welcome.2.1")
             },
             _ => new[]
             {
-                "\"Ngươi về rồi.\" Sudoku có vẻ nhẹ nhõm hơn cô ấy muốn thừa nhận.",
-                "Sudoku nhìn sang bạn. \"Ta đã đợi ngươi.\""
+                ModEntry.T("roommate.welcome.3.0"),
+                ModEntry.T("roommate.welcome.3.1")
             }
         };
 
@@ -162,29 +162,31 @@ internal static class SudokuRoommateLibrary
 
     public static string GetActivityLabel(SudokuActivityKind activity)
     {
-        return activity switch
+        string key = activity switch
         {
-            SudokuActivityKind.TvWatch => "Đang nhìn TV",
-            SudokuActivityKind.FurnitureWatch => "Đang quan sát đồ đạc",
-            SudokuActivityKind.PetWatch => "Đang quan sát thú nuôi",
-            SudokuActivityKind.HouseListening => "Đang nghe căn nhà",
-            SudokuActivityKind.DoorWatch => "Đang đứng gần cửa",
-            SudokuActivityKind.QuietCorner => "Đang ở một góc yên tĩnh",
-            SudokuActivityKind.WaitingForPlayer => "Đang đợi bạn về",
-            _ => "Đang ở trong nhà"
+            SudokuActivityKind.TvWatch => "roommate.activity-label.tv",
+            SudokuActivityKind.FurnitureWatch => "roommate.activity-label.furniture",
+            SudokuActivityKind.PetWatch => "roommate.activity-label.pet",
+            SudokuActivityKind.HouseListening => "roommate.activity-label.listen",
+            SudokuActivityKind.DoorWatch => "roommate.activity-label.door",
+            SudokuActivityKind.QuietCorner => "roommate.activity-label.corner",
+            SudokuActivityKind.WaitingForPlayer => "roommate.activity-label.wait",
+            _ => "roommate.activity-label.home"
         };
+        return ModEntry.T(key);
     }
 
     public static string GetTrustLabel(int trust)
     {
-        return trust switch
+        string key = trust switch
         {
-            <= 2 => "Xa lạ",
-            <= 6 => "Bớt đề phòng",
-            <= 12 => "Quen thuộc",
-            <= 20 => "Tin tưởng",
-            _ => "Như người nhà"
+            <= 2 => "roommate.trust.stranger",
+            <= 6 => "roommate.trust.warming",
+            <= 12 => "roommate.trust.familiar",
+            <= 20 => "roommate.trust.trusted",
+            _ => "roommate.trust.family"
         };
+        return ModEntry.T(key);
     }
 
     private static int GetTrustLevel(int trust)
@@ -206,12 +208,12 @@ internal static class SudokuRoommateLibrary
         return pool[index];
     }
 
-    private static SudokuRoommateDialogue D(int portrait, params string[] lines)
+    private static SudokuRoommateDialogue D(int portrait, params string[] keys)
     {
         return new SudokuRoommateDialogue
         {
             PortraitIndex = portrait,
-            Lines = lines
+            Lines = keys.Select(ModEntry.T).ToArray()
         };
     }
 }

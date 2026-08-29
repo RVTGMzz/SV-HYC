@@ -9,6 +9,8 @@ internal sealed partial class ModEntry
 {
     private void RegisterAlpha22Features(IModHelper helper)
     {
+        // alpha.2.2.5: initialize SMAPI i18n before any custom Sudoku menu is opened.
+        I18n = helper.Translation;
         helper.Events.GameLoop.UpdateTicked += this.OnGhostVisualUpdateTicked;
         helper.Events.Input.ButtonPressed += this.OnAlpha224ControllerFallbackButtonPressed;
         this.RegisterAlpha22TestCommands(helper);
@@ -40,17 +42,10 @@ internal sealed partial class ModEntry
             this.Helper.Input.Suppress(e.Button);
     }
 
-    // Match the motion language that already works well for ChaCha in Cardcha:
-    // a small horizontal fairy/ghost sway plus a faster vertical bob around a modest lift.
-    // These are drawOffset units, not world/tile movement, so interaction and pathfinding stay fixed.
     private const float GhostHoverBaseLift = 5f;
     private const float GhostHoverVerticalAmplitude = 2.5f;
     private const float GhostHoverHorizontalAmplitude = 1.8f;
 
-    /// <summary>
-    /// Applies a visual-only floating offset to Sudoku. Her world position, tile, collision,
-    /// interaction distance, pathfinding, and save state stay untouched.
-    /// </summary>
     private void UpdateSudokuGhostVisuals()
     {
         if (!Context.IsWorldReady)

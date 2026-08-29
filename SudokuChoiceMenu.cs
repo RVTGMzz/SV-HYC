@@ -24,6 +24,8 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
     private readonly string question;
     private readonly string progressText;
     private readonly SudokuChoiceOption[] options;
+    private readonly Action<int>? onOptionActivated;
+    private readonly Action? onClosed;
 
     private int selectedIndex;
     private bool controllerModeSeen;
@@ -34,7 +36,10 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
         IEnumerable<string> lines,
         string question,
         string progressText,
-        IEnumerable<SudokuChoiceOption> options
+        IEnumerable<SudokuChoiceOption> options,
+        int initialSelectedIndex = 0,
+        Action<int>? onOptionActivated = null,
+        Action? onClosed = null
     )
         : base(
             Game1.uiViewport.Width / 2 - GetMenuWidth() / 2,
@@ -50,6 +55,12 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
         this.question = question;
         this.progressText = progressText;
         this.options = options.Where(p => !string.IsNullOrWhiteSpace(p.Label)).Take(6).ToArray();
+        this.selectedIndex = this.options.Length == 0
+            ? 0
+            : Math.Clamp(initialSelectedIndex, 0, this.options.Length - 1);
+        this.onOptionActivated = onOptionActivated;
+        this.onClosed = onClosed;
+        this.controllerModeSeen = SudokuInputState.LastWasController;
     }
 
     private static int GetMenuWidth() => Math.Clamp(Game1.uiViewport.Width - 96, 680, 880);
@@ -75,6 +86,7 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
     public override void receiveLeftClick(int x, int y, bool playSound = true)
     {
         this.controllerModeSeen = false;
+        SudokuInputState.LastWasController = false;
 
         for (int i = 0; i < this.options.Length; i++)
         {
@@ -89,6 +101,9 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
 
     public override void performHoverAction(int x, int y)
     {
+        // Once the player has switched to controller, a stationary mouse cursor may still
+        // generate hover callbacks in Stardew. Don't let that stale cursor overwrite the
+        // controller selection. A real mouse click switches back to mouse mode.
         if (this.controllerModeSeen)
             return;
 
@@ -105,6 +120,7 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
     public override void receiveKeyPress(Keys key)
     {
         this.controllerModeSeen = false;
+        SudokuInputState.LastWasController = false;
 
         switch (key)
         {
@@ -140,6 +156,7 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
             return false;
 
         this.controllerModeSeen = true;
+        SudokuInputState.LastWasController = true;
 
         switch (button)
         {
@@ -188,8 +205,14 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
     public override void draw(SpriteBatch b)
     {
         Rectangle panel = new(this.xPositionOnScreen, this.yPositionOnScreen, this.width, this.height);
-        b.Draw(Game1.staminaRect, panel, new Color(18, 24, 34) * 0.97f);
-        DrawBorder(b, panel, 4, new Color(100, 132, 155));
+        SudokuUiStyle.DrawRoundedPanel(
+            b,
+            panel,
+            new Color(18, 24, 34) * 0.97f,
+            new Color(100, 132, 155),
+            borderThickness: 4,
+            radius: 16
+        );
 
         b.DrawString(
             Game1.dialogueFont,
@@ -205,8 +228,14 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
             portraitSize,
             portraitSize
         );
-        b.Draw(Game1.staminaRect, portraitBox, new Color(10, 14, 20));
-        DrawBorder(b, portraitBox, 2, new Color(78, 104, 124));
+        SudokuUiStyle.DrawRoundedPanel(
+            b,
+            portraitBox,
+            new Color(10, 14, 20),
+            new Color(78, 104, 124),
+            borderThickness: 2,
+            radius: 10
+        );
 
         if (this.portraits is not null)
         {
@@ -251,9 +280,9 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
         for (int i = 0; i < this.options.Length; i++)
             DrawChoiceButton(b, this.GetOptionRect(i), this.options[i].Label, i == this.selectedIndex);
 
-        string hint = this.controllerModeSeen
-            ? "D-pad/LS: chọn   •   A: xác nhận   •   B: đóng"
-            : "↑/↓: chọn   •   Enter: xác nhận   •   Esc: đóng";
+        string hint = ModEntry.T(this.controllerModeSeen
+            ? "menu.hint.controller"
+            : "menu.hint.keyboard");
         Vector2 hintSize = Game1.smallFont.MeasureString(hint);
         b.DrawString(
             Game1.smallFont,
@@ -282,7 +311,9 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
             return;
         }
 
-        Action action = this.options[Math.Clamp(this.selectedIndex, 0, this.options.Length - 1)].Action;
+        int index = Math.Clamp(this.selectedIndex, 0, this.options.Length - 1);
+        this.onOptionActivated?.Invoke(index);
+        Action action = this.options[index].Action;
         Game1.playSound("smallSelect");
         Game1.activeClickableMenu = null;
         action();
@@ -292,14 +323,21 @@ internal sealed class SudokuChoiceMenu : IClickableMenu
     {
         Game1.playSound("cancel");
         Game1.activeClickableMenu = null;
+        this.onClosed?.Invoke();
     }
 
     private static void DrawChoiceButton(SpriteBatch b, Rectangle rect, string text, bool selected)
     {
         Color fill = selected ? new Color(82, 110, 133) : new Color(43, 59, 73);
         Color border = selected ? new Color(225, 235, 242) : new Color(105, 135, 158);
-        b.Draw(Game1.staminaRect, rect, fill);
-        DrawBorder(b, rect, selected ? 4 : 2, border);
+        SudokuUiStyle.DrawRoundedPanel(
+            b,
+            rect,
+            fill,
+            border,
+            borderThickness: selected ? 4 : 2,
+            radius: 9
+        );
 
         string wrapped = WrapText(Game1.smallFont, text, rect.Width - 18);
         Vector2 size = Game1.smallFont.MeasureString(wrapped);

@@ -6,6 +6,10 @@ namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
+    // Keeps the hub anchored on the option the player actually activated when a sub-dialogue
+    // returns to the roommate menu. Closing the interaction resets this to the first option.
+    private int sudokuHubSelectedIndex;
+
     private void OnOpenTalkCommand(string command, string[] args)
     {
         if (!Context.IsWorldReady)
@@ -14,6 +18,7 @@ internal sealed partial class ModEntry
             return;
         }
 
+        this.sudokuHubSelectedIndex = 0;
         this.ShowDailySudokuConversation(forceFresh: true);
     }
 
@@ -41,39 +46,50 @@ internal sealed partial class ModEntry
         {
             new SudokuChoiceOption
             {
-                Label = "Chơi Sudoku",
+                Label = T("hub.option.play"),
                 Action = this.ShowSudokuStageSelect
             },
             new SudokuChoiceOption
             {
-                Label = "Nói chuyện",
+                Label = T("hub.option.talk"),
                 Action = this.ShowNaturalSudokuTalk
             },
             new SudokuChoiceOption
             {
-                Label = "Hôm nay cô đang làm gì?",
+                Label = T("hub.option.activity"),
                 Action = this.ShowSudokuActivityTalk
             },
             new SudokuChoiceOption
             {
-                Label = spiritEve ? "Spirit's Eve tối nay?" : "Có gì lạ không?",
+                Label = T(spiritEve ? "hub.option.spiriteve" : "hub.option.strange"),
                 Action = spiritEve ? this.ShowSpiritEvePlan : this.ShowSudokuStrangeTalk
             },
             new SudokuChoiceOption
             {
-                Label = "Để sau",
-                Action = () => { }
+                Label = T("ui.common.later"),
+                Action = () => this.sudokuHubSelectedIndex = 0
             }
         };
+
+        this.sudokuHubSelectedIndex = Math.Clamp(this.sudokuHubSelectedIndex, 0, Math.Max(0, options.Count - 1));
 
         Texture2D? portraits = this.LoadSudokuPortraitTexture();
         Game1.activeClickableMenu = new SudokuChoiceMenu(
             portraits,
             portraitIndex,
-            openingLines ?? new[] { "Sudoku nhìn bạn, chờ bạn lên tiếng." },
-            question: question ?? "...Hôm nay ngươi muốn làm gì?",
-            progressText: $"Puzzle Bond {stageClears}/{totalStages}  •  Trust {trust}/30 — {trustLabel}",
-            options: options
+            openingLines ?? new[] { T("hub.opening") },
+            question: question ?? T("hub.question"),
+            progressText: T("hub.progress", new
+            {
+                cleared = stageClears,
+                total = totalStages,
+                trust,
+                label = trustLabel
+            }),
+            options: options,
+            initialSelectedIndex: this.sudokuHubSelectedIndex,
+            onOptionActivated: index => this.sudokuHubSelectedIndex = index,
+            onClosed: () => this.sudokuHubSelectedIndex = 0
         );
     }
 
@@ -89,8 +105,8 @@ internal sealed partial class ModEntry
         SudokuRoommateDialogue dialogue = SudokuRoommateLibrary.GetNaturalTalk(trust, stageClears);
 
         string trustNote = gained
-            ? $"Trust tăng lên {trust}/30."
-            : $"Trust {trust}/30 • hôm nay hai người đã dành thời gian nói chuyện rồi.";
+            ? T("hub.trust.gained", new { trust })
+            : T("hub.trust.already", new { trust });
 
         this.ShowSimpleSudokuDialogue(
             dialogue.PortraitIndex,
@@ -111,8 +127,9 @@ internal sealed partial class ModEntry
         SudokuRoommateDialogue dialogue = SudokuRoommateLibrary.GetActivity(activity, trust);
         string activityLabel = SudokuRoommateLibrary.GetActivityLabel(activity);
         string note = gained
-            ? $"{activityLabel} • Trust tăng lên {trust}/30"
-            : $"{activityLabel} • Trust {trust}/30";
+            ? T("hub.activity.gained", new { activity = activityLabel, trust })
+            : T("hub.activity.normal", new { activity = activityLabel, trust });
+
         this.ShowSimpleSudokuDialogue(
             dialogue.PortraitIndex,
             dialogue.Lines,
@@ -130,8 +147,9 @@ internal sealed partial class ModEntry
         int trust = ModIdentity.GetSudokuTrust(Game1.player);
         SudokuRoommateDialogue dialogue = SudokuRoommateLibrary.GetStrangeThing(trust);
         string note = gained
-            ? $"Paranormal note • Trust tăng lên {trust}/30"
-            : $"Paranormal note • Trust {trust}/30";
+            ? T("hub.strange.gained", new { trust })
+            : T("hub.strange.normal", new { trust });
+
         this.ShowSimpleSudokuDialogue(
             dialogue.PortraitIndex,
             dialogue.Lines,
@@ -152,12 +170,12 @@ internal sealed partial class ModEntry
             portraits,
             portraitIndex,
             lines,
-            question: returnToHub ? "...Còn gì nữa không?" : "...",
-            primaryLabel: returnToHub ? "Ở lại" : "Được.",
-            secondaryLabel: "Để sau",
+            question: returnToHub ? T("dialogue.more") : "...",
+            primaryLabel: returnToHub ? T("dialogue.stay") : T("dialogue.ok"),
+            secondaryLabel: T("ui.common.later"),
             progressText: progressText,
             onPrimary: returnToHub ? () => this.ShowSudokuInteractionHub() : () => { },
-            onSecondary: () => { }
+            onSecondary: () => this.sudokuHubSelectedIndex = 0
         );
     }
 }

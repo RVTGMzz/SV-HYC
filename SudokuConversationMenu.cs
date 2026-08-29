@@ -57,6 +57,7 @@ internal sealed class SudokuConversationMenu : IClickableMenu
         this.progressText = progressText;
         this.onPrimary = onPrimary;
         this.onSecondary = onSecondary;
+        this.controllerModeSeen = SudokuInputState.LastWasController;
     }
 
     private static int GetMenuWidth() => Math.Clamp(Game1.uiViewport.Width - 96, 620, 800);
@@ -79,6 +80,7 @@ internal sealed class SudokuConversationMenu : IClickableMenu
     public override void receiveLeftClick(int x, int y, bool playSound = true)
     {
         this.controllerModeSeen = false;
+        SudokuInputState.LastWasController = false;
 
         if (this.PrimaryButton.Contains(x, y))
         {
@@ -97,6 +99,9 @@ internal sealed class SudokuConversationMenu : IClickableMenu
 
     public override void performHoverAction(int x, int y)
     {
+        // Once the player has switched to controller, a stationary mouse cursor may still
+        // generate hover callbacks in Stardew. Don't let that stale cursor overwrite the
+        // controller selection. A real mouse click switches back to mouse mode.
         if (this.controllerModeSeen)
             return;
 
@@ -109,6 +114,7 @@ internal sealed class SudokuConversationMenu : IClickableMenu
     public override void receiveKeyPress(Keys key)
     {
         this.controllerModeSeen = false;
+        SudokuInputState.LastWasController = false;
 
         switch (key)
         {
@@ -144,6 +150,7 @@ internal sealed class SudokuConversationMenu : IClickableMenu
             return false;
 
         this.controllerModeSeen = true;
+        SudokuInputState.LastWasController = true;
 
         switch (button)
         {
@@ -192,8 +199,14 @@ internal sealed class SudokuConversationMenu : IClickableMenu
     public override void draw(SpriteBatch b)
     {
         Rectangle panel = new(this.xPositionOnScreen, this.yPositionOnScreen, this.width, this.height);
-        b.Draw(Game1.staminaRect, panel, new Color(18, 24, 34) * 0.97f);
-        DrawBorder(b, panel, 4, new Color(100, 132, 155));
+        SudokuUiStyle.DrawRoundedPanel(
+            b,
+            panel,
+            new Color(18, 24, 34) * 0.97f,
+            new Color(100, 132, 155),
+            borderThickness: 4,
+            radius: 16
+        );
 
         int portraitSize = Math.Min(192, this.height - 190);
         Rectangle portraitBox = new(
@@ -203,8 +216,14 @@ internal sealed class SudokuConversationMenu : IClickableMenu
             portraitSize
         );
 
-        b.Draw(Game1.staminaRect, portraitBox, new Color(10, 14, 20));
-        DrawBorder(b, portraitBox, 2, new Color(78, 104, 124));
+        SudokuUiStyle.DrawRoundedPanel(
+            b,
+            portraitBox,
+            new Color(10, 14, 20),
+            new Color(78, 104, 124),
+            borderThickness: 2,
+            radius: 10
+        );
 
         if (this.portraits is not null)
         {
@@ -268,9 +287,9 @@ internal sealed class SudokuConversationMenu : IClickableMenu
         DrawChoiceButton(b, this.PrimaryButton, this.primaryLabel, this.selectedChoice == 0);
         DrawChoiceButton(b, this.SecondaryButton, this.secondaryLabel, this.selectedChoice == 1);
 
-        string hint = this.controllerModeSeen
-            ? "D-pad/LS: chọn     A: xác nhận     B: để sau"
-            : "←/→: chọn     Enter: xác nhận     Esc: để sau";
+        string hint = ModEntry.T(this.controllerModeSeen
+            ? "conversation.hint.controller"
+            : "conversation.hint.keyboard");
         Vector2 hintSize = Game1.smallFont.MeasureString(hint);
         b.DrawString(
             Game1.smallFont,
@@ -314,8 +333,14 @@ internal sealed class SudokuConversationMenu : IClickableMenu
     {
         Color fill = selected ? new Color(82, 110, 133) : new Color(43, 59, 73);
         Color border = selected ? new Color(225, 235, 242) : new Color(105, 135, 158);
-        b.Draw(Game1.staminaRect, rect, fill);
-        DrawBorder(b, rect, selected ? 4 : 2, border);
+        SudokuUiStyle.DrawRoundedPanel(
+            b,
+            rect,
+            fill,
+            border,
+            borderThickness: selected ? 4 : 2,
+            radius: 9
+        );
 
         Vector2 size = Game1.smallFont.MeasureString(text);
         b.DrawString(
