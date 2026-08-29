@@ -13,16 +13,31 @@ internal sealed partial class ModEntry
         if (!Context.IsWorldReady)
             return;
 
-        // Custom menus must get first refusal even if a transient TV-sequence flag is still
-        // active. Mouse input is handled by the menu itself, so gating controller input here
-        // could make the menu appear frozen only on gamepad.
-        // Custom menus get an explicit SMAPI controller path so gamepad behavior stays
-        // consistent even when Stardew doesn't forward every controller button itself.
+        if (Game1.activeClickableMenu is OccultCabinetMenu occultCabinetMenu)
+        {
+            if (occultCabinetMenu.HandleSmapiInput(e.Button))
+                this.Helper.Input.Suppress(e.Button);
+            return;
+        }
+
+        if (Game1.activeClickableMenu is WizardRevealMenu wizardRevealMenu)
+        {
+            if (wizardRevealMenu.HandleSmapiInput(e.Button))
+                this.Helper.Input.Suppress(e.Button);
+            return;
+        }
+
+        if (Game1.activeClickableMenu is SaloonPrologueMenu saloonPrologueMenu)
+        {
+            if (saloonPrologueMenu.HandleSmapiInput(e.Button))
+                this.Helper.Input.Suppress(e.Button);
+            return;
+        }
+
         if (Game1.activeClickableMenu is SudokuMenu sudokuMenu)
         {
             if (sudokuMenu.HandleSmapiInput(e.Button))
                 this.Helper.Input.Suppress(e.Button);
-
             return;
         }
 
@@ -30,7 +45,6 @@ internal sealed partial class ModEntry
         {
             if (conversationMenu.HandleSmapiInput(e.Button))
                 this.Helper.Input.Suppress(e.Button);
-
             return;
         }
 
@@ -38,7 +52,6 @@ internal sealed partial class ModEntry
         {
             if (choiceMenu.HandleSmapiInput(e.Button))
                 this.Helper.Input.Suppress(e.Button);
-
             return;
         }
 
@@ -46,14 +59,10 @@ internal sealed partial class ModEntry
         {
             if (stageSelectMenu.HandleSmapiInput(e.Button))
                 this.Helper.Input.Suppress(e.Button);
-
             return;
         }
 
-        if (this.sequenceActive)
-            return;
-
-        if (Game1.activeClickableMenu is not null)
+        if (this.sequenceActive || Game1.activeClickableMenu is not null)
             return;
 
         bool isActionButton = e.Button.IsActionButton() || e.Button == SButton.ControllerA;
@@ -61,11 +70,12 @@ internal sealed partial class ModEntry
         if (!isActionButton && !isMouseClick)
             return;
 
-        if (!ModIdentity.HasArrivalBeenSeen(Game1.player))
+        if (this.TryHandleOccultCabinetInteraction(e))
             return;
 
-        // During Spirit's Eve, let Stardew's festival dialogue system handle Sudoku so the
-        // special festival lines/reactions injected into Data/Festivals/fall27 can play.
+        if (!ModIdentity.HasArrivalBeenSeen(Game1.player) || this.IsSudokuSealed())
+            return;
+
         if (this.IsAtSpiritEveFestival())
             return;
 
@@ -80,10 +90,7 @@ internal sealed partial class ModEntry
             return;
 
         float distance = Vector2.Distance(Game1.player.Tile, sudoku.Tile);
-        if (distance > 3.25f)
-            return;
-
-        if (!this.IsSudokuInteractionTarget(sudoku, e))
+        if (distance > 3.25f || !this.IsSudokuInteractionTarget(sudoku, e))
             return;
 
         Vector2 lookDelta = Game1.player.Tile - sudoku.Tile;
@@ -117,24 +124,11 @@ internal sealed partial class ModEntry
 
         switch (Game1.player.FacingDirection)
         {
-            case 0:
-                forward = -delta.Y;
-                sideways = Math.Abs(delta.X);
-                break;
-            case 1:
-                forward = delta.X;
-                sideways = Math.Abs(delta.Y);
-                break;
-            case 2:
-                forward = delta.Y;
-                sideways = Math.Abs(delta.X);
-                break;
-            case 3:
-                forward = -delta.X;
-                sideways = Math.Abs(delta.Y);
-                break;
-            default:
-                return false;
+            case 0: forward = -delta.Y; sideways = Math.Abs(delta.X); break;
+            case 1: forward = delta.X; sideways = Math.Abs(delta.Y); break;
+            case 2: forward = delta.Y; sideways = Math.Abs(delta.X); break;
+            case 3: forward = -delta.X; sideways = Math.Abs(delta.Y); break;
+            default: return false;
         }
 
         return forward >= 0.10f && forward <= 1.75f && sideways <= 0.80f;
@@ -154,10 +148,7 @@ internal sealed partial class ModEntry
             }
             catch (Exception modContentError)
             {
-                this.Monitor.Log(
-                    $"Couldn't load Sudoku portraits for conversation UI. GameContent: {gameContentError.Message}; ModContent: {modContentError.Message}",
-                    LogLevel.Error
-                );
+                this.Monitor.Log($"Couldn't load Sudoku portraits for conversation UI. GameContent: {gameContentError.Message}; ModContent: {modContentError.Message}", LogLevel.Error);
                 return null;
             }
         }
@@ -166,15 +157,10 @@ internal sealed partial class ModEntry
     private void ShowFirstConversation()
     {
         Texture2D? portraits = this.LoadSudokuPortraitTexture();
-
         Game1.activeClickableMenu = new SudokuConversationMenu(
             portraits,
             portraitIndex: 6,
-            lines: new[]
-            {
-                T("intro.0.line1"),
-                T("intro.0.line2")
-            },
+            lines: new[] { T("intro.0.line1"), T("intro.0.line2") },
             question: T("intro.0.question"),
             primaryLabel: T("intro.0.primary"),
             secondaryLabel: T("intro.0.secondary"),
@@ -187,27 +173,16 @@ internal sealed partial class ModEntry
     private void ShowFirstConversationPencil(bool tvAnswer)
     {
         Texture2D? portraits = this.LoadSudokuPortraitTexture();
-
         string[] lines = tvAnswer
-            ? new[]
-            {
-                T("intro.pencil.tv.1"),
-                T("intro.pencil.tv.2"),
-                T("intro.pencil.tv.3")
-            }
-            : new[]
-            {
-                T("intro.pencil.normal.1"),
-                T("intro.pencil.normal.2"),
-                T("intro.pencil.normal.3")
-            };
+            ? new[] { T("intro.pencil.tv.1"), T("intro.pencil.tv.2"), T("intro.pencil.tv.3") }
+            : new[] { T("intro.pencil.normal.1"), T("intro.pencil.normal.2"), T("intro.pencil.normal.3") };
 
         Game1.activeClickableMenu = new SudokuConversationMenu(
             portraits,
             portraitIndex: tvAnswer ? 1 : 0,
             lines: lines,
             question: T("intro.pencil.question"),
-            primaryLabel: T("intro.pencil.primary"),
+            primaryLabel: T(this.HasStoryPencil() ? "intro.pencil.primary" : "intro.pencil.missing"),
             secondaryLabel: T("intro.pencil.secondary"),
             progressText: T("intro.progress"),
             onPrimary: () => this.CompleteFirstConversation(broughtHoe: false),
@@ -217,11 +192,69 @@ internal sealed partial class ModEntry
 
     private void CompleteFirstConversation(bool broughtHoe)
     {
+        if (broughtHoe)
+        {
+            this.ShowPencilRequiredWarning(usedHoe: true);
+            return;
+        }
+
+        if (!this.ConsumeOneStoryPencil())
+        {
+            this.ShowPencilRequiredWarning(usedHoe: false);
+            return;
+        }
+
+        Game1.player.modData[ModIdentity.PencilAcceptedKey] = "true";
         Game1.player.modData[ModIdentity.FirstConversationCompletedKey] = "true";
+        if (!Game1.player.modData.ContainsKey(ModIdentity.SudokuActivatedDayKey))
+            Game1.player.modData[ModIdentity.SudokuActivatedDayKey] = Game1.Date.TotalDays.ToString();
 
-        string preface = T(broughtHoe ? "intro.complete.hoe" : "intro.complete.pencil");
+        this.ShowDailySudokuConversation(T("intro.complete.pencil"), forceFresh: true);
+    }
 
-        this.ShowDailySudokuConversation(preface, forceFresh: true);
+    private void ShowPencilRequiredWarning(bool usedHoe)
+    {
+        Texture2D? portraits = this.LoadSudokuPortraitTexture();
+        string[] lines = usedHoe
+            ? new[] { T("intro.pencil.warning.hoe.1"), T("intro.pencil.warning.hoe.2"), T("intro.pencil.warning.hoe.3") }
+            : new[] { T("intro.pencil.warning.missing.1"), T("intro.pencil.warning.missing.2"), T("intro.pencil.warning.missing.3") };
+
+        Game1.activeClickableMenu = new SudokuConversationMenu(
+            portraits,
+            portraitIndex: usedHoe ? 6 : 1,
+            lines: lines,
+            question: T("intro.pencil.warning.question"),
+            primaryLabel: T("intro.pencil.warning.buy"),
+            secondaryLabel: T("ui.common.later"),
+            progressText: T("intro.progress"),
+            onPrimary: this.ShowPencilShopThought,
+            onSecondary: this.ShowPencilShopThought
+        );
+    }
+
+    private void ShowPencilShopThought()
+    {
+        if (Context.IsWorldReady)
+            Game1.drawObjectDialogue(T("story.player-thought.pencil-shop"));
+    }
+
+    private bool HasStoryPencil() => Game1.player.Items.Any(item => item?.QualifiedItemId == ModIdentity.PencilQualifiedItemId);
+
+    private bool ConsumeOneStoryPencil()
+    {
+        for (int i = 0; i < Game1.player.Items.Count; i++)
+        {
+            Item? item = Game1.player.Items[i];
+            if (item?.QualifiedItemId != ModIdentity.PencilQualifiedItemId)
+                continue;
+
+            item.Stack--;
+            if (item.Stack <= 0)
+                Game1.player.Items[i] = null;
+            Game1.playSound("coin");
+            return true;
+        }
+        return false;
     }
 
     private void ShowDailySudokuConversation(string? preface = null, bool forceFresh = false)
@@ -253,12 +286,7 @@ internal sealed partial class ModEntry
         if (!repeatTalk)
             ModIdentity.MarkDailyDialogueRunToday(Game1.player);
 
-        SudokuDailyDialogue dialogue = SudokuDialogueLibrary.GetForToday(
-            solvedCount,
-            repeatTalk,
-            solvedToday
-        );
-
+        SudokuDailyDialogue dialogue = SudokuDialogueLibrary.GetForToday(solvedCount, repeatTalk, solvedToday);
         List<string> lines = new();
         if (!string.IsNullOrWhiteSpace(preface))
             lines.Add(preface);
@@ -281,9 +309,6 @@ internal sealed partial class ModEntry
             markDailyDialogue: false
         );
 
-        this.Monitor.Log(
-            $"Sudoku roommate hub opened: stageClears={solvedCount}, trust={ModIdentity.GetSudokuTrust(Game1.player)}, repeatTalk={repeatTalk}, solvedToday={solvedToday}, portrait={portraitIndex}.",
-            LogLevel.Trace
-        );
+        this.Monitor.Log($"Sudoku roommate hub opened: stageClears={solvedCount}, trust={ModIdentity.GetSudokuTrust(Game1.player)}, repeatTalk={repeatTalk}, solvedToday={solvedToday}, portrait={portraitIndex}.", LogLevel.Trace);
     }
 }
