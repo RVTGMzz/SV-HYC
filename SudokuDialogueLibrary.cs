@@ -97,7 +97,7 @@ internal static class SudokuDialogueLibrary
         return new SudokuDailyDialogue
         {
             PortraitIndex = portrait,
-            Lines = lineKeys.Select(ModEntry.T).ToArray(),
+            Lines = lineKeys.Select(key => ModEntry.T(key)).ToArray(),
             Question = ModEntry.T(questionKey)
         };
     }
