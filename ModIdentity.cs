@@ -30,6 +30,7 @@ internal static class ModIdentity
     public const string PracticePuzzleIdKey = UniqueId + "/SudokuPractice/PuzzleId";
     public const string PracticeBoardKey = UniqueId + "/SudokuPractice/Board";
     public const string PracticeCursorKey = UniqueId + "/SudokuPractice/Cursor";
+    public const string StageClearDayKey = UniqueId + "/SudokuStage/FirstClearDay";
 
     public const string CursedVhsItemId = UniqueId + "_CursedVHS";
     public const string CursedVhsQualifiedItemId = "(O)" + CursedVhsItemId;
@@ -158,10 +159,6 @@ internal static class ModIdentity
         player.modData[DailyDialogueDayKey] = Game1.Date.TotalDays.ToString();
     }
 
-    /// <summary>
-    /// Legacy alpha.12 counter. Alpha.13 keeps it synchronized to the number of unique Stage clears
-    /// so old saves and diagnostics remain meaningful.
-    /// </summary>
     public static int GetSudokuSolvedCount(Farmer player)
     {
         return player.modData.TryGetValue(SudokuSolvedCountKey, out string? raw)
@@ -195,7 +192,6 @@ internal static class ModIdentity
         player.modData[SocialInteractionDayKey] = day.ToString();
         return true;
     }
-
 
     public static bool HasWelcomeHomeRunToday(Farmer player)
     {
@@ -296,6 +292,7 @@ internal static class ModIdentity
         player.modData.Remove(PracticePuzzleIdKey);
         player.modData.Remove(PracticeBoardKey);
         player.modData.Remove(PracticeCursorKey);
+        player.modData.Remove(StageClearDayKey);
 
         string[] dynamicPrefixes =
         {
