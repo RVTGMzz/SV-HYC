@@ -8,20 +8,18 @@ using StardewValley.GameData.Shops;
 
 namespace HeyYoureCursed;
 
-/// <summary>
-/// Bridges the alpha.3 story/haunting systems into the repository's older split-partial architecture.
-/// This keeps the tested Windows package and the GitHub branch on the same gameplay rules without
-/// replacing the older source layout wholesale.
-/// </summary>
+/// <summary>Bridges the alpha.3 story/haunting systems into the repository's older split-partial architecture.</summary>
 internal sealed partial class ModEntry
 {
     private const string PencilTextureAsset = "Mods/ronvotri.HeyYoureCursed/Pencil";
+    private bool pendingAlpha3VhsOriginDialogue;
 
     private void RegisterAlpha3Features(IModHelper helper)
     {
         helper.Events.Content.AssetRequested += this.OnAlpha3AssetRequested;
         helper.Events.GameLoop.SaveLoaded += this.OnAlpha3SaveLoaded;
         helper.Events.GameLoop.DayStarted += this.OnAlpha3DayStarted;
+        helper.Events.GameLoop.UpdateTicked += this.OnAlpha3UpdateTicked;
         helper.Events.GameLoop.ReturnedToTitle += this.OnAlpha3ReturnedToTitle;
 
         helper.ConsoleCommands.Add("heyyourecursed_givepencil", "Give one Hey! You're Cursed! Pencil for story testing.", this.OnGivePencilCommand);
@@ -72,9 +70,7 @@ internal sealed partial class ModEntry
         {
             e.Edit(asset =>
             {
-                Dictionary<string, ObjectData>? custom = this.Helper.Data.ReadJsonFile<Dictionary<string, ObjectData>>(
-                    "assets/Data/HeyYoureCursed.objects.json"
-                );
+                Dictionary<string, ObjectData>? custom = this.Helper.Data.ReadJsonFile<Dictionary<string, ObjectData>>("assets/Data/HeyYoureCursed.objects.json");
                 if (custom is null)
                 {
                     this.Monitor.Log("Couldn't read HeyYoureCursed.objects.json; alpha.3 story items were not injected.", LogLevel.Error);
@@ -94,7 +90,6 @@ internal sealed partial class ModEntry
                         item.DisplayName = T("item.pencil.name");
                         item.Description = T("item.pencil.description");
                     }
-
                     data[id] = item;
                 }
             }, AssetEditPriority.Late);
@@ -134,11 +129,9 @@ internal sealed partial class ModEntry
         this.PrepareSaloonPrologueOnSaveLoaded();
         this.PrepareOccultCabinetOnSaveLoaded();
         this.ApplySealedSudokuState();
+        this.QueueVhsOriginDialogueIfReady();
 
-        this.Monitor.Log(
-            "alpha.3.4 integration active: persistent Saloon gate, Pencil activation, seven-day Cabinet unlock, and Active Haunting state.",
-            LogLevel.Info
-        );
+        this.Monitor.Log("alpha.3.4 integration active: persistent Saloon gate, Pencil activation, seven-day Cabinet unlock, and Active Haunting state.", LogLevel.Info);
     }
 
     private void OnAlpha3DayStarted(object? sender, DayStartedEventArgs e)
@@ -147,19 +140,53 @@ internal sealed partial class ModEntry
         this.PrepareSaloonPrologueOnDayStarted();
         this.PrepareOccultCabinetOnDayStarted();
         this.ApplySealedSudokuState();
+        this.QueueVhsOriginDialogueIfReady();
+    }
+
+    private void OnAlpha3UpdateTicked(object? sender, UpdateTickedEventArgs e)
+    {
+        if (!Context.IsWorldReady
+            || !this.pendingAlpha3VhsOriginDialogue
+            || this.sequenceActive
+            || Game1.eventUp
+            || Game1.activeClickableMenu is not null)
+        {
+            return;
+        }
+
+        this.pendingAlpha3VhsOriginDialogue = false;
+        Game1.player.modData[ModIdentity.VhsOriginStorySeenKey] = "true";
+        Game1.drawObjectDialogue(T("story.vhs.origin-package"));
     }
 
     private void OnAlpha3ReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
+        this.pendingAlpha3VhsOriginDialogue = false;
         this.ResetSaloonPrologueRuntime();
         this.ResetOccultCabinetRuntime();
     }
 
-    /// <summary>
-    /// Older builds automatically handed out the VHS on load/day-start. Since those handlers still
-    /// exist in the split architecture, remove that freshly generated tape on a genuinely fresh story
-    /// until the player has actually attended the Saloon prologue.
-    /// </summary>
+    private void QueueVhsOriginDialogueIfReady()
+    {
+        if (!this.HasSaloonPrologueSeen()
+            || Game1.player.modData.ContainsKey(ModIdentity.VhsOriginStorySeenKey)
+            || !Game1.player.modData.TryGetValue(ModIdentity.CursedVhsGrantedKey, out string? granted)
+            || granted != "true")
+        {
+            return;
+        }
+
+        if (!Game1.player.modData.TryGetValue(ModIdentity.SaloonPrologueCompletedDayKey, out string? raw)
+            || !int.TryParse(raw, out int completedDay)
+            || Game1.Date.TotalDays <= completedDay)
+        {
+            return;
+        }
+
+        this.pendingAlpha3VhsOriginDialogue = true;
+    }
+
+    /// <summary>Undo the old build's automatic VHS grant on genuinely fresh saves until the player attends the Saloon gathering.</summary>
     private void CorrectLegacyAutoVhsBeforePrologue()
     {
         bool prologueSeen = Game1.player.modData.TryGetValue(ModIdentity.SaloonPrologueSeenKey, out string? seen) && seen == "true";
