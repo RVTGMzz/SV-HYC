@@ -1,6 +1,11 @@
-# Hey! You’re Cursed! — v0.0.6-alpha.13
+# Hey! You’re Cursed! — v0.0.6-alpha.13.1
 
 A paranormal Stardew Valley mod about a cursed VHS, Sudoku, and a ghost who slowly stops pretending she does not enjoy your company.
+
+## alpha.13.1 — build hotfix
+
+- Fixes C# `CS0136` in Sudoku's daily-conversation fallback by removing the overlapping local variable name `portraits`.
+- No Stage Select, progression, reward, dialogue, controller, or ghost-presentation behavior changed from alpha.13.
 
 ## alpha.13 — Stage Select + unique-clear progression
 
