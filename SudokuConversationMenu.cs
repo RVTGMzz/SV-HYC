@@ -14,6 +14,7 @@ namespace HeyYoureCursed;
 internal sealed class SudokuConversationMenu : IClickableMenu
 {
     private const int PortraitFrameSize = 64;
+    private const float BodyDialogueScale = 1.22f;
 
     private readonly Texture2D? portraits;
     private readonly int portraitIndex;
@@ -227,9 +228,19 @@ internal sealed class SudokuConversationMenu : IClickableMenu
 
         foreach (string line in this.lines)
         {
-            string wrapped = WrapText(Game1.smallFont, line, textWidth);
-            b.DrawString(Game1.smallFont, wrapped, new Vector2(textX, y), new Color(215, 223, 230));
-            y += Game1.smallFont.MeasureString(wrapped).Y + 12;
+            string wrapped = WrapText(Game1.smallFont, line, textWidth / BodyDialogueScale);
+            b.DrawString(
+                Game1.smallFont,
+                wrapped,
+                new Vector2(textX, y),
+                new Color(215, 223, 230),
+                0f,
+                Vector2.Zero,
+                BodyDialogueScale,
+                SpriteEffects.None,
+                0f
+            );
+            y += Game1.smallFont.MeasureString(wrapped).Y * BodyDialogueScale + 12;
         }
 
         string wrappedQuestion = WrapText(Game1.dialogueFont, this.question, textWidth);
