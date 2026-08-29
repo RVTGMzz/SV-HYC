@@ -66,7 +66,7 @@ internal sealed partial class ModEntry
         this.dailySudoku?.ResetTodayForTesting();
 
         // A reset is meant to produce a deterministic fresh test state: no ghost,
-        // no installed tape, and exactly one VHS ready to insert again.
+        // no installed tape, no Stage progress, and exactly one VHS ready to insert again.
         this.EnsureCursedVhsGranted(showDialogue: false);
 
         this.Monitor.Log(
@@ -118,6 +118,7 @@ internal sealed partial class ModEntry
         bool signalRanToday = ModIdentity.HasDailySignalRunToday(Game1.player);
         bool dailyDialogueToday = ModIdentity.HasDailyDialogueRunToday(Game1.player);
         int solvedCount = this.dailySudoku?.GetSolvedCount() ?? ModIdentity.GetSudokuSolvedCount(Game1.player);
+        int stageCount = this.dailySudoku?.GetStageCount() ?? 0;
         int vhsInventoryCount = this.CountCursedVhsInInventory();
 
         string npcLocation = sudoku?.currentLocation?.NameOrUniqueName ?? "none";
@@ -125,7 +126,7 @@ internal sealed partial class ModEntry
         string npcInvisible = sudoku is null ? "n/a" : sudoku.IsInvisible.ToString();
 
         this.Monitor.Log(
-            $"Hey! You’re Cursed! core status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcCount={allSudoku.Count}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, npcInvisible={npcInvisible}, vhsGranted={vhsGranted}, vhsInstalled={vhsInstalled}, vhsInventoryCount={vhsInventoryCount}, signalRanToday={signalRanToday}, sequenceActive={this.sequenceActive}, firstSequence={this.sequenceIsFirstArrival}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, solvedCount={solvedCount}, dailyDialogueToday={dailyDialogueToday}, activeMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
+            $"Hey! You’re Cursed! core status: arrivalSeen={seen}, npcEnabled={npcEnabled}, npcCount={allSudoku.Count}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, npcInvisible={npcInvisible}, vhsGranted={vhsGranted}, vhsInstalled={vhsInstalled}, vhsInventoryCount={vhsInventoryCount}, signalRanToday={signalRanToday}, sequenceActive={this.sequenceActive}, firstSequence={this.sequenceIsFirstArrival}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, stageCleared={solvedCount}/{stageCount}, dailyDialogueToday={dailyDialogueToday}, activeMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
             LogLevel.Info
         );
     }
