@@ -1,209 +1,69 @@
-# Hey! You’re Cursed! — v0.0.7-alpha.2.2.1
+# Hey! You’re Cursed! — v0.0.7-alpha.3.4
 
-## alpha.2.2.1 — ChaCha-like hover height hotfix
+A paranormal Stardew Valley mod built around one simple lesson: **chuyện tâm linh không đùa được đâu** — don't mess around with the supernatural.
 
-- Fixes the alpha.2.2 visual offset that could lift Sudoku far too high in the farmhouse.
-- Replaces the slow Y-only bob with the same proven motion language used by ChaCha's follower actor in Cardcha: a tiny horizontal sway plus a faster vertical bob around a modest base lift.
-- Sudoku now uses approximately `X ±1.8` and `Y ±2.5` around a `-5` draw offset, instead of the old `-11 ±3.5` Y-only offset.
-- World tile, collision, pathfinding, interaction distance, Trust, Stage progression, Endless Practice, and test shortcuts are unchanged.
-- Sudoku remains shadowless.
+## Current alpha.3 story flow
 
-## alpha.2.2 — Ghost Hover Visual Pass + test shortcuts
+1. **Persistent Saloon invitation** — a fresh/reset save does not receive the VHS immediately. Gus asks the farmer to attend a gathering at the Stardrop Saloon around 18:00. If the player skips it, the invitation returns on later days; the paranormal story simply waits.
+2. **The careless remark** — at the gathering, villagers swap paranormal stories. The farmer can claim they've never experienced anything supernatural or dismiss the stories. Gus and Abigail warn them not to joke about such things. The Wizard happens to overhear from outside.
+3. **The cursed VHS** — the following morning, and only after the gathering was actually attended, a brown-paper parcel appears with an old VHS, a `DO NOT REWIND` note, and an almost-erased `18` written in pencil.
+4. **Sudoku appears** — the VHS/TV sequence introduces Sudoku, the first haunting.
+5. **Real Pencil gate** — Sudoku will not complete the activation without a real Pencil. Pierre sells the Pencil for **100g**. Sudoku never tells the farmer where to buy it; the farmer thinks, `Bút chì à... chắc chú Pierre có bán.`
+6. **Seven-day milestone** — the clock starts only when Sudoku actually accepts the Pencil. Seven full days later, the Wizard visits the farmhouse and asks whether the farmer has learned the lesson.
+7. **Occult Cabinet** — the Wizard gives a placeable indoor Occult Cabinet. The player chooses where to put it in the farmhouse.
+8. **Active Haunting system** — the Cabinet manages one active haunting at a time. In alpha.3.4, `Cursed VHS — Sudoku` can be sealed and unsealed. Trust, all 18 Stage clears, Daily/Endless progress, and story state are preserved.
 
-- Sudoku now floats continuously with a small visual-only vertical bob while idle and while gliding.
-- Her tile position, collision, interaction distance, save state, and farmhouse pathfinding are unchanged.
-- Sudoku remains shadowless through her `Data/Characters` definition (`Shadow.Visible=false`); runtime shadow offset is also kept disabled.
-- Added developer/test commands so progression features can be tested without manually solving every board.
+## Long-term haunting rule
 
-### Fast test commands
+Sudoku is the first/tutorial haunting, but future ghosts should **not** form a forced A → B → C campaign.
 
-- `heyyourecursed_test_solve` — instantly solves the Sudoku board currently open and runs the normal completion/reward logic.
-- `heyyourecursed_test_profile fresh` — 0 stages, Trust 0.
-- `heyyourecursed_test_profile early` — 3 stages, Trust 3.
-- `heyyourecursed_test_profile mid` — 7 stages, Trust 8.
-- `heyyourecursed_test_profile late` — 13 stages, Trust 18.
-- `heyyourecursed_test_profile complete` — all stages, Trust 30, Endless Practice unlocked.
-- `heyyourecursed_test_trust <0-30>` — set Trust directly.
-- `heyyourecursed_test_stages <0-18>` — set unique Stage clears directly.
-- `heyyourecursed_test_endless` — clear all current Stages and unlock Endless Practice.
-- `heyyourecursed_test_spiriteve <gentle|wild|lewis|reset>` — set/reset Spirit’s Eve test state.
-- `heyyourecursed_test_help` — print the test command list in the SMAPI console.
+After the seven-day Cabinet unlock, future Cases can be entered non-linearly. Each ghost can have its own set of **18 unique minigames/challenges**, while 18/18 represents completion of that Case rather than permission to try the next ghost.
 
-## alpha.2.1 — Compile hotfix
+Only one haunting can be actively attached at a time. Other known hauntings are sealed through their anchor items in the Occult Cabinet.
 
-- Added the missing `StardewModdingAPI` namespace imports used by the roommate and Spirit's Eve partial files, fixing the `Context` CS0103 errors.
-- Narrowed the nullable Sudoku service field to local variables in roommate dialogue methods, removing the two CS8602 warnings from those call sites.
-- No gameplay or progression behavior changed from alpha.2.
+## Sudoku progression
 
-A paranormal Stardew Valley mod about a cursed VHS, Sudoku, and a ghost who slowly becomes a strange little roommate instead of just a minigame dispenser.
+- **Gắn kết / Puzzle Bond:** 18 unique Stage clears.
+- **Tin cậy / Trust:** social progression with Sudoku, 0–30.
+- One new Stage can be cleared for progression per in-game day; cleared Stages can be replayed freely.
+- Daily Challenge remains the repeatable reward source.
+- 18/18 unlocks Endless Practice for Sudoku, but does **not** gate access to future haunting Cases after the Cabinet milestone.
 
-## v0.0.7-alpha.2.1 — Active roommate behavior pass
+## Active Haunting — alpha.3.4
 
-This build keeps the centered Sudoku UI, parallel Puzzle Bond/Trust progression, Endless Practice, and Spirit's Eve foundation from alpha.1, then makes Sudoku actually **live around the farmhouse** instead of standing in one fixed tile.
+Current states:
 
-### 1. Sudoku now has real farmhouse activity states
+- `ActiveHauntingId = Sudoku` — Sudoku can materialize and behave normally.
+- Seal `Cursed VHS — Sudoku` — Sudoku is removed from the world and the active slot becomes `none`.
+- Unseal — Sudoku returns immediately with the same Trust/Stage/story progress.
+- A sealed Sudoku cannot be respawned by the daily TV signal and is not injected into Spirit's Eve.
 
-After the daily TV materialization, Sudoku chooses a deterministic activity for each part of the day. The current activity pool includes:
+Sudoku has Trust-sensitive reactions to being sealed and restored.
 
-- watching the TV;
-- observing furniture;
-- watching a pet when one is available;
-- listening to the farmhouse;
-- standing near the door;
-- hiding in a quiet corner;
-- at higher Trust, waiting for the player to come home.
+## Main test commands
 
-The activity selection changes with Trust, so early Sudoku spends more time near the TV or in quiet corners, while a close Sudoku is more willing to occupy shared spaces and openly wait for the player.
+- `heyyourecursed_resetarrival` — reset all the way back to the persistent Saloon invitation; no free VHS is returned.
+- `heyyourecursed_test_prologue` — replay/start the Saloon scene while standing in the Saloon.
+- `heyyourecursed_givevhs` — debug VHS bypass.
+- `heyyourecursed_givepencil` — give one Pencil.
+- `heyyourecursed_test_wizard` — arm the seven-day Wizard reveal immediately.
+- `heyyourecursed_givecabinet` — give an Occult Cabinet.
+- `heyyourecursed_test_seal` / `heyyourecursed_test_unseal` — test the Active Haunting state directly.
+- `heyyourecursed_status` — report story, Sudoku, Cabinet, and Active Haunting state.
+- Existing Sudoku helpers remain available: `heyyourecursed_test_solve`, `heyyourecursed_test_profile`, `heyyourecursed_test_trust`, `heyyourecursed_test_stages`, `heyyourecursed_test_endless`, and `heyyourecursed_test_spiriteve`.
 
-### 2. Ghost movement instead of normal NPC walking
+## Story design documents
 
-Sudoku does not use a normal villager walking schedule inside the farmhouse. The mod resolves safe tiles from the player's **actual current farmhouse map and furniture layout**, builds a short path, then smoothly glides her tile-to-tile while keeping her normal ghost sprite still.
-
-Safety rules:
-
-- no movement before the day's TV materialization;
-- pause movement while a menu/event is open;
-- pause if the player is standing too close;
-- use `CanSpawnCharacterHere` for destination/path tiles;
-- recalculate when furniture/player position invalidates a path;
-- unusual farmhouse layouts can use a distant ghost blink fallback instead of leaving Sudoku permanently stuck;
-- leaving the farmhouse cancels transient movement state.
-
-This is intentionally a **ghost drift**, not standard NPC walking animation.
-
-### 3. `Hôm nay cô đang làm gì?` now matches what she is actually doing
-
-The roommate menu no longer pulls a generic random activity line. It reads Sudoku's live state and uses matching dialogue, for example:
-
-- TV → comments about the screen/static;
-- pet → comments about the animal being able to see her;
-- door → comments about hearing the player return;
-- quiet corner → explains why she picked that spot;
-- waiting state → admits (or tries not to admit) that she was waiting for the player.
-
-Trust can still increase only once per day from ordinary roommate interaction, so repeatedly asking about the same activity does not farm relationship progress.
-
-### 4. Welcome-home reactions
-
-Once Trust is at least 3, returning to the farmhouse after 11:00 can trigger one short Sudoku reaction **once per day**. The wording becomes less defensive as Trust rises. This is deliberately non-modal: it gives the house a lived-in feeling without forcing a dialogue box every time the player enters.
-
-### 5. Puzzle and relationship remain parallel
-
-The existing alpha.1 structure stays intact:
-
-- **Puzzle Bond** = 18 unique Stage clears;
-- **Trust** = ordinary time/interactions with Sudoku;
-- Daily Challenge remains the repeatable reward source;
-- 18/18 unlocks Endless Practice;
-- a player can focus on puzzles, character interaction, or both.
-
-### 6. Centered Sudoku UI retained
-
-Sudoku board, Stage Select, portrait conversation, and roommate choice menu still use Stardew's UI viewport, so the Sudoku frame stays centered even when world/UI viewport sizes differ.
-
-### 7. Late-game Endless Practice
-
-After **18/18 Stage**, Stage Select unlocks **ENDLESS PRACTICE**.
-
-For the current content bank it cycles through the existing 18 validated puzzles in a persistent sequence. Endless Practice:
-
-- is always available after 18/18;
-- gives no item/gold reward;
-- does not increase Puzzle Bond;
-- does not affect Daily Challenge reward eligibility;
-- returns to Stage Select when closed.
-
-This gives late-game players a permanent reason to keep playing Sudoku even after the fixed progression is complete. More puzzle packs/chapters can extend this later without changing the basic flow.
-
-### 8. Spirit's Eve outing foundation
-
-On **Fall 27**, the roommate menu changes `Có gì lạ không?` into `Spirit's Eve tối nay?`.
-
-Sudoku asks:
-
-> "Hôm nay người sống giả làm ma?"
-> "...Ta muốn đi."
-> "Ta được phép dọa họ chứ?"
-
-The player can choose:
-
-- **Nhẹ thôi.**
-- **Cứ tự nhiên.**
-- **Đừng làm Lewis ngất.**
-
-Choosing a plan:
-
-- records the plan for that year;
-- gives a small one-time Trust bump for the outing;
-- invalidates the Fall 27 festival data so the selected plan is used when the festival loads;
-- adds Sudoku to Spirit's Eve using `Set-Up_additionalCharacters`;
-- adds Sudoku festival dialogue and extra reaction lines for Abigail, Sebastian, Wizard, Krobus, and Lewis;
-- leaves normal Stardew festival interaction in control while the player is at the festival;
-- adds a one-time Fall 28 aftermath line where Sudoku asks whether she can go again next year.
-
-Vanilla Spirit's Eve uses a standard custom-NPC position. A separate known-open SVE festival coordinate is used when Stardew Valley Expanded is detected.
-
-This is the first pass of the outing system; later builds can add more animation/cutscene choreography without replacing the save-state foundation.
-
-### 9. Ghost presentation retained
-
-Sudoku still keeps the existing ghost pass:
-
-- 85% world-sprite opacity;
-- sprite lifted slightly above the floor;
-- no shadow;
-- portraits remain fully opaque.
-
-## Current puzzle rewards
-
-Only **Daily Challenge** gives repeatable item/gold rewards.
-
-Stage clears give permanent progression and unlocks. Endless Practice is reward-free.
-
-## Controller
-
-All new roommate/choice menus are controller-first:
-
-- D-pad / Left Stick: move selection
-- A: confirm
-- B: close/back
-
-Sudoku board controls remain:
-
-- D-pad / Left Stick: move cell
-- A: open number picker
-- Left/Right: choose 1–9
-- A again: place number
-- X: erase
-- Y / Start: check
-- LB/RB or LT/RT: previous/next editable cell
-- B / Esc: back
+- `ALPHA_3_2_STORY_GATE.md` — persistent Saloon prologue and VHS story gate.
+- `ALPHA_3_3_OCCULT_CABINET.md` — seven-day Wizard reveal and free haunting unlock rule.
+- `ALPHA_3_4_ACTIVE_HAUNTING.md` — one-active-haunting contract and Sudoku seal/unseal behavior.
 
 ## Build
 
-Close Stardew Valley and SMAPI, then double-click:
+Close Stardew Valley and SMAPI, then run:
 
 `Build_HeyYoureCursed.bat`
 
-Successful builds deploy to:
+The current test package is **v0.0.7-alpha.3.4 — Active Haunting + Seal/Unseal Sudoku**.
 
-`Mods/HeyYoureCursed`
-
-## Useful test commands
-
-- `heyyourecursed_test_help` — print all alpha.2.2 shortcuts
-- `heyyourecursed_test_solve` — auto-solve the currently open board
-- `heyyourecursed_test_profile <fresh|early|mid|late|complete>` — jump progression/Trust state
-- `heyyourecursed_test_trust <0-30>` — set Trust
-- `heyyourecursed_test_stages <0-18>` — set unique Stage clears
-- `heyyourecursed_test_endless` — unlock Endless Practice
-- `heyyourecursed_test_spiriteve <gentle|wild|lewis|reset>` — set Spirit's Eve state
-- `heyyourecursed_talk` — open the roommate interaction hub
-- `heyyourecursed_stages` — open Stage Select
-- `heyyourecursed_open` — open today's Daily Challenge
-- `heyyourecursed_status` — reports Puzzle Bond, Trust, current roommate activity, Endless unlock, and Spirit's Eve mode
-- `heyyourecursed_resetdaily`
-- `heyyourecursed_resetarrival`
-- `heyyourecursed_unlocknpc`
-- `heyyourecursed_testarrival`
-- `heyyourecursed_givevhs`
+This branch has been synchronized to the alpha.3.4 story/system design, but the current alpha.3.4 pass still requires the Windows compile/game test before it should be treated as a stable checkpoint.
