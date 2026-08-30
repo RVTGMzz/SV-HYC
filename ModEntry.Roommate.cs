@@ -6,8 +6,6 @@ namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
-    // Keeps the hub anchored on the option the player actually activated when a sub-dialogue
-    // returns to the roommate menu. Closing the interaction resets this to the first option.
     private int sudokuHubSelectedIndex;
 
     private void OnOpenTalkCommand(string command, string[] args)
@@ -58,6 +56,11 @@ internal sealed partial class ModEntry
             {
                 Label = T("hub.option.activity"),
                 Action = this.ShowSudokuActivityTalk
+            },
+            new SudokuChoiceOption
+            {
+                Label = T("hub.option.gift"),
+                Action = this.ShowSudokuGiftOffer
             },
             new SudokuChoiceOption
             {
