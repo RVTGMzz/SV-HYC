@@ -1,0 +1,1 @@
+Gift system source is on dev/alpha3.5-sudoku-gifts. Binary Sudoku sprite is pinned by checksum in CHECKPOINT_ALPHA_3_4_TESTED.md and included in the Windows test package.
