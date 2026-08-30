@@ -20,6 +20,8 @@ internal sealed partial class ModEntry
         helper.Events.GameLoop.SaveLoaded += this.OnAlpha3SaveLoaded;
         helper.Events.GameLoop.DayStarted += this.OnAlpha3DayStarted;
         helper.Events.GameLoop.UpdateTicked += this.OnAlpha3UpdateTicked;
+        helper.Events.GameLoop.TimeChanged += this.OnAlpha3TimeChanged;
+        helper.Events.Player.Warped += this.OnAlpha3Warped;
         helper.Events.GameLoop.ReturnedToTitle += this.OnAlpha3ReturnedToTitle;
 
         helper.ConsoleCommands.Add("heyyourecursed_givepencil", "Give one Hey! You're Cursed! Pencil for story testing.", this.OnGivePencilCommand);
@@ -131,7 +133,7 @@ internal sealed partial class ModEntry
         this.ApplySealedSudokuState();
         this.QueueVhsOriginDialogueIfReady();
 
-        this.Monitor.Log("alpha.3.4 integration active: persistent Saloon gate, Pencil activation, seven-day Cabinet unlock, and Active Haunting state.", LogLevel.Info);
+        this.Monitor.Log("alpha.3.4 integration active: native persistent Saloon event, Pencil activation, seven-day Cabinet unlock, and Active Haunting state.", LogLevel.Info);
     }
 
     private void OnAlpha3DayStarted(object? sender, DayStartedEventArgs e)
@@ -145,8 +147,13 @@ internal sealed partial class ModEntry
 
     private void OnAlpha3UpdateTicked(object? sender, UpdateTickedEventArgs e)
     {
-        if (!Context.IsWorldReady
-            || !this.pendingAlpha3VhsOriginDialogue
+        if (!Context.IsWorldReady)
+            return;
+
+        this.UpdateSaloonPrologueUi();
+        this.PollSaloonPrologueStart();
+
+        if (!this.pendingAlpha3VhsOriginDialogue
             || this.sequenceActive
             || Game1.eventUp
             || Game1.activeClickableMenu is not null)
@@ -157,6 +164,22 @@ internal sealed partial class ModEntry
         this.pendingAlpha3VhsOriginDialogue = false;
         Game1.player.modData[ModIdentity.VhsOriginStorySeenKey] = "true";
         Game1.drawObjectDialogue(T("story.vhs.origin-package"));
+    }
+
+    private void OnAlpha3TimeChanged(object? sender, TimeChangedEventArgs e)
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        this.HandleSaloonPrologueTimeChanged(e);
+    }
+
+    private void OnAlpha3Warped(object? sender, WarpedEventArgs e)
+    {
+        if (!Context.IsWorldReady || !e.IsLocalPlayer)
+            return;
+
+        this.HandleSaloonPrologueWarped(e);
     }
 
     private void OnAlpha3ReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
