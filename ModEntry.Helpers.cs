@@ -20,6 +20,13 @@ internal sealed partial class ModEntry
             .ToList();
     }
 
+    private static void ConfigureSudokuGhostPhysics(NPC sudoku)
+    {
+        // Sudoku is a ghost: the farmer can walk through her instead of being body-blocked.
+        // Keep normal map collision for Sudoku herself so roommate wandering still respects the farmhouse layout.
+        sudoku.farmerPassesThrough = true;
+    }
+
     private NPC? FindSudoku(bool currentLocationOnly)
     {
         IEnumerable<NPC> candidates = this.FindAllSudoku();
@@ -61,7 +68,10 @@ internal sealed partial class ModEntry
 
         NPC? existing = this.NormalizeSudokuInstances();
         if (existing is not null)
+        {
+            ConfigureSudokuGhostPhysics(existing);
             return existing;
+        }
 
         try
         {
@@ -77,6 +87,10 @@ internal sealed partial class ModEntry
                     "Sudoku's Data/Characters entry is unlocked, but the game did not create an NPC instance.",
                     LogLevel.Warn
                 );
+            }
+            else
+            {
+                ConfigureSudokuGhostPhysics(sudoku);
             }
 
             return sudoku;
@@ -137,6 +151,7 @@ internal sealed partial class ModEntry
             ?? (farmHouse.CanSpawnCharacterHere(fallbackTile) ? fallbackTile : playerTile);
 
         Game1.warpCharacter(sudoku, farmHouse, finalTile);
+        ConfigureSudokuGhostPhysics(sudoku);
         sudoku.IsInvisible = false;
         sudoku.ignoreScheduleToday = true;
         sudoku.Halt();
@@ -167,6 +182,8 @@ internal sealed partial class ModEntry
         NPC canonical = all
             .OrderBy(p => p.Name == ModIdentity.LegacySudokuNpcId ? 0 : 1)
             .First();
+
+        ConfigureSudokuGhostPhysics(canonical);
 
         int removed = 0;
         foreach (NPC duplicate in all)
@@ -261,6 +278,8 @@ internal sealed partial class ModEntry
         NPC? sudoku = this.EnsureSudokuCharacterExists();
         if (sudoku is null)
             return;
+
+        ConfigureSudokuGhostPhysics(sudoku);
 
         bool waitingForSignal =
             ModIdentity.IsCursedVhsInstalled(Game1.player)
