@@ -5,6 +5,8 @@ namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
+    private const string SudokuGiftDayKey = ModIdentity.UniqueId + "/SudokuGiftDay";
+
     private enum SudokuGiftReaction
     {
         Pencil,
@@ -39,6 +41,29 @@ internal sealed partial class ModEntry
         "Jack-O-Lantern"
     };
 
+    private static bool HasGiftedSudokuToday()
+    {
+        return Game1.player.modData.TryGetValue(SudokuGiftDayKey, out string? raw)
+            && int.TryParse(raw, out int storedDay)
+            && storedDay == Game1.Date.TotalDays;
+    }
+
+    private static bool TryApplySudokuGiftTrust(int requestedDelta, out int trust, out int actualDelta)
+    {
+        int before = ModIdentity.GetSudokuTrust(Game1.player);
+        trust = before;
+        actualDelta = 0;
+
+        if (HasGiftedSudokuToday())
+            return false;
+
+        trust = Math.Clamp(before + requestedDelta, 0, 30);
+        actualDelta = trust - before;
+        Game1.player.modData[ModIdentity.SudokuTrustKey] = trust.ToString();
+        Game1.player.modData[SudokuGiftDayKey] = Game1.Date.TotalDays.ToString();
+        return true;
+    }
+
     private void ShowSudokuGiftOffer()
     {
         if (!Context.IsWorldReady)
@@ -46,7 +71,7 @@ internal sealed partial class ModEntry
 
         int trust = ModIdentity.GetSudokuTrust(Game1.player);
 
-        if (ModIdentity.HasGiftedSudokuToday(Game1.player))
+        if (HasGiftedSudokuToday())
         {
             this.ShowSimpleSudokuDialogue(
                 portraitIndex: 0,
@@ -100,7 +125,7 @@ internal sealed partial class ModEntry
 
     private void CompleteSudokuGift(string expectedQualifiedId)
     {
-        if (!Context.IsWorldReady || ModIdentity.HasGiftedSudokuToday(Game1.player))
+        if (!Context.IsWorldReady || HasGiftedSudokuToday())
         {
             this.ShowSudokuGiftOffer();
             return;
@@ -124,7 +149,7 @@ internal sealed partial class ModEntry
             _ => 0
         };
 
-        if (!ModIdentity.TryApplySudokuGiftTrust(Game1.player, requestedDelta, out int trust, out int actualDelta))
+        if (!TryApplySudokuGiftTrust(requestedDelta, out int trust, out int actualDelta))
         {
             this.ShowSudokuGiftOffer();
             return;
@@ -227,7 +252,7 @@ internal sealed partial class ModEntry
             return;
         }
 
-        Game1.player.modData.Remove(ModIdentity.SudokuGiftDayKey);
+        Game1.player.modData.Remove(SudokuGiftDayKey);
         this.Monitor.Log("Sudoku's gift limit was reset for today.", StardewModdingAPI.LogLevel.Info);
     }
 }
