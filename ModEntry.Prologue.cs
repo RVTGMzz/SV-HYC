@@ -6,8 +6,6 @@ namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
-    private const int SaloonPrologueRuntimeEventId = 970070034;
-
     private bool pendingSaloonInviteDialogue;
     private bool saloonPrologueActive;
     private bool saloonPrologueEventWasRunning;
@@ -180,7 +178,7 @@ internal sealed partial class ModEntry
             Game1.player.modData[ModIdentity.SaloonPrologueChoiceKey] = "skeptical";
 
             string script = this.BuildNativeSaloonPrologueEvent();
-            StardewValley.Event saloonEvent = new(script, SaloonPrologueRuntimeEventId);
+            StardewValley.Event saloonEvent = new(script, Game1.player);
             Game1.currentLocation.currentEvent = saloonEvent;
             Game1.currentLocation.startEvent(saloonEvent);
             this.saloonPrologueEventWasRunning = true;
