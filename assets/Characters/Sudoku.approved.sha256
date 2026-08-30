@@ -1,0 +1,7 @@
+# Approved Sudoku character sprite
+# Source: user hand-fixed sprite, approved 2026-08-30
+# Expected path: assets/Characters/Sudoku.png
+# Dimensions: 64x128 RGBA
+SHA-256: 9b51eafc4abb5faaa2277543fde30cda1b6267304debaa7e8af011944b00e99a
+
+Do not replace Sudoku.png from an older package without verifying this checksum first.
