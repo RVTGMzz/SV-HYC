@@ -6,6 +6,8 @@ namespace HeyYoureCursed;
 
 internal sealed partial class ModEntry
 {
+    private int spiritEvePrankWaitTicks;
+
     private bool IsSpiritEveToday()
     {
         return Context.IsWorldReady
@@ -19,6 +21,51 @@ internal sealed partial class ModEntry
             && Game1.timeOfDay >= 2200
             && Game1.currentLocation is not null
             && Game1.currentLocation.NameOrUniqueName.StartsWith("Town", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void UpdateSpiritEvePrankScene()
+    {
+        bool eligible = this.IsAtSpiritEveFestival()
+            && !this.IsSudokuSealed()
+            && this.IsSudokuActiveHaunting()
+            && ModIdentity.HasSpiritEvePlanForCurrentYear(Game1.player)
+            && !ModIdentity.HasSpiritEvePrankSeenForCurrentYear(Game1.player);
+
+        if (!eligible)
+        {
+            this.spiritEvePrankWaitTicks = 0;
+            return;
+        }
+
+        if (this.sequenceActive || Game1.activeClickableMenu is not null)
+            return;
+
+        this.spiritEvePrankWaitTicks++;
+        if (this.spiritEvePrankWaitTicks < 90)
+            return;
+
+        this.spiritEvePrankWaitTicks = 0;
+        this.OpenSpiritEvePrankScene(ModIdentity.GetSpiritEveScareMode(Game1.player), markSeen: true);
+    }
+
+    private void OpenSpiritEvePrankScene(string mode, bool markSeen)
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        Game1.activeClickableMenu = new SpiritEvePrankMenu(
+            this.LoadSudokuPortraitTexture(),
+            mode,
+            onComplete: () =>
+            {
+                if (markSeen)
+                {
+                    ModIdentity.MarkSpiritEvePrankSeen(Game1.player);
+                    this.Monitor.Log($"Spirit's Eve visible prank completed: mode={mode}, year={Game1.year}.", LogLevel.Info);
+                }
+            }
+        );
+        Game1.playSound("ghost");
     }
 
     private bool TryConsumeSpiritEveAftermath(out string[] lines, out int portraitIndex)

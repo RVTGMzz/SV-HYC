@@ -41,6 +41,17 @@ internal sealed partial class ModEntry
         int trust = ModIdentity.GetSudokuTrust(Game1.player);
         string trustLabel = SudokuRoommateLibrary.GetTrustLabel(trust);
         bool spiritEve = this.IsSpiritEveToday();
+        string hubProgress = T("hub.progress", new
+        {
+            cleared = stageClears,
+            total = totalStages,
+            trust,
+            label = trustLabel
+        });
+        if (trust >= 30)
+            hubProgress += "\n" + this.GetSudokuProtectionStatus();
+        if (ModIdentity.HasSudokuCapstoneSeen(Game1.player))
+            hubProgress += "\n" + T("capstone.status.complete");
 
         List<SudokuChoiceOption> options = new()
         {
@@ -58,6 +69,11 @@ internal sealed partial class ModEntry
             {
                 Label = T("hub.option.activity"),
                 Action = this.ShowSudokuActivityTalk
+            },
+            new SudokuChoiceOption
+            {
+                Label = T("hub.option.gift"),
+                Action = this.ShowSudokuGiftOffer
             },
             new SudokuChoiceOption
             {
@@ -79,13 +95,7 @@ internal sealed partial class ModEntry
             portraitIndex,
             openingLines ?? new[] { T("hub.opening") },
             question: question ?? T("hub.question"),
-            progressText: T("hub.progress", new
-            {
-                cleared = stageClears,
-                total = totalStages,
-                trust,
-                label = trustLabel
-            }),
+            progressText: hubProgress,
             options: options,
             initialSelectedIndex: this.sudokuHubSelectedIndex,
             onOptionActivated: index => this.sudokuHubSelectedIndex = index,

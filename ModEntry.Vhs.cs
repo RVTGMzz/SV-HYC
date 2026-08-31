@@ -28,7 +28,7 @@ internal sealed partial class ModEntry
         if (firstArrival)
             this.ShowFirstConversation();
         else
-            Game1.showGlobalMessage("TV nhiễu lên rồi tắt phụt. Sudoku đã đứng cạnh bạn.");
+            Game1.showGlobalMessage(T("story.vhs.signal-repeat"));
 
         this.Monitor.Log(
             sudoku is null
@@ -58,7 +58,16 @@ internal sealed partial class ModEntry
             try
             {
                 Item tape = ItemRegistry.Create(ModIdentity.CursedVhsQualifiedItemId, 1);
-                Game1.player.addItemByMenuIfNecessary(tape);
+                // Don't open Stardew's overflow ItemGrabMenu here. If the backpack is
+                // full, that menu keeps the tape outside the inventory and another
+                // SaveLoaded/DayStarted pass can create a second copy.
+                if (!Game1.player.addItemToInventoryBool(tape))
+                {
+                    this.Monitor.Log("Couldn't grant the Cursed VHS because the player's inventory is full; it will be retried later.", LogLevel.Warn);
+                    if (showDialogue)
+                        Game1.showGlobalMessage(T("story.vhs.inventory-full"));
+                    return;
+                }
             }
             catch (Exception ex)
             {
@@ -70,9 +79,7 @@ internal sealed partial class ModEntry
         Game1.player.modData[ModIdentity.CursedVhsGrantedKey] = "true";
         if (showDialogue)
         {
-            Game1.drawObjectDialogue(
-                "Bạn nhận được một cuộn VHS cũ.^Có lẽ nó sẽ hoạt động nếu bạn dùng trực tiếp lên TV trong nhà."
-            );
+            Game1.drawObjectDialogue(T("story.vhs.received"));
         }
     }
 

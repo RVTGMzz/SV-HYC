@@ -13,6 +13,9 @@ internal sealed partial class ModEntry
         helper.ConsoleCommands.Add("heyyourecursed_test_stages", "Set the number of unique cleared Sudoku Stages directly.", this.OnTestStagesCommand);
         helper.ConsoleCommands.Add("heyyourecursed_test_endless", "Mark all current Stages clear and unlock Endless Practice.", this.OnTestEndlessCommand);
         helper.ConsoleCommands.Add("heyyourecursed_test_spiriteve", "Set Spirit's Eve test mode: gentle, wild/free, lewis, or reset.", this.OnTestSpiritEveCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_test_spiriteve_scene", "Open the visible Spirit's Eve scene: gentle, free, or lewis.", this.OnTestSpiritEveSceneCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_test_capstone", "Open the Sudoku 18/18 + Trust 30 capstone scene.", this.OnTestCapstoneCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_test_channel18", "Open the post-capstone Channel 18 broadcast.", this.OnTestChannel18Command);
         helper.ConsoleCommands.Add("heyyourecursed_test_help", "List Hey! You’re Cursed! developer/test commands.", this.OnTestHelpCommand);
     }
 
@@ -95,6 +98,11 @@ internal sealed partial class ModEntry
         Game1.player.modData[ModIdentity.SudokuTrustKey] = values.Value.trust.ToString();
         Game1.player.modData.Remove(ModIdentity.SocialInteractionDayKey);
         Game1.player.modData.Remove(ModIdentity.DailyDialogueDayKey);
+        if (profile == "complete")
+        {
+            Game1.player.modData.Remove(ModIdentity.SudokuCapstoneSeenKey);
+            Game1.player.modData.Remove(ModIdentity.SudokuCapstoneChoiceKey);
+        }
         this.dailySudoku.ResetTodayForTesting();
 
         NPC? sudoku = this.EnsureSudokuCharacterExists();
@@ -139,6 +147,7 @@ internal sealed partial class ModEntry
             Game1.player.modData.Remove(ModIdentity.SpiritEvePlanYearKey);
             Game1.player.modData.Remove(ModIdentity.SpiritEveScareModeKey);
             Game1.player.modData.Remove(ModIdentity.SpiritEveAftermathYearKey);
+            Game1.player.modData.Remove(ModIdentity.SpiritEvePrankYearKey);
             this.Helper.GameContent.InvalidateCache("Data/Festivals/fall27");
             this.Monitor.Log("Spirit's Eve test state reset for the current save.", LogLevel.Info);
             return;
@@ -157,6 +166,46 @@ internal sealed partial class ModEntry
         this.Monitor.Log($"Spirit's Eve scare mode set to '{mode}' for year {Game1.year}.", LogLevel.Info);
     }
 
+    private void OnTestSpiritEveSceneCommand(string command, string[] args)
+    {
+        if (!this.TryRequireWorld(command))
+            return;
+
+        string mode = args.Length > 0 ? args[0].Trim().TrimStart('/').ToLowerInvariant() : "gentle";
+        if (mode == "wild") mode = "free";
+        if (mode is not ("gentle" or "free" or "lewis"))
+        {
+            this.Monitor.Log("Usage: heyyourecursed_test_spiriteve_scene <gentle|free|lewis>", LogLevel.Info);
+            return;
+        }
+
+        this.PrepareCoreForFeatureTesting();
+        this.OpenSpiritEvePrankScene(mode, markSeen: false);
+    }
+
+    private void OnTestCapstoneCommand(string command, string[] args)
+    {
+        if (!this.TryRequireWorld(command) || this.dailySudoku is null)
+            return;
+
+        this.PrepareCoreForFeatureTesting();
+        this.SetStageClearsForTesting(this.dailySudoku.GetStageCount());
+        Game1.player.modData[ModIdentity.SudokuTrustKey] = "30";
+        Game1.player.modData.Remove(ModIdentity.SudokuCapstoneSeenKey);
+        Game1.player.modData.Remove(ModIdentity.SudokuCapstoneChoiceKey);
+        this.TryShowSudokuCapstone();
+    }
+
+    private void OnTestChannel18Command(string command, string[] args)
+    {
+        if (!this.TryRequireWorld(command))
+            return;
+
+        this.PrepareCoreForFeatureTesting();
+        ModIdentity.MarkSudokuCapstoneSeen(Game1.player, "stay");
+        this.ShowChannel18Broadcast();
+    }
+
     private void OnTestHelpCommand(string command, string[] args)
     {
         this.Monitor.Log(
@@ -167,7 +216,12 @@ internal sealed partial class ModEntry
             + "  heyyourecursed_test_stages <0-18> — set unique Stage clears directly.\n"
             + "  heyyourecursed_test_endless — clear all current Stages and unlock Endless Practice.\n"
             + "  heyyourecursed_test_spiriteve <gentle|wild|free|lewis|reset> — set/reset Spirit's Eve test state (wild = free/Cứ tự nhiên).\n"
-            + "Existing: heyyourecursed_talk, heyyourecursed_stages, heyyourecursed_open, heyyourecursed_status, heyyourecursed_resetdaily, heyyourecursed_resetarrival.",
+            + "  heyyourecursed_test_spiriteve_scene <gentle|free|lewis> — open the visible Spirit's Eve scene now.\n"
+            + "  heyyourecursed_test_capstone — open the 18/18 + Trust 30 capstone scene.\n"
+            + "  heyyourecursed_test_channel18 — open the post-capstone Channel 18 broadcast.\n"
+            + "  heyyourecursed_test_rescue [death|exhaustion] — trigger max-Trust protection at the current location.\n"
+            + "  heyyourecursed_reset_rescue — clear the 15-day protection cooldown.\n"
+            + "Existing: heyyourecursed_talk, heyyourecursed_stages, heyyourecursed_open, heyyourecursed_status, heyyourecursed_resetgift, heyyourecursed_resetdaily, heyyourecursed_resetarrival.",
             LogLevel.Info
         );
     }

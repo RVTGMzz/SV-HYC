@@ -34,6 +34,8 @@ internal sealed partial class ModEntry
             OccultCabinetMenu menu => menu.HandleSmapiInput(e.Button),
             WizardRevealMenu menu => menu.HandleSmapiInput(e.Button),
             SaloonPrologueMenu menu => menu.HandleSmapiInput(e.Button),
+            SpiritEvePrankMenu menu => menu.HandleSmapiInput(e.Button),
+            SudokuCapstoneMenu menu => menu.HandleSmapiInput(e.Button),
             SudokuMenu menu => menu.HandleSmapiInput(e.Button),
             SudokuConversationMenu menu => menu.HandleSmapiInput(e.Button),
             SudokuChoiceMenu menu => menu.HandleSmapiInput(e.Button),

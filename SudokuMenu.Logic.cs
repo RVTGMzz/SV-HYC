@@ -5,18 +5,33 @@ namespace HeyYoureCursed;
 
 internal sealed partial class SudokuMenu
 {
+    private void OpenHelp()
+    {
+        this.helpOpen = true;
+        this.numberPickerOpen = false;
+        Game1.playSound("smallSelect");
+    }
+
+    private void CloseHelp()
+    {
+        this.helpOpen = false;
+        Game1.playSound("cancel");
+    }
+
     private void EnterNumber(int value)
     {
         int index = this.selectedRow * 9 + this.selectedColumn;
         if (this.puzzle.Puzzle[index] != '0')
         {
-            this.statusText = "Ô đó là đề bài. Đừng sửa.";
+            this.statusText = ModEntry.T("sudoku.status.given-edit");
             Game1.playSound("cancel");
             return;
         }
 
         this.service.SetCell(this.puzzle, this.mode, this.selectedRow, this.selectedColumn, value);
-        this.statusText = value == 0 ? "Đã xóa ô." : $"Đã điền {value}.";
+        this.statusText = value == 0
+            ? ModEntry.T("sudoku.status.erased")
+            : ModEntry.T("sudoku.status.entered", new { value });
         Game1.playSound("smallSelect");
     }
 
@@ -24,7 +39,7 @@ internal sealed partial class SudokuMenu
     {
         if (!this.service.IsSolved(this.puzzle, this.mode))
         {
-            this.statusText = "......Sai. Nhìn lại hàng, cột và ô 3×3.";
+            this.statusText = ModEntry.T("sudoku.status.wrong");
             Game1.playSound("cancel");
             return;
         }
@@ -37,14 +52,20 @@ internal sealed partial class SudokuMenu
             {
                 int cleared = this.service.GetSolvedCount();
                 string unlockText = this.stageIndex + 1 < total
-                    ? $" Stage {this.stageIndex + 2:00} sẽ mở vào ngày mai."
-                    : " Bạn đã hoàn thành toàn bộ 18 Stage hiện tại. Endless Practice đã mở.";
-                this.statusText = $"Đúng. Stage {this.stageIndex + 1:00} hoàn thành!{unlockText} Tiến độ: {cleared}/{total}.";
+                    ? ModEntry.T("sudoku.status.stage-next", new { number = this.stageIndex + 2 })
+                    : ModEntry.T("sudoku.status.stage-endless");
+                this.statusText = ModEntry.T("sudoku.status.stage-cleared", new
+                {
+                    number = this.stageIndex + 1,
+                    unlock = unlockText,
+                    cleared,
+                    total
+                });
                 Game1.playSound("purchase");
             }
             else
             {
-                this.statusText = $"Đúng. Stage {this.stageIndex + 1:00} đã hoàn thành trước đó; chơi lại không tăng tiến độ.";
+                this.statusText = ModEntry.T("sudoku.status.stage-replay", new { number = this.stageIndex + 1 });
                 Game1.playSound("coin");
             }
             return;
@@ -52,7 +73,7 @@ internal sealed partial class SudokuMenu
 
         if (this.mode == SudokuPlayMode.Practice)
         {
-            this.statusText = "Đúng. Endless Practice hoàn thành — không thưởng, không tăng Puzzle Bond.";
+            this.statusText = ModEntry.T("sudoku.status.practice-solved");
             Game1.playSound("coin");
             return;
         }
@@ -60,12 +81,12 @@ internal sealed partial class SudokuMenu
         string? reward = this.service.ClaimDailyReward(this.puzzle);
         if (!string.IsNullOrWhiteSpace(reward))
         {
-            this.statusText = $"Đúng. Sudoku đẩy sang cho bạn {reward}. 'Đừng hiểu lầm. Không phải quà.'";
+            this.statusText = ModEntry.T("sudoku.status.daily-reward", new { reward });
             Game1.playSound("purchase");
         }
         else
         {
-            this.statusText = "Đúng rồi. Nhưng phần thưởng Daily Challenge hôm nay đã nhận rồi.";
+            this.statusText = ModEntry.T("sudoku.status.daily-claimed");
             Game1.playSound("coin");
         }
     }
@@ -83,7 +104,7 @@ internal sealed partial class SudokuMenu
         int index = this.selectedRow * 9 + this.selectedColumn;
         if (this.puzzle.Puzzle[index] != '0')
         {
-            this.statusText = "Ô này là đề bài. Hãy chọn một ô trống.";
+            this.statusText = ModEntry.T("sudoku.status.given");
             Game1.playSound("cancel");
             return;
         }
@@ -92,7 +113,7 @@ internal sealed partial class SudokuMenu
         char current = board[index];
         this.numberPickerValue = current is >= '1' and <= '9' ? current - '0' : 1;
         this.numberPickerOpen = true;
-        this.statusText = "Chọn số bằng trái/phải rồi nhấn A.";
+        this.statusText = ModEntry.T("sudoku.status.picker");
         Game1.playSound("smallSelect");
     }
 
@@ -115,7 +136,7 @@ internal sealed partial class SudokuMenu
             case SButton.ControllerX:
                 this.EnterNumber(0); this.numberPickerOpen = false; return true;
             case SButton.ControllerB:
-                this.numberPickerOpen = false; this.statusText = "Đã hủy chọn số."; Game1.playSound("cancel"); return true;
+                this.numberPickerOpen = false; this.statusText = ModEntry.T("sudoku.status.picker-cancelled"); Game1.playSound("cancel"); return true;
             case SButton.DPadUp:
             case SButton.LeftThumbstickUp:
                 this.ChangePicker(-1); return true;
@@ -139,7 +160,7 @@ internal sealed partial class SudokuMenu
         this.numberPickerOpen = false;
         this.selectedRow = (this.selectedRow + rowDelta + 9) % 9;
         this.selectedColumn = (this.selectedColumn + colDelta + 9) % 9;
-        this.statusText = "Chọn ô. Nhấn A để chọn số.";
+        this.statusText = ModEntry.T("sudoku.status.select");
         Game1.playSound("shiny4");
     }
 
@@ -155,7 +176,7 @@ internal sealed partial class SudokuMenu
                 this.selectedRow = index / 9;
                 this.selectedColumn = index % 9;
                 this.numberPickerOpen = false;
-                this.statusText = "Đã nhảy tới ô trống kế tiếp.";
+                this.statusText = ModEntry.T("sudoku.status.next-empty");
                 Game1.playSound("shiny4");
                 return;
             }

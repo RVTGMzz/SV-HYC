@@ -30,6 +30,7 @@ internal sealed partial class ModEntry
         helper.ConsoleCommands.Add("heyyourecursed_givecabinet", "Give one Occult Cabinet immediately for testing.", this.OnGiveCabinetCommand);
         helper.ConsoleCommands.Add("heyyourecursed_test_seal", "Seal Sudoku into the Occult Cabinet immediately for testing.", this.OnTestSealCommand);
         helper.ConsoleCommands.Add("heyyourecursed_test_unseal", "Unseal Sudoku from the Occult Cabinet immediately for testing.", this.OnTestUnsealCommand);
+        this.RegisterSudokuRescueFeatures(helper);
     }
 
     private void OnAlpha3AssetRequested(object? sender, AssetRequestedEventArgs e)
@@ -133,11 +134,12 @@ internal sealed partial class ModEntry
         this.ApplySealedSudokuState();
         this.QueueVhsOriginDialogueIfReady();
 
-        this.Monitor.Log("alpha.3.4 integration active: native persistent Saloon event, Pencil activation, seven-day Cabinet unlock, and Active Haunting state.", LogLevel.Info);
+        this.Monitor.Log("alpha.3.6 integration active: tested alpha.3.4 story baseline plus gifts, tutorial, and max-Trust protection.", LogLevel.Info);
     }
 
     private void OnAlpha3DayStarted(object? sender, DayStartedEventArgs e)
     {
+        this.spiritEvePrankWaitTicks = 0;
         this.CorrectLegacyAutoVhsBeforePrologue();
         this.PrepareSaloonPrologueOnDayStarted();
         this.PrepareOccultCabinetOnDayStarted();
@@ -152,6 +154,7 @@ internal sealed partial class ModEntry
 
         this.UpdateSaloonPrologueUi();
         this.PollSaloonPrologueStart();
+        this.UpdateSpiritEvePrankScene();
 
         if (!this.pendingAlpha3VhsOriginDialogue
             || this.sequenceActive
@@ -179,12 +182,15 @@ internal sealed partial class ModEntry
         if (!Context.IsWorldReady || !e.IsLocalPlayer)
             return;
 
+        this.spiritEvePrankWaitTicks = 0;
         this.HandleSaloonPrologueWarped(e);
     }
 
     private void OnAlpha3ReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
         this.pendingAlpha3VhsOriginDialogue = false;
+        this.spiritEvePrankWaitTicks = 0;
+        this.ResetSudokuRescueRuntime();
         this.ResetSaloonPrologueRuntime();
         this.ResetOccultCabinetRuntime();
     }

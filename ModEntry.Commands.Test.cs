@@ -134,13 +134,15 @@ internal sealed partial class ModEntry
         bool cabinetUnlocked = this.IsOccultCabinetUnlocked();
         string activeHaunting = this.GetActiveHauntingId();
         bool sudokuSealed = this.IsSudokuSealed();
+        bool giftedToday = ModIdentity.HasGiftedSudokuToday(Game1.player);
+        int rescueCooldown = ModIdentity.GetSudokuRescueDaysRemaining(Game1.player, SudokuRescueCooldownDays);
 
         string npcLocation = sudoku?.currentLocation?.NameOrUniqueName ?? "none";
         string npcTile = sudoku is null ? "none" : sudoku.Tile.ToString();
         string npcInvisible = sudoku is null ? "n/a" : sudoku.IsInvisible.ToString();
 
         this.Monitor.Log(
-            $"Hey! You’re Cursed! alpha.3.4 status: prologueSeen={prologueSeen}, arrivalSeen={seen}, npcEnabled={npcEnabled}, npcCount={allSudoku.Count}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, npcInvisible={npcInvisible}, vhsGranted={vhsGranted}, vhsInstalled={vhsInstalled}, vhsInventoryCount={vhsInventoryCount}, signalRanToday={signalRanToday}, sequenceActive={this.sequenceActive}, firstSequence={this.sequenceIsFirstArrival}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, stageCleared={solvedCount}/{stageCount}, trust={ModIdentity.GetSudokuTrust(Game1.player)}/30, dailyDialogueToday={dailyDialogueToday}, daysSinceSudokuActivation={daysSinceActivation}, wizardRevealSeen={wizardSeen}, cabinetUnlocked={cabinetUnlocked}, activeHaunting={activeHaunting}, sudokuSealed={sudokuSealed}, activeMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
+            $"Hey! You’re Cursed! alpha.3.6 status: prologueSeen={prologueSeen}, arrivalSeen={seen}, npcEnabled={npcEnabled}, npcCount={allSudoku.Count}, npcId={sudoku?.Name ?? "none"}, npcLocation={npcLocation}, npcTile={npcTile}, npcInvisible={npcInvisible}, vhsGranted={vhsGranted}, vhsInstalled={vhsInstalled}, vhsInventoryCount={vhsInventoryCount}, signalRanToday={signalRanToday}, sequenceActive={this.sequenceActive}, firstSequence={this.sequenceIsFirstArrival}, dailyPuzzle={dailyPuzzle?.Id ?? "none"}, dailyClaimed={dailyClaimed}, stageCleared={solvedCount}/{stageCount}, trust={ModIdentity.GetSudokuTrust(Game1.player)}/30, giftedToday={giftedToday}, rescueActive={this.sudokuRescueActive}, rescueCooldownDays={rescueCooldown}, dailyDialogueToday={dailyDialogueToday}, daysSinceSudokuActivation={daysSinceActivation}, wizardRevealSeen={wizardSeen}, cabinetUnlocked={cabinetUnlocked}, activeHaunting={activeHaunting}, sudokuSealed={sudokuSealed}, activeMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, time={Game1.timeOfDay}, location={Game1.currentLocation?.NameOrUniqueName}.",
             LogLevel.Info
         );
     }

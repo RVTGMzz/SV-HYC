@@ -213,7 +213,7 @@ internal sealed class SudokuStageSelectMenu : IClickableMenu
         b.Draw(Game1.staminaRect, panel, new Color(18, 24, 34) * 0.97f);
         DrawBorder(b, panel, 4, new Color(95, 125, 148));
 
-        string title = "SUDOKU — CHỌN STAGE";
+        string title = ModEntry.T("stage.title");
         Vector2 titleSize = Game1.dialogueFont.MeasureString(title);
         b.DrawString(
             Game1.dialogueFont,
@@ -224,7 +224,7 @@ internal sealed class SudokuStageSelectMenu : IClickableMenu
 
         int cleared = this.service.GetSolvedCount();
         int total = this.service.GetStageCount();
-        string progress = $"Tiến độ cùng Sudoku: {cleared}/{total} stage";
+        string progress = ModEntry.T("stage.progress", new { cleared, total });
         Vector2 progressSize = Game1.smallFont.MeasureString(progress);
         b.DrawString(
             Game1.smallFont,
@@ -235,7 +235,12 @@ internal sealed class SudokuStageSelectMenu : IClickableMenu
 
         this.DrawDailyCard(b);
 
-        string[] rowNames = { "EASY", "NORMAL", "HARD" };
+        string[] rowNames =
+        {
+            ModEntry.LocalizeDifficulty("easy").ToUpperInvariant(),
+            ModEntry.LocalizeDifficulty("normal").ToUpperInvariant(),
+            ModEntry.LocalizeDifficulty("hard").ToUpperInvariant()
+        };
         for (int row = 0; row < 3; row++)
         {
             int labelY = this.StageAreaTop + row * this.StageRowStride;
@@ -270,8 +275,8 @@ internal sealed class SudokuStageSelectMenu : IClickableMenu
         );
 
         string hint = this.controllerModeSeen
-            ? "D-pad/LS: chọn   •   A: mở   •   B: đóng"
-            : "Chuột/←↑↓→: chọn   •   Enter: mở   •   Esc: đóng";
+            ? ModEntry.T("stage.hint.controller")
+            : ModEntry.T("stage.hint.keyboard");
         Vector2 hintSize = Game1.smallFont.MeasureString(hint);
         b.DrawString(
             Game1.smallFont,
@@ -298,10 +303,10 @@ internal sealed class SudokuStageSelectMenu : IClickableMenu
         b.Draw(Game1.staminaRect, this.DailyRect, fill);
         DrawBorder(b, this.DailyRect, selected ? 4 : 2, border);
 
-        string title = "THỬ THÁCH HÔM NAY";
+        string title = ModEntry.T("stage.daily.title");
         string info = daily is null
-            ? "Không có bảng hợp lệ."
-            : $"{daily.Difficulty}  •  {(claimed ? "Đã nhận thưởng" : "Có thưởng hôm nay")}";
+            ? ModEntry.T("stage.daily.invalid")
+            : ModEntry.T(claimed ? "stage.daily.claimed" : "stage.daily.available", new { difficulty = ModEntry.LocalizeDifficulty(daily.Difficulty) });
 
         b.DrawString(
             Game1.smallFont,
@@ -354,7 +359,11 @@ internal sealed class SudokuStageSelectMenu : IClickableMenu
             unlocked ? Color.White : new Color(105, 115, 124)
         );
 
-        string state = !unlocked ? "KHÓA" : cleared ? "✓" : "MỞ";
+        string state = !unlocked
+            ? ModEntry.T("stage.state.locked")
+            : cleared
+                ? "✓"
+                : ModEntry.T("stage.state.open");
         Vector2 stateSize = Game1.smallFont.MeasureString(state);
         b.DrawString(
             Game1.smallFont,
@@ -370,24 +379,24 @@ internal sealed class SudokuStageSelectMenu : IClickableMenu
         {
             SudokuPuzzle? daily = this.service.EnsureToday();
             if (daily is null)
-                return "Daily Challenge chưa có bảng hợp lệ.";
+                return ModEntry.T("stage.detail.daily.invalid");
 
             return this.service.IsRewardClaimedToday()
-                ? $"Daily Challenge • {daily.Difficulty} • phần thưởng hôm nay đã nhận."
-                : $"Daily Challenge • {daily.Difficulty} • giải đúng để nhận phần thưởng hôm nay.";
+                ? ModEntry.T("stage.detail.daily.claimed", new { difficulty = ModEntry.LocalizeDifficulty(daily.Difficulty) })
+                : ModEntry.T("stage.detail.daily.reward", new { difficulty = ModEntry.LocalizeDifficulty(daily.Difficulty) });
         }
 
         int stageIndex = this.selectedIndex - 1;
         SudokuPuzzle? stage = this.service.GetStage(stageIndex);
         if (stage is null)
-            return "Stage không tồn tại.";
+            return ModEntry.T("stage.detail.missing");
 
         if (!this.service.IsStageUnlocked(stageIndex))
-            return $"Stage {stageIndex + 1:00} • {stage.Difficulty} • hãy hoàn thành Stage {stageIndex:00} trước.";
+            return ModEntry.T("stage.detail.previous", new { number = stageIndex + 1, difficulty = ModEntry.LocalizeDifficulty(stage.Difficulty), previous = stageIndex });
 
         return this.service.IsStageCleared(stageIndex)
-            ? $"Stage {stageIndex + 1:00} • {stage.Difficulty} • đã hoàn thành. Chơi lại không tăng tiến độ."
-            : $"Stage {stageIndex + 1:00} • {stage.Difficulty} • lần clear đầu tiên sẽ tăng mối liên kết với Sudoku.";
+            ? ModEntry.T("stage.detail.cleared", new { number = stageIndex + 1, difficulty = ModEntry.LocalizeDifficulty(stage.Difficulty) })
+            : ModEntry.T("stage.detail.new", new { number = stageIndex + 1, difficulty = ModEntry.LocalizeDifficulty(stage.Difficulty) });
     }
 
     private void ActivateSelection()

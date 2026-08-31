@@ -1,4 +1,4 @@
-# Hey! You’re Cursed! — v0.0.7-alpha.3.4
+# Hey! You’re Cursed! — v0.0.7-alpha.3.7
 
 A paranormal Stardew Valley mod built around one simple lesson: **chuyện tâm linh không đùa được đâu** — don't mess around with the supernatural.
 
@@ -12,6 +12,16 @@ A paranormal Stardew Valley mod built around one simple lesson: **chuyện tâm 
 6. **Seven-day milestone** — the clock starts only when Sudoku actually accepts the Pencil. Seven full days later, the Wizard visits the farmhouse and asks whether the farmer has learned the lesson.
 7. **Occult Cabinet** — the Wizard gives a placeable indoor Occult Cabinet. The player chooses where to put it in the farmhouse.
 8. **Active Haunting system** — the Cabinet manages one active haunting at a time. In alpha.3.4, `Cursed VHS — Sudoku` can be sealed and unsealed. Trust, all 18 Stage clears, Daily/Endless progress, and story state are preserved.
+
+The alpha.3.4 story baseline above is Windows/game tested and remains the rollback checkpoint.
+
+## Sudoku release polish — alpha.3.5/3.6
+
+- A custom Sudoku gift option uses the currently held ordinary object, once per in-game day. It changes Trust by +2/+1/0/-1/-2 without using vanilla friendship hearts; Pencil has a callback reaction.
+- Every Sudoku board has a beginner guide: click `? Hướng dẫn / ? How to Play`, press `H` or `F1`, or use controller Back/View.
+- At Trust 30/30, Sudoku can prevent a real death/knockout or exhaustion collapse at the point where it happens. The rescue restores full HP and Energy, prevents normal loss/warp penalties, and has a 15 in-game day cooldown across seasons.
+- The rescue deliberately does not trigger for the normal 2:00 AM late-night pass-out.
+- The roommate hub shows `Sự che chở: Sẵn sàng` or the remaining cooldown once Trust reaches 30/30.
 
 ## Long-term haunting rule
 
@@ -50,6 +60,9 @@ Sudoku has Trust-sensitive reactions to being sealed and restored.
 - `heyyourecursed_givecabinet` — give an Occult Cabinet.
 - `heyyourecursed_test_seal` / `heyyourecursed_test_unseal` — test the Active Haunting state directly.
 - `heyyourecursed_status` — report story, Sudoku, Cabinet, and Active Haunting state.
+- `heyyourecursed_resetgift` — reset Sudoku's one-gift-per-day limit.
+- `heyyourecursed_test_rescue [death|exhaustion]` — trigger the real max-Trust rescue path at the current location.
+- `heyyourecursed_reset_rescue` — clear the 15-day rescue cooldown.
 - Existing Sudoku helpers remain available: `heyyourecursed_test_solve`, `heyyourecursed_test_profile`, `heyyourecursed_test_trust`, `heyyourecursed_test_stages`, `heyyourecursed_test_endless`, and `heyyourecursed_test_spiriteve`.
 
 ## Story design documents
@@ -57,6 +70,9 @@ Sudoku has Trust-sensitive reactions to being sealed and restored.
 - `ALPHA_3_2_STORY_GATE.md` — persistent Saloon prologue and VHS story gate.
 - `ALPHA_3_3_OCCULT_CABINET.md` — seven-day Wizard reveal and free haunting unlock rule.
 - `ALPHA_3_4_ACTIVE_HAUNTING.md` — one-active-haunting contract and Sudoku seal/unseal behavior.
+- `BUILD_ALPHA_3_5_SUDOKU_GIFTS.md` — custom gift rules and Trust values.
+- `BUILD_ALPHA_3_5_SUDOKU_GUIDE.md` — beginner tutorial access and contents.
+- `BUILD_ALPHA_3_6_MAX_TRUST_RESCUE.md` — rescue contract and Windows test checklist.
 
 ## Build
 
@@ -64,6 +80,6 @@ Close Stardew Valley and SMAPI, then run:
 
 `Build_HeyYoureCursed.bat`
 
-The current test package is **v0.0.7-alpha.3.4 — Active Haunting + Seal/Unseal Sudoku**.
+The current source target is **v0.0.7-alpha.3.7 — Sudoku Complete: Finale + Channel 18**.
 
-This branch has been synchronized to the alpha.3.4 story/system design, but the current alpha.3.4 pass still requires the Windows compile/game test before it should be treated as a stable checkpoint.
+Windows compile/game testing is authoritative for alpha.3.5/3.6. The tested alpha.3.4 checkpoint remains available for rollback.

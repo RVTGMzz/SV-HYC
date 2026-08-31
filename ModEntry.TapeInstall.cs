@@ -47,7 +47,7 @@ internal sealed partial class ModEntry
         Game1.player.modData[ModIdentity.CursedVhsInstalledKey] = "true";
 
         Game1.playSound("smallSelect");
-        Game1.showGlobalMessage("*Cạch.* Cuộn VHS biến mất vào trong TV. Nút eject không phản hồi.");
+        Game1.showGlobalMessage(T("story.vhs.install"));
         this.TryStartArrival(force: true);
 
         this.Monitor.Log(

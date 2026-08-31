@@ -34,6 +34,20 @@ internal sealed partial class ModEntry
             return;
         }
 
+        if (Game1.activeClickableMenu is SpiritEvePrankMenu spiritEvePrankMenu)
+        {
+            if (spiritEvePrankMenu.HandleSmapiInput(e.Button))
+                this.Helper.Input.Suppress(e.Button);
+            return;
+        }
+
+        if (Game1.activeClickableMenu is SudokuCapstoneMenu sudokuCapstoneMenu)
+        {
+            if (sudokuCapstoneMenu.HandleSmapiInput(e.Button))
+                this.Helper.Input.Suppress(e.Button);
+            return;
+        }
+
         if (Game1.activeClickableMenu is SudokuMenu sudokuMenu)
         {
             if (sudokuMenu.HandleSmapiInput(e.Button))
@@ -278,6 +292,9 @@ internal sealed partial class ModEntry
             );
             return;
         }
+
+        if (this.TryShowSudokuCapstone())
+            return;
 
         int solvedCount = this.dailySudoku.GetSolvedCount();
         bool solvedToday = this.dailySudoku.IsRewardClaimedToday();

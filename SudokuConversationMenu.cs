@@ -342,10 +342,11 @@ internal sealed class SudokuConversationMenu : IClickableMenu
             radius: 9
         );
 
-        Vector2 size = Game1.smallFont.MeasureString(text);
+        string wrapped = WrapText(Game1.smallFont, text, rect.Width - 24);
+        Vector2 size = Game1.smallFont.MeasureString(wrapped);
         b.DrawString(
             Game1.smallFont,
-            text,
+            wrapped,
             new Vector2(rect.Center.X - size.X / 2, rect.Center.Y - size.Y / 2),
             Color.White
         );

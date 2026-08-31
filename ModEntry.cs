@@ -54,6 +54,7 @@ internal sealed partial class ModEntry : Mod
         helper.ConsoleCommands.Add("heyyourecursed_talk", "Open Sudoku's roommate interaction hub immediately for testing.", this.OnOpenTalkCommand);
         helper.ConsoleCommands.Add("heyyourecursed_resetdaily", "Reset today's Sudoku board and reward flag for testing.", this.OnResetDailyCommand);
         helper.ConsoleCommands.Add("heyyourecursed_givevhs", "Give the Cursed VHS story item to the current player for testing.", this.OnGiveVhsCommand);
+        helper.ConsoleCommands.Add("heyyourecursed_resetgift", "Reset Sudoku's one-gift-per-day limit for testing.", this.OnResetGiftCommand);
         this.RegisterAlpha22Features(helper);
     }
 
@@ -86,7 +87,24 @@ internal sealed partial class ModEntry : Mod
 
         if (IsNpcAsset("Characters/Dialogue"))
         {
-            e.LoadFromModFile<Dictionary<string, string>>("assets/Dialogue/Sudoku.json", AssetLoadPriority.Exclusive);
+            e.LoadFrom(
+                () => new Dictionary<string, string>
+                {
+                    ["Introduction"] = T("npc.dialogue.introduction"),
+                    ["Mon"] = T("npc.dialogue.mon"),
+                    ["Tue"] = T("npc.dialogue.tue"),
+                    ["Wed"] = T("npc.dialogue.wed"),
+                    ["Thu"] = T("npc.dialogue.thu"),
+                    ["Fri"] = T("npc.dialogue.fri"),
+                    ["Sat"] = T("npc.dialogue.sat"),
+                    ["Sun"] = T("npc.dialogue.sun"),
+                    ["Rainy_Day_0"] = T("npc.dialogue.rainy.0"),
+                    ["Rainy_Day_1"] = T("npc.dialogue.rainy.1"),
+                    ["Indoor_Day_0"] = T("npc.dialogue.indoor.0"),
+                    ["Indoor_Day_1"] = T("npc.dialogue.indoor.1")
+                },
+                AssetLoadPriority.Exclusive
+            );
             return;
         }
 
@@ -148,7 +166,7 @@ internal sealed partial class ModEntry : Mod
         this.LoadEventTexturesSafely();
 
         this.Monitor.Log(
-            "Hey! You’re Cursed! v0.0.7-alpha.2.2.3 loaded. Larger Sudoku conversation body text + ChaCha-like ghost hover are active.",
+            "Hey! You’re Cursed! v0.0.7-alpha.3.7 loaded. Sudoku route finale, Channel 18, gifts, tutorial, and max-Trust protection are active.",
             LogLevel.Info
         );
 

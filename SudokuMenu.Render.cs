@@ -12,9 +12,12 @@ internal sealed partial class SudokuMenu
         b.Draw(Game1.staminaRect, panel, new Color(18, 24, 34) * 0.96f);
         this.DrawBorder(b, panel, 4, new Color(95, 125, 148));
 
-        string title = this.mode == SudokuPlayMode.Stage
-            ? $"SUDOKU — STAGE {this.stageIndex + 1:00}"
-            : "SUDOKU — DAILY CHALLENGE";
+        string title = this.mode switch
+        {
+            SudokuPlayMode.Stage => ModEntry.T("sudoku.title.stage", new { number = this.stageIndex + 1 }),
+            SudokuPlayMode.Practice => ModEntry.T("sudoku.title.practice"),
+            _ => ModEntry.T("sudoku.title.daily")
+        };
         Vector2 titleSize = Game1.dialogueFont.MeasureString(title);
         b.DrawString(
             Game1.dialogueFont,
@@ -23,9 +26,13 @@ internal sealed partial class SudokuMenu
             new Color(215, 230, 238)
         );
 
-        string sub = this.mode == SudokuPlayMode.Stage
-            ? $"{this.puzzle.Difficulty}  •  {this.stageIndex + 1}/{this.service.GetStageCount()}  •  không có daily reward"
-            : $"{this.puzzle.Difficulty}  •  {this.puzzle.Id}  •  thưởng 1 lần/ngày";
+        string difficulty = ModEntry.LocalizeDifficulty(this.puzzle.Difficulty);
+        string sub = this.mode switch
+        {
+            SudokuPlayMode.Stage => ModEntry.T("sudoku.sub.stage", new { difficulty, current = this.stageIndex + 1, total = this.service.GetStageCount() }),
+            SudokuPlayMode.Practice => ModEntry.T("sudoku.sub.practice", new { difficulty }),
+            _ => ModEntry.T("sudoku.sub.daily", new { difficulty, puzzle = this.puzzle.Id })
+        };
         Vector2 subSize = Game1.smallFont.MeasureString(sub);
         b.DrawString(
             Game1.smallFont,
@@ -33,6 +40,8 @@ internal sealed partial class SudokuMenu
             new Vector2(this.xPositionOnScreen + (this.width - subSize.X) / 2, this.yPositionOnScreen + 66),
             new Color(145, 170, 188)
         );
+
+        this.DrawButton(b, this.HelpRect, "? " + ModEntry.T("sudoku.help.button"));
 
         this.DrawGrid(b);
         this.DrawNumberButtons(b);
@@ -46,12 +55,14 @@ internal sealed partial class SudokuMenu
         b.Draw(Game1.staminaRect, footer, new Color(12, 18, 27) * 0.90f);
         this.DrawBorder(b, footer, 1, new Color(65, 88, 106));
 
-        string backLabel = this.returnToStageSelect is null ? "đóng" : "danh sách";
+        string backLabel = this.returnToStageSelect is null
+            ? ModEntry.T("sudoku.action.close")
+            : ModEntry.T("sudoku.action.list");
         string hint = this.controllerModeSeen
             ? this.numberPickerOpen
-                ? "←/→: chọn số   •   A: điền   •   X: xóa   •   B: hủy"
-                : $"D-pad/LS: di chuyển   •   A: chọn số   •   X: xóa\nLB/RB: ô trống   •   Y/Start: kiểm tra   •   B: {backLabel}"
-            : $"Chuột/←↑↓→: chọn ô   •   1–9: điền\nDelete: xóa   •   Enter: kiểm tra   •   Esc: {backLabel}";
+                ? ModEntry.T("sudoku.hint.controller-picker")
+                : ModEntry.T("sudoku.hint.controller", new { back = backLabel })
+            : ModEntry.T("sudoku.hint.keyboard", new { back = backLabel });
 
         string wrappedHint = WrapText(Game1.smallFont, hint, footer.Width - 28);
         b.DrawString(
@@ -71,7 +82,125 @@ internal sealed partial class SudokuMenu
         );
 
         this.upperRightCloseButton?.draw(b);
+
+        if (this.helpOpen)
+            this.DrawHelpOverlay(b);
+
         this.drawMouse(b);
+    }
+
+    private void DrawHelpOverlay(SpriteBatch b)
+    {
+        b.Draw(
+            Game1.staminaRect,
+            new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height),
+            Color.Black * 0.62f
+        );
+
+        Rectangle panel = this.HelpPanelRect;
+        b.Draw(Game1.staminaRect, panel, new Color(18, 24, 34) * 0.99f);
+        this.DrawBorder(b, panel, 4, new Color(140, 170, 192));
+
+        string title = ModEntry.T("sudoku.help.title");
+        Vector2 titleSize = Game1.dialogueFont.MeasureString(title);
+        b.DrawString(
+            Game1.dialogueFont,
+            title,
+            new Vector2(panel.Center.X - titleSize.X / 2, panel.Y + 18),
+            new Color(225, 235, 242)
+        );
+
+        int contentTop = panel.Y + 68;
+        int left = panel.X + 24;
+        int right = panel.Right - 24;
+        int exampleSize = Math.Clamp(panel.Width / 4, 108, 132);
+        Rectangle example = new(left, contentTop + 30, exampleSize, exampleSize);
+
+        string goal = WrapText(Game1.smallFont, ModEntry.T("sudoku.help.goal"), panel.Width - 48);
+        b.DrawString(Game1.smallFont, goal, new Vector2(left, contentTop), new Color(205, 220, 230));
+
+        this.DrawHelpExample(b, example);
+
+        int rulesX = example.Right + 26;
+        int rulesWidth = Math.Max(180, right - rulesX);
+        string rules = string.Join("\n", new[]
+        {
+            ModEntry.T("sudoku.help.rule.row"),
+            ModEntry.T("sudoku.help.rule.column"),
+            ModEntry.T("sudoku.help.rule.box")
+        });
+        b.DrawString(
+            Game1.smallFont,
+            WrapText(Game1.smallFont, rules, rulesWidth),
+            new Vector2(rulesX, example.Y + 4),
+            new Color(215, 226, 233)
+        );
+
+        string exampleText = WrapText(Game1.smallFont, ModEntry.T("sudoku.help.example"), rulesWidth);
+        b.DrawString(
+            Game1.smallFont,
+            exampleText,
+            new Vector2(rulesX, example.Bottom - Game1.smallFont.MeasureString(exampleText).Y),
+            new Color(151, 207, 230)
+        );
+
+        int textY = example.Bottom + 18;
+        string tip = WrapText(Game1.smallFont, ModEntry.T("sudoku.help.tip"), panel.Width - 48);
+        b.DrawString(Game1.smallFont, tip, new Vector2(left, textY), new Color(224, 210, 158));
+        textY += (int)Game1.smallFont.MeasureString(tip).Y + 12;
+
+        string legend = WrapText(Game1.smallFont, ModEntry.T("sudoku.help.legend"), panel.Width - 48);
+        b.DrawString(Game1.smallFont, legend, new Vector2(left, textY), new Color(180, 205, 220));
+        textY += (int)Game1.smallFont.MeasureString(legend).Y + 10;
+
+        string controls = WrapText(Game1.smallFont, ModEntry.T("sudoku.help.controls"), panel.Width - 48);
+        b.DrawString(Game1.smallFont, controls, new Vector2(left, textY), new Color(190, 210, 222));
+
+        this.DrawButton(b, this.HelpCloseRect, ModEntry.T("sudoku.help.close"));
+
+        string closeHint = this.controllerModeSeen
+            ? ModEntry.T("sudoku.help.close.controller")
+            : ModEntry.T("sudoku.help.close.keyboard");
+        Vector2 hintSize = Game1.tinyFont.MeasureString(closeHint);
+        b.DrawString(
+            Game1.tinyFont,
+            closeHint,
+            new Vector2(panel.Center.X - hintSize.X / 2, this.HelpCloseRect.Y - 22),
+            new Color(125, 150, 168)
+        );
+    }
+
+    private void DrawHelpExample(SpriteBatch b, Rectangle rect)
+    {
+        int cell = rect.Width / 3;
+        int[,] values =
+        {
+            { 1, 2, 3 },
+            { 4, 0, 6 },
+            { 7, 8, 9 }
+        };
+
+        for (int row = 0; row < 3; row++)
+        {
+            for (int col = 0; col < 3; col++)
+            {
+                Rectangle cellRect = new(rect.X + col * cell, rect.Y + row * cell, cell, cell);
+                bool answer = row == 1 && col == 1;
+                b.Draw(Game1.staminaRect, cellRect, answer ? new Color(70, 102, 124) : new Color(39, 52, 65));
+                this.DrawBorder(b, cellRect, 1, new Color(130, 154, 170));
+
+                string text = answer ? "5" : values[row, col].ToString();
+                Vector2 size = Game1.smallFont.MeasureString(text);
+                b.DrawString(
+                    Game1.smallFont,
+                    text,
+                    new Vector2(cellRect.Center.X - size.X / 2, cellRect.Center.Y - size.Y / 2),
+                    answer ? new Color(145, 205, 230) : new Color(230, 235, 238)
+                );
+            }
+        }
+
+        this.DrawBorder(b, new Rectangle(rect.X, rect.Y, cell * 3, cell * 3), 3, new Color(205, 220, 230));
     }
 
     private void DrawGrid(SpriteBatch b)
@@ -177,8 +306,8 @@ internal sealed partial class SudokuMenu
             );
         }
 
-        this.DrawButton(b, this.ClearRect, "XÓA");
-        this.DrawButton(b, this.CheckRect, "KIỂM TRA");
+        this.DrawButton(b, this.ClearRect, ModEntry.T("sudoku.action.erase"));
+        this.DrawButton(b, this.CheckRect, ModEntry.T("sudoku.action.check"));
     }
 
     private void DrawButton(SpriteBatch b, Rectangle rect, string text)

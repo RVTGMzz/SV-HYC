@@ -25,7 +25,7 @@ internal sealed partial class ModEntry
     internal static string T(string key, object tokens)
     {
         if (I18n is null)
-            return Alpha3TranslationFallback.Get(key, english: false);
+            return FormatFallback(Alpha3TranslationFallback.Get(key, english: false), tokens);
 
         string translated = I18n.Get(key, tokens).ToString();
         bool missing = string.Equals(translated, key, StringComparison.OrdinalIgnoreCase)
@@ -35,6 +35,18 @@ internal sealed partial class ModEntry
 
         string localeProbe = I18n.Get("hub.option.play").ToString();
         bool english = string.Equals(localeProbe, "Play Sudoku", StringComparison.OrdinalIgnoreCase);
-        return Alpha3TranslationFallback.Get(key, english);
+        return FormatFallback(Alpha3TranslationFallback.Get(key, english), tokens);
+    }
+
+    private static string FormatFallback(string template, object tokens)
+    {
+        string result = template;
+        foreach (System.Reflection.PropertyInfo property in tokens.GetType().GetProperties())
+        {
+            string value = property.GetValue(tokens)?.ToString() ?? string.Empty;
+            result = result.Replace("{{" + property.Name + "}}", value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return result;
     }
 }

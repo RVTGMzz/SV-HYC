@@ -27,40 +27,50 @@ internal sealed partial class ModEntry
         {
             new SudokuChoiceOption
             {
-                Label = "Daily Challenge",
+                Label = T("stage.option.daily"),
                 Action = () => this.OpenDailySudoku(force: false, returnToStageSelect: true)
             },
             new SudokuChoiceOption
             {
-                Label = "Stage 01–18",
+                Label = T("stage.option.stages"),
                 Action = this.ShowSudokuStageGrid
             },
             new SudokuChoiceOption
             {
-                Label = practiceUnlocked ? "Endless Practice" : "Endless Practice — khóa",
+                Label = practiceUnlocked ? T("stage.option.practice") : T("stage.option.practice-locked"),
                 Action = practiceUnlocked
                     ? this.OpenPracticeSudoku
                     : () => this.ShowSudokuStageSelect()
             },
-            new SudokuChoiceOption
-            {
-                Label = "Để sau",
-                Action = () => { }
-            }
         };
+
+        if (ModIdentity.HasSudokuCapstoneSeen(Game1.player))
+        {
+            options.Add(new SudokuChoiceOption
+            {
+                Label = T("channel18.option"),
+                Action = this.ShowChannel18Broadcast
+            });
+        }
+
+        options.Add(new SudokuChoiceOption
+        {
+            Label = T("ui.common.later"),
+            Action = () => { }
+        });
 
         Game1.activeClickableMenu = new SudokuChoiceMenu(
             this.LoadSudokuPortraitTexture(),
             portraitIndex: practiceUnlocked ? 4 : 0,
             lines: new[]
             {
-                "Sudoku đặt mấy tờ giấy xuống trước mặt bạn.",
+                T("stage.hub.line.1"),
                 practiceUnlocked
-                    ? "\"Mười tám Stage đã xong. Nếu vẫn muốn chơi... ta còn bảng khác.\""
-                    : "\"Chọn đi. Ta không định chờ cả ngày.\""
+                    ? T("stage.hub.line.2.complete")
+                    : T("stage.hub.line.2.incomplete")
             },
-            question: "Bạn muốn chơi kiểu nào?",
-            progressText: $"Puzzle Bond {cleared}/{total}" + (practiceUnlocked ? "  •  Endless đã mở" : string.Empty),
+            question: T("stage.hub.question"),
+            progressText: T("stage.hub.progress", new { cleared, total, unlocked = practiceUnlocked ? T("stage.hub.unlocked") : string.Empty }),
             options: options
         );
     }

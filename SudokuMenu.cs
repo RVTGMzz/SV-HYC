@@ -21,8 +21,9 @@ internal sealed partial class SudokuMenu : IClickableMenu
     private int selectedColumn;
     private bool controllerModeSeen;
     private bool numberPickerOpen;
+    private bool helpOpen;
     private int numberPickerValue = 1;
-    private string statusText = "Chọn một ô trống, rồi điền số 1–9.";
+    private string statusText = string.Empty;
 
     public SudokuMenu(
         DailySudokuService service,
@@ -45,6 +46,8 @@ internal sealed partial class SudokuMenu : IClickableMenu
         this.stageIndex = stageIndex;
         this.returnToStageSelect = returnToStageSelect;
         this.cellSize = Math.Clamp((this.height - 330) / 9, 34, 48);
+        this.controllerModeSeen = SudokuInputState.LastWasController;
+        this.statusText = ModEntry.T("sudoku.status.initial");
         this.SelectFirstEditableCell();
     }
 
@@ -62,11 +65,28 @@ internal sealed partial class SudokuMenu : IClickableMenu
     private int ActionY => this.NumberY + this.NumberButtonSize + 12;
     private Rectangle ClearRect => new(this.xPositionOnScreen + 68, this.ActionY, 150, 46);
     private Rectangle CheckRect => new(this.xPositionOnScreen + this.width - 218, this.ActionY, 150, 46);
+    private Rectangle HelpRect => new(this.xPositionOnScreen + 22, this.yPositionOnScreen + 19, 128, 38);
+    private Rectangle HelpPanelRect => new(this.xPositionOnScreen + 28, this.yPositionOnScreen + 58, this.width - 56, this.height - 92);
+    private Rectangle HelpCloseRect => new(this.HelpPanelRect.Center.X - 90, this.HelpPanelRect.Bottom - 54, 180, 38);
     private int FooterY => this.ActionY + 60;
 
     public override void receiveLeftClick(int x, int y, bool playSound = true)
     {
+        if (this.helpOpen)
+        {
+            if (this.HelpCloseRect.Contains(x, y))
+                this.CloseHelp();
+            return;
+        }
+
+        if (this.HelpRect.Contains(x, y))
+        {
+            this.OpenHelp();
+            return;
+        }
+
         this.controllerModeSeen = false;
+        SudokuInputState.LastWasController = false;
         this.numberPickerOpen = false;
 
         base.receiveLeftClick(x, y, playSound);
@@ -81,8 +101,8 @@ internal sealed partial class SudokuMenu : IClickableMenu
             this.selectedColumn = Math.Clamp(col, 0, 8);
             int index = this.selectedRow * 9 + this.selectedColumn;
             this.statusText = this.puzzle.Puzzle[index] == '0'
-                ? "Đã chọn ô trống. Chọn số 1–9 bên dưới."
-                : "Ô này là đề bài. Hãy chọn một ô trống.";
+                ? ModEntry.T("sudoku.status.select-empty")
+                : ModEntry.T("sudoku.status.given");
             Game1.playSound("shiny4");
             return;
         }
@@ -117,8 +137,22 @@ internal sealed partial class SudokuMenu : IClickableMenu
 
     public override void receiveKeyPress(Keys key)
     {
+        if (this.helpOpen)
+        {
+            if (key is Keys.Escape or Keys.Enter or Keys.Space)
+                this.CloseHelp();
+            return;
+        }
+
         this.controllerModeSeen = false;
+        SudokuInputState.LastWasController = false;
         this.numberPickerOpen = false;
+
+        if (key is Keys.H or Keys.F1)
+        {
+            this.OpenHelp();
+            return;
+        }
 
         if (key == Keys.Escape)
         {
@@ -164,7 +198,7 @@ internal sealed partial class SudokuMenu : IClickableMenu
     internal bool HandleSmapiInput(SButton button)
     {
         bool isControllerInput = button is
-            SButton.ControllerA or SButton.ControllerB or SButton.ControllerX or SButton.ControllerY
+            SButton.ControllerA or SButton.ControllerB or SButton.ControllerX or SButton.ControllerY or SButton.ControllerBack
             or SButton.DPadLeft or SButton.DPadRight or SButton.DPadUp or SButton.DPadDown
             or SButton.LeftThumbstickLeft or SButton.LeftThumbstickRight or SButton.LeftThumbstickUp or SButton.LeftThumbstickDown
             or SButton.LeftShoulder or SButton.RightShoulder
@@ -175,11 +209,22 @@ internal sealed partial class SudokuMenu : IClickableMenu
             return false;
 
         this.controllerModeSeen = true;
+        SudokuInputState.LastWasController = true;
+
+        if (this.helpOpen)
+        {
+            if (button is SButton.ControllerA or SButton.ControllerB or SButton.ControllerStart)
+                this.CloseHelp();
+            return true;
+        }
+
         if (this.numberPickerOpen)
             return this.HandleNumberPickerInput(button);
 
         switch (button)
         {
+            case SButton.ControllerBack:
+                this.OpenHelp(); return true;
             case SButton.DPadLeft:
             case SButton.LeftThumbstickLeft:
                 this.MoveSelection(0, -1); return true;
@@ -222,6 +267,7 @@ internal sealed partial class SudokuMenu : IClickableMenu
             Buttons.DPadDown => SButton.DPadDown,
             Buttons.A => SButton.ControllerA,
             Buttons.B => SButton.ControllerB,
+            Buttons.Back => SButton.ControllerBack,
             Buttons.X => SButton.ControllerX,
             Buttons.Y => SButton.ControllerY,
             Buttons.LeftShoulder => SButton.LeftShoulder,
