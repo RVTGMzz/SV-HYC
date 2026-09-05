@@ -22,6 +22,7 @@ Contract details:
 - Hey! You're Cursed! treats the value `true` case-insensitively.
 - Remove the marker as soon as Team Up stops controlling Sudoku.
 - This marker is runtime ownership only. Team Up owns setting/removing it and should not use it as persistent party save state.
+- Because NPC `modData` may be serialized, Team Up should remove this marker during its save/teardown lifecycle rather than relying on the marker as saved party state. If control continues after a save, Team Up may reapply it after saving.
 - On save/load, Team Up should restore its own party state through its own system, then reapply the marker to the live Sudoku NPC if she is still actively party-controlled.
 - On teardown/leave-party, remove the marker from the NPC.
 
