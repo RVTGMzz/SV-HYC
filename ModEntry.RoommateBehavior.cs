@@ -22,7 +22,7 @@ internal sealed partial class ModEntry
     private Vector2 roommateGlideTargetPosition;
     private int roommateGlideTicks;
 
-    private void ResetSudokuRoommateBehavior()
+    private void ClearSudokuRoommateActivityRuntime()
     {
         this.roommatePath.Clear();
         this.roommateCurrentActivity = null;
@@ -33,6 +33,12 @@ internal sealed partial class ModEntry
         this.roommateBehaviorCooldownTicks = 0;
         this.roommateGlideTargetTile = null;
         this.roommateGlideTicks = 0;
+    }
+
+    private void ResetSudokuRoommateBehavior()
+    {
+        this.ClearSudokuRoommateActivityRuntime();
+        this.sudokuRoommateYieldedToTeamUp = false;
     }
 
     private void BeginSudokuRoommateBehaviorAfterArrival()
@@ -71,6 +77,9 @@ internal sealed partial class ModEntry
         if (sudoku is null || sudoku.IsInvisible)
             return;
 
+        if (this.ShouldYieldSudokuRoommateControl(sudoku))
+            return;
+
         int trust = ModIdentity.GetSudokuTrust(Game1.player);
         bool cameFromOutside = oldLocation is not FarmHouse;
         if (cameFromOutside
@@ -92,6 +101,9 @@ internal sealed partial class ModEntry
 
         NPC? sudoku = this.FindSudoku(currentLocationOnly: true);
         if (sudoku is null || sudoku.IsInvisible)
+            return;
+
+        if (this.ShouldYieldSudokuRoommateControl(sudoku))
             return;
 
         sudoku.ignoreScheduleToday = true;
@@ -164,6 +176,9 @@ internal sealed partial class ModEntry
 
         NPC? sudoku = this.FindSudoku(currentLocationOnly: true);
         if (sudoku is null || sudoku.IsInvisible)
+            return;
+
+        if (this.ShouldYieldSudokuRoommateControl(sudoku))
             return;
 
         int currentSlot = GetRoommateActivitySlot(Game1.timeOfDay);
